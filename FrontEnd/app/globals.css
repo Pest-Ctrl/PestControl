@@ -55,3 +55,17 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #00ff00;
 }
+
+@keyframes flowRightToLeft {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.animate-flow-rtl {
+  background-size: 200% auto;
+  animation: flowRightToLeft 8s linear infinite;
+}

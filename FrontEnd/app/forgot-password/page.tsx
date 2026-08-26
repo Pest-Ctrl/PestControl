@@ -12,7 +12,7 @@ export default function ForgotPassword() {
         
         {submitted ? (
           <div className="bg-green-900/50 border border-green-500 text-green-200 px-4 py-3 rounded-md text-sm mb-6">
-            A reset link has been sent to the Admin for email: {email}.
+            A reset notification has been sent to the Admin : {email}.
           </div>
         ) : (
           <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}>
