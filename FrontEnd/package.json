@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "playwright test"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
