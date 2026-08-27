@@ -58,15 +58,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex font-sans">
-      {/* Left Column: Login Form */}
-      <Scrollable className="w-full md:w-1/2 bg-[#0d1117] flex flex-col justify-center min-h-screen relative z-10 border-r border-zinc-900 shadow-2xl p-8 sm:p-12 md:p-16 lg:p-24">
-        <div className="max-w-md w-full mx-auto">
-          <div className="mb-12 text-center">
+    <div className="min-h-screen bg-[#050505] relative font-sans overflow-hidden">
+      {/* Background Layer */}
+      <div className="absolute inset-0 z-0">
+        <NeonBackground />
+      </div>
+
+      {/* Foreground Login Box */}
+      <Scrollable className="relative z-10 flex flex-col justify-center items-center min-h-screen p-4 sm:p-8">
+        <div className="max-w-md w-full bg-[#050505]/60 backdrop-blur-xl border border-zinc-800/50 shadow-[0_0_50px_rgba(0,0,0,0.8)] rounded-2xl p-8 sm:p-12 relative overflow-hidden">
+          {/* Subtle top glow line for the card */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#1ef2c1] to-transparent opacity-50" />
+          
+          <div className="mb-10 text-center">
             <h1 className="text-3xl font-bold text-white uppercase tracking-[0.15em]">
               Sign <span className="text-[#1ef2c1]">In</span>
             </h1>
-            <p className="text-zinc-500 text-sm mt-2">Bug Tracking System · Engineering Portal</p>
+            <p className="text-zinc-400 text-xs mt-3 tracking-widest uppercase">Bug Tracking System</p>
           </div>
 
           {/* GitHub OAuth Button */}
@@ -74,7 +82,7 @@ export default function LoginPage() {
             id="github-signin-btn"
             onClick={handleGithubLogin}
             disabled={ghLoading}
-            className="w-full bg-[#21262d] text-white flex items-center justify-center gap-3 py-3 shadow-[0_0_15px_rgba(0,255,0,0.15)] hover:shadow-[0_0_20px_rgba(0,255,0,0.3)] border border-zinc-700 hover:border-[#1ef2c1]/50 transition-all duration-300 mb-8 font-medium disabled:opacity-50"
+            className="w-full bg-[#0d1117]/80 text-white flex items-center justify-center gap-3 py-3.5 shadow-[0_0_15px_rgba(30,242,193,0.1)] hover:shadow-[0_0_20px_rgba(30,242,193,0.25)] border border-zinc-700/50 hover:border-[#1ef2c1]/50 transition-all duration-300 mb-8 font-medium disabled:opacity-50 rounded-lg"
           >
             {ghLoading ? (
               <span className="w-5 h-5 border-2 border-zinc-400 border-t-[#1ef2c1] rounded-full animate-spin" />
@@ -86,21 +94,21 @@ export default function LoginPage() {
             Continue with GitHub
           </button>
 
-          <div className="flex items-center mb-8">
-            <div className="flex-grow border-t border-zinc-800" />
-            <span className="px-4 text-xs text-zinc-600 font-semibold tracking-wider uppercase">or sign in with email</span>
-            <div className="flex-grow border-t border-zinc-800" />
+          <div className="flex items-center mb-8 opacity-70">
+            <div className="flex-grow border-t border-zinc-700" />
+            <span className="px-4 text-[10px] text-zinc-400 font-semibold tracking-widest uppercase">or email</span>
+            <div className="flex-grow border-t border-zinc-700" />
           </div>
 
           <form className="flex flex-col gap-5" onSubmit={handleLogin}>
             {error && (
-              <div id="InvalidCreds" className="bg-red-900/40 border border-red-500/60 text-red-300 px-4 py-2.5 text-sm flex items-center gap-2">
+              <div id="InvalidCreds" className="bg-red-900/40 border border-red-500/60 text-red-300 px-4 py-2.5 text-sm flex items-center gap-2 rounded-lg">
                 <span className="text-red-400">⚠</span> {error}
               </div>
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+              <label htmlFor="email" className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
                 Email Address
               </label>
               <input
@@ -109,13 +117,13 @@ export default function LoginPage() {
                 placeholder="you@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#0a0f1a] border border-zinc-700 py-3 px-4 text-white placeholder-zinc-600 focus:outline-none focus:border-[#1ef2c1] focus:ring-1 focus:ring-[#1ef2c1]/30 transition-all text-sm"
+                className="w-full bg-[#050505]/80 border border-zinc-700 py-3 px-4 text-white placeholder-zinc-600 focus:outline-none focus:border-[#1ef2c1] focus:ring-1 focus:ring-[#1ef2c1]/30 transition-all text-sm rounded-lg"
                 required
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="password" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+              <label htmlFor="password" className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
                 Password
               </label>
               <input
@@ -124,7 +132,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#0a0f1a] border border-zinc-700 py-3 px-4 text-white placeholder-zinc-600 focus:outline-none focus:border-[#1ef2c1] focus:ring-1 focus:ring-[#1ef2c1]/30 transition-all text-sm"
+                className="w-full bg-[#050505]/80 border border-zinc-700 py-3 px-4 text-white placeholder-zinc-600 focus:outline-none focus:border-[#1ef2c1] focus:ring-1 focus:ring-[#1ef2c1]/30 transition-all text-sm rounded-lg"
                 required
               />
             </div>
@@ -133,33 +141,33 @@ export default function LoginPage() {
               id="login-submit-btn"
               type="submit"
               disabled={loading}
-              className="mt-2 w-full py-3.5 font-bold tracking-widest uppercase transition-all duration-300
-                bg-[#0d1117] text-[#1ef2c1] border-2 border-[#1ef2c1] shadow-[0_0_12px_rgba(0,255,0,0.4)]
-                hover:bg-[#1ef2c1] hover:text-black hover:shadow-[0_0_25px_rgba(0,255,0,0.8)]
-                disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-4 w-full py-3.5 font-bold tracking-widest uppercase transition-all duration-300
+                bg-transparent text-[#1ef2c1] border-2 border-[#1ef2c1] shadow-[0_0_12px_rgba(30,242,193,0.3)]
+                hover:bg-[#1ef2c1] hover:text-black hover:shadow-[0_0_25px_rgba(30,242,193,0.6)]
+                disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
             >
               {loading ? 'Authenticating...' : 'Log In'}
             </button>
           </form>
 
           <div className="mt-8 flex flex-col items-center gap-3 text-sm">
-            <a href="/forgot-password" className="text-zinc-600 hover:text-[#1ef2c1] transition-colors text-xs tracking-wider">
+            <a href="/forgot-password" className="text-zinc-500 hover:text-[#1ef2c1] transition-colors text-xs tracking-wider">
               Forgot password?
             </a>
           </div>
 
           {/* Test credentials hint */}
-          <div className="mt-10 border border-zinc-800 bg-[#0a0f1a] p-4">
-            <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2 font-bold">Demo Credentials</p>
+          <div className="mt-10 border border-zinc-800/50 bg-[#000000]/40 p-4 rounded-lg">
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-3 font-bold text-center">Demo Credentials</p>
             <div className="space-y-1">
               {DUMMY_USERS.map(u => (
                 <button
                   key={u.email}
                   type="button"
                   onClick={() => { setEmail(u.email); setPassword(u.password); }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800/50 hover:text-[#1ef2c1] transition-colors flex justify-between"
+                  className="w-full text-left px-3 py-2 text-[11px] text-zinc-400 hover:bg-zinc-800/50 hover:text-[#1ef2c1] transition-colors flex justify-between rounded-md"
                 >
-                  <span>{u.email}</span>
+                  <span className="font-mono">{u.email}</span>
                   <span className="text-zinc-600">{u.role}</span>
                 </button>
               ))}
@@ -167,14 +175,6 @@ export default function LoginPage() {
           </div>
         </div>
       </Scrollable>
-
-      {/* Right Column: Animated Neon Background */}
-      <div className="hidden md:block w-1/2 relative bg-[#050505] min-h-screen overflow-hidden">
-        <div className="absolute inset-0">
-          <NeonBackground />
-        </div>
-        <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0d1117] to-transparent z-10 pointer-events-none" />
-      </div>
     </div>
   );
 }
