@@ -11,4 +11,15 @@ test.describe('Login Flow', () => {
 
     await expect(page).toHaveURL('/dashboard');
   });
+
+  test('Unable to log in due to invalid credentials!', async({page}) => {
+    await page.goto('/login');
+
+    await page.locator('#email').fill('test01@gmail.com');
+    await page.locator('#password').fill('youshallnotpass');
+
+    await page.locator('#login-submit-btn').click();
+
+    await expect(page.locator('#InvalidCreds')).toBeVisible();
+  });
 });
