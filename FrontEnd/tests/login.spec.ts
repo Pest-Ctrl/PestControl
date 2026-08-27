@@ -9,7 +9,7 @@ test.describe('Login Flow', () => {
 
     await page.locator('#login-submit-btn').click();
 
-    await expect(page).toHaveURL('/pagenotexist');
+    await expect(page).toHaveURL('/urldoesnotexisttestpurposesonly');
   });
 
   test('Unable to log in due to invalid credentials!', async({page}) => {
