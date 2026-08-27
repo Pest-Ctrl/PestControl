@@ -1,11 +1,12 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "⬡" },
+  { href: "/projects", label: "Projects", icon: "◇" },
   { href: "/dashboard/issues", label: "Issues", icon: "⬢" },
   { href: "/dashboard/analytics", label: "Analytics", icon: "◈" },
   { href: "/dashboard/audit-log", label: "Audit Log", icon: "◉" },

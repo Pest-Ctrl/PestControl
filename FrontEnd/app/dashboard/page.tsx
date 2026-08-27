@@ -1,7 +1,8 @@
 import Scrollable from "@/components/Scrollable";
-import Sidebar from "@/components/dashboard/Sidebar";
-import KpiCard from "@/components/dashboard/KpiCard";
 import IssueTable, { Issue } from "@/components/dashboard/IssueTable";
+import KpiCard from "@/components/dashboard/KpiCard";
+import Sidebar from "@/components/dashboard/Sidebar";
+import Link from "next/link";
 // Sample data for now we will be updaitng this 
 const MOCK_ISSUES: Issue[] = [
   { id: '#BTS-001', title: 'Auth token not refreshing on session expiry', status: 'Open',        severity: 'Critical', type: 'Security',      assignee: 'Unassigned',   reporter: 'test01',   createdAt: '2026-08-18' },
@@ -64,9 +65,9 @@ export default function DashboardPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-[#00ff00] animate-pulse" />
               <span className="text-xs text-zinc-400">Live</span>
             </div>
-            <button className="bg-[#00ff00] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#00cc00] transition-colors tracking-wider uppercase">
+            <Link href="/space" className="bg-[#00ff00] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#00cc00] transition-colors tracking-wider uppercase">
               + New Issue
-            </button>
+            </Link>
           </div>
         </header>
 
