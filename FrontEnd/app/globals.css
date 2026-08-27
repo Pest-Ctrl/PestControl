@@ -3,6 +3,8 @@
 @theme {
   --color-background: #050505;
   --color-neon: #1ef2c1;
+  --color-neon-hover: #16b892;
+  --color-surface: #0d1117;
   
   --font-sans: var(--font-lato), sans-serif;
   

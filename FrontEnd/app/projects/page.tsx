@@ -12,7 +12,7 @@ const WORKSPACES = [
     status: 'Active', 
     issueCount: 24, 
     lastUpdated: '2 hours ago',
-    color: '#00ff00' // Live/Active green
+    color: 'var(--color-neon)'
   },
   { 
     id: 'ws-02', 
@@ -22,7 +22,7 @@ const WORKSPACES = [
     status: 'Active', 
     issueCount: 8, 
     lastUpdated: '5 hours ago',
-    color: '#00ff00'
+    color: 'var(--color-neon)'
   },
   { 
     id: 'ws-03', 
@@ -60,7 +60,7 @@ export default function WorkspacePage() {
             <p className="text-xs text-zinc-600">Select a project context to view issues</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="bg-[#00ff00] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#00cc00] transition-colors tracking-wider uppercase">
+            <button className="bg-neon text-black text-xs font-bold px-4 py-1.5 hover:bg-neon-hover transition-colors tracking-wider uppercase">
               + New Workspace
             </button>
           </div>
@@ -90,10 +90,10 @@ export default function WorkspacePage() {
                 <Link 
                   href="/space" 
                   key={workspace.id}
-                  className="group block bg-[#0d1117] border border-zinc-900 hover:border-zinc-700 transition-all duration-200 relative overflow-hidden flex flex-col h-48"
+                  className="group block bg-surface border border-zinc-900 hover:border-zinc-700 transition-all duration-200 relative overflow-hidden flex flex-col h-48"
                 >
                   {/* Subtle top border highlight on hover */}
-                  <div className="absolute top-0 left-0 w-full h-[2px] bg-zinc-800 group-hover:bg-[#00ff00]/50 transition-colors" />
+                  <div className="absolute top-0 left-0 w-full h-[2px] bg-zinc-800 group-hover:bg-neon/50 transition-colors" />
 
                   <div className="p-6 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-4">
