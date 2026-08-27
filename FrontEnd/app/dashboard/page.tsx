@@ -35,7 +35,7 @@ const STATUS_DONUT = [
   { label: 'Open',         count: STATUS_COUNTS['Open'] || 0,        color: '#eab308' },
   { label: 'In Progress',  count: STATUS_COUNTS['InProgress'] || 0,  color: '#3b82f6' },
   { label: 'Under Review', count: STATUS_COUNTS['UnderReview'] || 0, color: '#a855f7' },
-  { label: 'Resolved',     count: STATUS_COUNTS['Resolved'] || 0,    color: '#00ff00' },
+  { label: 'Resolved',     count: STATUS_COUNTS['Resolved'] || 0,    color: '#1ef2c1' },
   { label: 'Closed',       count: STATUS_COUNTS['Closed'] || 0,      color: '#71717a' },
   { label: 'Reopened',     count: STATUS_COUNTS['Reopened'] || 0,    color: '#ef4444' },
 ];
@@ -60,7 +60,7 @@ export default function DashboardPage() {
             <p className="text-xs text-zinc-400">Sprint 4 · Aug 18 – Aug 31, 2026</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="bg-[#00ff00] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#00cc00] transition-colors tracking-wider uppercase">
+            <button className="bg-[#1ef2c1] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#16b892] transition-colors tracking-wider uppercase">
               + New Issue
             </button>
           </div>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
                   <div key={w.week} className="flex-1 flex flex-col items-center gap-2">
                     <span className="text-xs font-mono text-zinc-400">{w.closed}</span>
                     <div
-                      className="w-full bg-gradient-to-t from-[#00ff00]/80 to-[#00ff00]/30 border-t-2 border-[#00ff00] transition-all"
+                      className="w-full bg-gradient-to-t from-[#1ef2c1]/80 to-[#1ef2c1]/30 border-t-2 border-[#1ef2c1] transition-all"
                       style={{ height: `${(w.closed / MAX_VELOCITY) * 100}%` }}
                     />
                     <span className="text-[10px] text-zinc-400 font-mono">{w.week}</span>
@@ -209,7 +209,7 @@ export default function DashboardPage() {
               ].map((entry, i) => (
                 <div key={i} className="flex items-center gap-4 py-1.5 border-b border-zinc-900/50 last:border-0">
                   <span className="text-zinc-500 w-16 shrink-0">{entry.time}</span>
-                  <span className="text-[#00ff00]/60 w-16 shrink-0">{entry.user}</span>
+                  <span className="text-[#1ef2c1]/60 w-16 shrink-0">{entry.user}</span>
                   <span className="text-zinc-400 flex-1">{entry.action}</span>
                   <span className="text-zinc-500">{entry.from} → {entry.to}</span>
                 </div>

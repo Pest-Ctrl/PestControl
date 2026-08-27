@@ -61,9 +61,9 @@ export default function IssueTable({ issues }: IssueTableProps) {
           {issues.map((issue, i) => (
             <tr
               key={issue.id}
-              className={`border-b border-zinc-900/50 hover:bg-[#00ff00]/[0.03] transition-colors cursor-pointer group ${i % 2 === 0 ? '' : 'bg-zinc-950/30'}`}
+              className={`border-b border-zinc-900/50 hover:bg-[#1ef2c1]/[0.03] transition-colors cursor-pointer group ${i % 2 === 0 ? '' : 'bg-zinc-950/30'}`}
             >
-              <td className="px-4 py-3 font-mono text-[#00ff00]/60 text-xs group-hover:text-[#00ff00] transition-colors">
+              <td className="px-4 py-3 font-mono text-[#1ef2c1]/60 text-xs group-hover:text-[#1ef2c1] transition-colors">
                 {issue.id}
               </td>
               <td className="px-4 py-3 text-zinc-200 max-w-[220px]">

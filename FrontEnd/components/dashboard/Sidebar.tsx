@@ -35,11 +35,11 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 group
                 ${isActive
-                  ? "bg-[#00ff00]/10 text-[#00ff00] border-l-2 border-[#00ff00]"
+                  ? "bg-[#1ef2c1]/10 text-[#1ef2c1] border-l-2 border-[#1ef2c1]"
                   : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 border-l-2 border-transparent"
                 }`}
             >
-              <span className={`font-mono text-base ${isActive ? "text-[#00ff00]" : "text-zinc-700 group-hover:text-zinc-400"}`}>
+              <span className={`font-mono text-base ${isActive ? "text-[#1ef2c1]" : "text-zinc-700 group-hover:text-zinc-400"}`}>
                 {item.icon}
               </span>
               {item.label}

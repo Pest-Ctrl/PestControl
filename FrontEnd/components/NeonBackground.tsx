@@ -2,25 +2,25 @@ import React from 'react';
 
 export default function NeonBackground() {
   const stripes = [
-    { height: 'h-4', bg: 'bg-gradient-to-r from-black via-[#00ff00] to-black animate-flow-rtl', opacity: 'opacity-40' },
-    { height: 'h-12', bg: 'bg-gradient-to-r from-[#003300] via-[#00ff00] to-[#002200] animate-flow-rtl', opacity: 'opacity-90' },
-    { height: 'h-2', bg: 'bg-[#00ff00]', opacity: 'opacity-100' },
+    { height: 'h-4', bg: 'bg-gradient-to-r from-black via-[#1ef2c1] to-black animate-flow-rtl', opacity: 'opacity-40' },
+    { height: 'h-12', bg: 'bg-gradient-to-r from-[#003300] via-[#1ef2c1] to-[#002200] animate-flow-rtl', opacity: 'opacity-90' },
+    { height: 'h-2', bg: 'bg-[#1ef2c1]', opacity: 'opacity-100' },
     { height: 'h-8', bg: 'bg-gradient-to-r from-black to-[#00aa00] animate-flow-rtl', opacity: 'opacity-60' },
-    { height: 'h-16', bg: 'bg-gradient-to-l from-[#00ff00] to-transparent animate-flow-rtl', opacity: 'opacity-80' },
-    { height: 'h-1', bg: 'bg-[#00ff00]', opacity: 'opacity-100' },
+    { height: 'h-16', bg: 'bg-gradient-to-l from-[#1ef2c1] to-transparent animate-flow-rtl', opacity: 'opacity-80' },
+    { height: 'h-1', bg: 'bg-[#1ef2c1]', opacity: 'opacity-100' },
     
     { height: 'h-24', bg: 'bg-black', opacity: 'opacity-100' },
     { height: 'h-4', bg: 'bg-gradient-to-r from-[#001100] to-black animate-flow-rtl', opacity: 'opacity-50' },
     { height: 'h-32', bg: 'bg-black', opacity: 'opacity-100' },
-    { height: 'h-2', bg: 'bg-[#00ff00]', opacity: 'opacity-20' },
+    { height: 'h-2', bg: 'bg-[#1ef2c1]', opacity: 'opacity-20' },
     { height: 'h-16', bg: 'bg-black', opacity: 'opacity-100' },
-    { height: 'h-6', bg: 'bg-gradient-to-r from-transparent to-[#00ff00]', opacity: 'opacity-70' },
-    { height: 'h-2', bg: 'bg-[#00ff00]', opacity: 'opacity-100' },
-    { height: 'h-16', bg: 'bg-gradient-to-r from-[#002200] via-[#00ff00] to-black', opacity: 'opacity-80' },
+    { height: 'h-6', bg: 'bg-gradient-to-r from-transparent to-[#1ef2c1]', opacity: 'opacity-70' },
+    { height: 'h-2', bg: 'bg-[#1ef2c1]', opacity: 'opacity-100' },
+    { height: 'h-16', bg: 'bg-gradient-to-r from-[#002200] via-[#1ef2c1] to-black', opacity: 'opacity-80' },
     { height: 'h-8', bg: 'bg-[#003300]', opacity: 'opacity-50' },
-    { height: 'h-10', bg: 'bg-gradient-to-l from-[#00ff00] to-[#001100]', opacity: 'opacity-90' },
-    { height: 'h-1', bg: 'bg-[#00ff00]', opacity: 'opacity-100' },
-    { height: 'h-12', bg: 'bg-gradient-to-r from-black to-[#00ff00]', opacity: 'opacity-30' },
+    { height: 'h-10', bg: 'bg-gradient-to-l from-[#1ef2c1] to-[#001100]', opacity: 'opacity-90' },
+    { height: 'h-1', bg: 'bg-[#1ef2c1]', opacity: 'opacity-100' },
+    { height: 'h-12', bg: 'bg-gradient-to-r from-black to-[#1ef2c1]', opacity: 'opacity-30' },
   ];
 
   return (
