@@ -94,7 +94,7 @@ export default function LoginPage() {
 
           <form className="flex flex-col gap-5" onSubmit={handleLogin}>
             {error && (
-              <div className="bg-red-900/40 border border-red-500/60 text-red-300 px-4 py-2.5 text-sm flex items-center gap-2">
+              <div id="InvalidCreds" className="bg-red-900/40 border border-red-500/60 text-red-300 px-4 py-2.5 text-sm flex items-center gap-2">
                 <span className="text-red-400">⚠</span> {error}
               </div>
             )}
