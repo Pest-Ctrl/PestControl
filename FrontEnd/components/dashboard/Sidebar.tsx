@@ -68,7 +68,7 @@ export default function Sidebar() {
               {session?.user?.name ?? "Developer"}
             </p>
             <p className="text-zinc-600 text-[10px] truncate">
-              {session?.user?.email ?? "Local Session"}
+              {session?.user?.email ?? ""}
             </p>
           </div>
           <button

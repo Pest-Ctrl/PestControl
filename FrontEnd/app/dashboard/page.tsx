@@ -2,7 +2,7 @@ import Scrollable from "@/components/Scrollable";
 import Sidebar from "@/components/dashboard/Sidebar";
 import KpiCard from "@/components/dashboard/KpiCard";
 import IssueTable, { Issue } from "@/components/dashboard/IssueTable";
-// Sample data for now we will be updaitng this later
+// Sample data for now we will be updaitng this 
 const MOCK_ISSUES: Issue[] = [
   { id: '#BTS-001', title: 'Auth token not refreshing on session expiry', status: 'Open',        severity: 'Critical', type: 'Security',      assignee: 'Unassigned',   reporter: 'test01',   createdAt: '2026-08-18' },
   { id: '#BTS-002', title: 'Dashboard fails to load on Safari 17',         status: 'InProgress', severity: 'High',     type: 'Compatibility', assignee: 'dev02',        reporter: 'test02',   createdAt: '2026-08-19' },
