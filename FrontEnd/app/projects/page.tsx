@@ -90,10 +90,9 @@ export default function WorkspacePage() {
                 <Link 
                   href="/space" 
                   key={workspace.id}
-                  className="group block bg-surface border border-zinc-900 hover:border-zinc-700 transition-all duration-200 relative overflow-hidden flex flex-col h-48"
+                  className="group block bg-surface border border-neon/40 shadow-[0_0_20px_rgba(0,255,0,0.08)] hover:border-neon transition-all duration-200 relative overflow-hidden flex flex-col h-48"
                 >
-                  {/* Subtle top border highlight on hover */}
-                  <div className="absolute top-0 left-0 w-full h-[2px] bg-zinc-800 group-hover:bg-neon/50 transition-colors" />
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neon to-transparent" />
 
                   <div className="p-6 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-4">
