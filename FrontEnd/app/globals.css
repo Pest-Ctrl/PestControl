@@ -2,8 +2,11 @@
 
 @theme {
   --color-background: #050505;
-  --color-surface: #121212;
-  --color-neon: #00ff00;
+  --color-neon: #1ef2c1;
+  --color-neon-hover: #16b892;
+  --color-surface: #0d1117;
+  
+  --font-sans: var(--font-lato), sans-serif;
   
   --radius-none: 0px;
   --radius-sm: 0px;
@@ -21,7 +24,6 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Courier New', Courier, monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -48,12 +50,12 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #121212;
-  border: 1px solid #00ff00;
+  border: 1px solid #1ef2c0;
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #00ff00;
+  background: #1ef2c0;
 }
 
 @keyframes flowRightToLeft {
