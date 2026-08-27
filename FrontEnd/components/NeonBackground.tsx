@@ -14,7 +14,6 @@ export default function NeonBackground() {
     { height: 'h-32', bg: 'bg-black', opacity: 'opacity-100' },
     { height: 'h-2', bg: 'bg-[#00ff00]', opacity: 'opacity-20' },
     { height: 'h-16', bg: 'bg-black', opacity: 'opacity-100' },
-
     { height: 'h-6', bg: 'bg-gradient-to-r from-transparent to-[#00ff00]', opacity: 'opacity-70' },
     { height: 'h-2', bg: 'bg-[#00ff00]', opacity: 'opacity-100' },
     { height: 'h-16', bg: 'bg-gradient-to-r from-[#002200] via-[#00ff00] to-black', opacity: 'opacity-80' },

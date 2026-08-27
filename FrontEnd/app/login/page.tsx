@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import React, { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import NeonBackground from '@/components/NeonBackground';
 import Scrollable from '@/components/Scrollable';
@@ -20,6 +20,13 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [ghLoading, setGhLoading] = useState(false);
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [status, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,11 +174,6 @@ export default function LoginPage() {
           <NeonBackground />
         </div>
         <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0d1117] to-transparent z-10 pointer-events-none" />
-        {/* Overlay text */}
-        <div className="absolute bottom-16 left-12 z-10">
-          <p className="text-[#00ff00]/30 text-xs tracking-[0.4em] uppercase font-mono">Defect Lifecycle Management</p>
-          <p className="text-[#00ff00]/10 text-xs tracking-[0.3em] uppercase font-mono mt-1">v1.0 · Phase 1</p>
-        </div>
       </div>
     </div>
   );

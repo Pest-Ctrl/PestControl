@@ -5,6 +5,8 @@
   --color-surface: #121212;
   --color-neon: #00ff00;
   
+  --font-sans: var(--font-lato), sans-serif;
+  
   --radius-none: 0px;
   --radius-sm: 0px;
   --radius-md: 0px;
@@ -21,7 +23,6 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Courier New', Courier, monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
