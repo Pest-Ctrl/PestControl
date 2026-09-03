@@ -6,13 +6,7 @@ import { useRouter } from 'next/navigation';
 import NeonBackground from '@/components/NeonBackground';
 import Scrollable from '@/components/Scrollable';
 
-// Dummy credentials for testing (no DB required)
-const DUMMY_USERS = [
-  { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer' },
-  { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QA Engineer' },
-  { email: 'admin@gmail.com',  password: 'admin@123',  name: 'Admin User',   role: 'Project Manager' },
-  { email: 'importer@gmail.com', password: 'password@3', name: 'Importer User', role: 'Repository Importer' },
-];
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,18 +37,23 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    const result = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    });
-
-    if (result?.error) {
-      setError('Invalid email or password.');
-    } else {
-      router.push('/dashboard');
+    try {
+      const response = await fetch('http://localhost:8080/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password: password }),
+      });
+      if (response.ok) {
+        router.push('/dashboard');
+      } else {
+        const errorText = await response.text();
+        setError(errorText || 'Invalid email or password.');
+      }
+    } catch (err) {
+      setError('Unable to connect to the server.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleGithubLogin = async () => {
@@ -74,7 +73,7 @@ export default function LoginPage() {
         <div className="max-w-md w-full bg-[#050505]/60 backdrop-blur-xl border border-zinc-800/50 shadow-[0_0_50px_rgba(0,0,0,0.8)] rounded-2xl p-8 sm:p-12 relative overflow-hidden">
           {/* Subtle top glow line for the card */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#1ef2c1] to-transparent opacity-50" />
-          
+
           <div className="mb-10 text-center">
             <h1 className="text-3xl font-bold text-white uppercase tracking-[0.15em]">
               Sign <span className="text-[#1ef2c1]">In</span>
@@ -161,23 +160,7 @@ export default function LoginPage() {
             </a>
           </div>
 
-          {/* Test credentials hint */}
-          <div className="mt-10 border border-zinc-800/50 bg-[#000000]/40 p-4 rounded-lg">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-3 font-bold text-center">Demo Credentials</p>
-            <div className="space-y-1">
-              {DUMMY_USERS.map(u => (
-                <button
-                  key={u.email}
-                  type="button"
-                  onClick={() => { setEmail(u.email); setPassword(u.password); }}
-                  className="w-full text-left px-3 py-2 text-[11px] text-zinc-400 hover:bg-zinc-800/50 hover:text-[#1ef2c1] transition-colors flex justify-between rounded-md"
-                >
-                  <span className="font-mono">{u.email}</span>
-                  <span className="text-zinc-600">{u.role}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+
         </div>
       </Scrollable>
     </div>
