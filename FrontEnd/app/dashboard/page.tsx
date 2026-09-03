@@ -36,10 +36,6 @@ export default async function DashboardPage() {
             <p className="text-xs text-zinc-400">Sprint 4 · Aug 18 – Aug 31, 2026</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-[#0d1117] border border-zinc-800 px-3 py-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#1ef2c1] animate-pulse" />
-              <span className="text-xs text-zinc-400">Live</span>
-            </div>
             <Link href="/space" className="bg-[#1ef2c1] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#16b892] transition-colors tracking-wider uppercase">
               + New Issue
             </Link>

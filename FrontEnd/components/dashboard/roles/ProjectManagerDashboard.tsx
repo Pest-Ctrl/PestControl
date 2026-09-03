@@ -1,51 +1,70 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import KpiCard from "@/components/dashboard/KpiCard";
 import IssueTable from "@/components/dashboard/IssueTable";
-import { Issue } from "@/components/dashboard/IssueTable";
 
-export const MOCK_ISSUES: Issue[] = [
-  { id: '#BTS-001', title: 'Auth token not refreshing on session expiry', status: 'Open',        severity: 'Critical', type: 'Security',      assignee: 'Unassigned',   reporter: 'test01',   createdAt: '2026-08-18' },
-  { id: '#BTS-002', title: 'Dashboard fails to load on Safari 17',         status: 'InProgress', severity: 'High',     type: 'Compatibility', assignee: 'dev02',        reporter: 'test02',   createdAt: '2026-08-19' },
-  { id: '#BTS-003', title: 'Issue filter clears on page refresh',           status: 'UnderReview',severity: 'Medium',   type: 'Functional',    assignee: 'dev01',        reporter: 'admin',    createdAt: '2026-08-19' },
-  { id: '#BTS-004', title: 'MTTR endpoint response time > 1s at 90 days',  status: 'Open',       severity: 'High',     type: 'Performance',   assignee: 'Unassigned',   reporter: 'test01',   createdAt: '2026-08-20' },
-  { id: '#BTS-005', title: 'Comment @-mention notification not firing',     status: 'Resolved',   severity: 'Medium',   type: 'Functional',    assignee: 'dev03',        reporter: 'test02',   createdAt: '2026-08-20' },
-  { id: '#BTS-006', title: 'Audit log missing assignee change entries',     status: 'InProgress', severity: 'High',     type: 'Data',          assignee: 'dev01',        reporter: 'admin',    createdAt: '2026-08-21' },
-  { id: '#BTS-007', title: 'CSV export truncates at 9,000 rows not 10,000',status: 'Open',       severity: 'Medium',   type: 'Functional',    assignee: 'Unassigned',   reporter: 'test01',   createdAt: '2026-08-21' },
-  { id: '#BTS-008', title: 'GitHub OAuth callback 500 on invalid state',   status: 'Closed',     severity: 'Critical', type: 'Security',      assignee: 'dev02',        reporter: 'test02',   createdAt: '2026-08-17' },
-  { id: '#BTS-009', title: 'Kanban drag-and-drop broken on mobile',        status: 'Reopened',   severity: 'Low',      type: 'UI',            assignee: 'dev04',        reporter: 'admin',    createdAt: '2026-08-22' },
-  { id: '#BTS-010', title: 'Rate limiter not resetting after 15 min window',status: 'Open',      severity: 'High',     type: 'Security',      assignee: 'Unassigned',   reporter: 'test01',   createdAt: '2026-08-23' },
-  { id: '#BTS-011', title: 'WCAG contrast fail on disabled buttons',       status: 'InProgress', severity: 'Low',      type: 'UI',            assignee: 'dev05',        reporter: 'test02',   createdAt: '2026-08-23' },
-  { id: '#BTS-012', title: 'Refresh token not rotated on every use',       status: 'Resolved',   severity: 'Critical', type: 'Security',      assignee: 'dev01',        reporter: 'admin',    createdAt: '2026-08-24' },
-];
+interface Issue {
+  IssueID: string;
+  Title: string;
+  Status: string;
+  Severity: string;
+  BugType: string;
+  CreatedAt: string;
+  Reporter: { Username: string };
+  Assignee: { Username: string } | null;
+}
 
-const STATUS_COUNTS = MOCK_ISSUES.reduce((acc, i) => {
-  acc[i.status] = (acc[i.status] || 0) + 1;
-  return acc;
-}, {} as Record<string, number>);
-
-const VELOCITY_WEEKS = [
-  { week: 'W32', closed: 3 },
-  { week: 'W33', closed: 5 },
-  { week: 'W34', closed: 4 },
-  { week: 'W35', closed: 6 },
-];
-const MAX_VELOCITY = Math.max(...VELOCITY_WEEKS.map(w => w.closed));
-
-const STATUS_DONUT = [
-  { label: 'Open',         count: STATUS_COUNTS['Open'] || 0,        color: '#eab308' },
-  { label: 'In Progress',  count: STATUS_COUNTS['InProgress'] || 0,  color: '#3b82f6' },
-  { label: 'Under Review', count: STATUS_COUNTS['UnderReview'] || 0, color: '#a855f7' },
-  { label: 'Resolved',     count: STATUS_COUNTS['Resolved'] || 0,    color: '#1ef2c1' },
-  { label: 'Closed',       count: STATUS_COUNTS['Closed'] || 0,      color: '#71717a' },
-  { label: 'Reopened',     count: STATUS_COUNTS['Reopened'] || 0,    color: '#ef4444' },
-];
-const TOTAL_ISSUES = MOCK_ISSUES.length;
+interface AuditEntry {
+  AuditID: string;
+  AuditTitle: string;
+  AuditDesc: string;
+  AuditTime: string;
+  User: { Username: string };
+}
 
 export default function ProjectManagerDashboard() {
-  const openIssues = MOCK_ISSUES.filter(i => i.status === 'Open').length;
-  const closedThisWeek = 6;
-  const totalCouldClose = 9;
-  const closureRate = Math.round((closedThisWeek / totalCouldClose) * 100);
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/issues").then((r) => r.json()),
+      fetch("/api/audit").then((r) => r.json()),
+    ])
+      .then(([issuesData, auditData]) => {
+        setIssues(Array.isArray(issuesData) ? issuesData : []);
+        setAuditLogs(Array.isArray(auditData) ? auditData : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const total = issues.length;
+  const openIssues = issues.filter(i => i.Status === 'Open').length;
+  const closedCount = issues.filter(i => i.Status === 'Closed').length;
+  const closureRate = total > 0 ? Math.round((closedCount / total) * 100) : 0;
+
+  const statusBreakdown = [
+    { label: 'Open', count: issues.filter(i => i.Status === 'Open').length, color: '#eab308' },
+    { label: 'In Progress', count: issues.filter(i => i.Status === 'InProgress').length, color: '#3b82f6' },
+    { label: 'Under Review', count: issues.filter(i => i.Status === 'UnderReview').length, color: '#a855f7' },
+    { label: 'Resolved', count: issues.filter(i => i.Status === 'Resolved').length, color: '#1ef2c1' },
+    { label: 'Closed', count: closedCount, color: '#71717a' },
+    { label: 'Reopened', count: issues.filter(i => i.Status === 'Reopened').length, color: '#ef4444' },
+  ];
+
+  const issueTableData = issues.map((i) => ({
+    id: i.IssueID.slice(0, 10),
+    title: i.Title,
+    status: i.Status as any,
+    severity: i.Severity as any,
+    type: i.BugType,
+    assignee: i.Assignee?.Username || "Unassigned",
+    reporter: i.Reporter?.Username || "—",
+    createdAt: new Date(i.CreatedAt).toISOString().split("T")[0],
+  }));
 
   return (
     <main className="flex-1 p-8 space-y-8">
@@ -53,70 +72,19 @@ export default function ProjectManagerDashboard() {
       <section>
         <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-4 font-bold">Key Metrics</p>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          <KpiCard
-            title="Open Issues"
-            value={openIssues}
-            subtitle={`${TOTAL_ISSUES} total tracked`}
-            trend={{ value: '+2 this week', positive: false }}
-            accent
-          />
-          <KpiCard
-            title="MTTR"
-            value="18.4"
-            unit="hrs"
-            subtitle="Mean time to resolution"
-            trend={{ value: '↓ 3.2h vs last sprint', positive: true }}
-            accent
-          />
-          <KpiCard
-            title="Bug Closure Rate"
-            value={closureRate}
-            unit="%"
-            subtitle={`${closedThisWeek}/${totalCouldClose} closed this week`}
-            trend={{ value: closureRate >= 70 ? 'Healthy' : '⚠ Below 70% threshold', positive: closureRate >= 70 }}
-            accent
-          />
-          <KpiCard
-            title="Defect Velocity"
-            value="4.5"
-            unit="/ wk"
-            subtitle="4-week rolling average"
-            trend={{ value: '+1.5 vs prior avg', positive: true }}
-            accent
-          />
+          <KpiCard title="Open Issues" value={loading ? "—" : openIssues} subtitle={`${total} total tracked`} trend={{ value: `${openIssues} need attention`, positive: openIssues === 0 }} accent />
+          <KpiCard title="MTTR" value="18.4" unit="hrs" subtitle="Mean time to resolution" trend={{ value: '↓ 3.2h vs last sprint', positive: true }} accent />
+          <KpiCard title="Bug Closure Rate" value={loading ? "—" : closureRate} unit="%" subtitle={`${closedCount}/${total} closed`} trend={{ value: closureRate >= 70 ? 'Healthy' : '⚠ Below 70%', positive: closureRate >= 70 }} accent />
+          <KpiCard title="Total Issues" value={loading ? "—" : total} subtitle="All tracked defects" trend={{ value: 'All time', positive: true }} accent />
         </div>
       </section>
 
-      {/* Charts + Status breakdown */}
+      {/* Status Breakdown */}
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Velocity Bar Chart */}
         <div className="xl:col-span-2 bg-[#0d1117] border border-zinc-900 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">Defect Velocity</p>
-              <p className="text-xs text-zinc-500 mt-0.5">Issues closed per week</p>
-            </div>
-            <span className="text-[10px] text-zinc-400 font-mono">4-week window</span>
-          </div>
-          <div className="flex items-end gap-4 h-32">
-            {VELOCITY_WEEKS.map((w) => (
-              <div key={w.week} className="flex-1 flex flex-col items-center gap-2">
-                <span className="text-xs font-mono text-zinc-400">{w.closed}</span>
-                <div
-                  className="w-full bg-gradient-to-t from-[#1ef2c1]/80 to-[#1ef2c1]/30 border-t-2 border-[#1ef2c1] transition-all"
-                  style={{ height: `${(w.closed / MAX_VELOCITY) * 100}%` }}
-                />
-                <span className="text-[10px] text-zinc-400 font-mono">{w.week}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Status Breakdown */}
-        <div className="bg-[#0d1117] border border-zinc-900 p-6">
           <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-6">Issues by Status</p>
           <div className="space-y-3">
-            {STATUS_DONUT.map((s) => (
+            {statusBreakdown.map((s) => (
               <div key={s.label} className="flex items-center gap-3">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
                 <div className="flex-1">
@@ -125,10 +93,7 @@ export default function ProjectManagerDashboard() {
                     <span className="font-mono text-zinc-300">{s.count}</span>
                   </div>
                   <div className="h-1 bg-zinc-900 w-full">
-                    <div
-                      className="h-1 transition-all"
-                      style={{ width: `${(s.count / TOTAL_ISSUES) * 100}%`, backgroundColor: s.color }}
-                    />
+                    <div className="h-1 transition-all" style={{ width: total > 0 ? `${(s.count / total) * 100}%` : '0%', backgroundColor: s.color }} />
                   </div>
                 </div>
               </div>
@@ -136,7 +101,28 @@ export default function ProjectManagerDashboard() {
           </div>
           <div className="mt-6 pt-4 border-t border-zinc-900 flex justify-between text-xs">
             <span className="text-zinc-400">Total</span>
-            <span className="font-mono text-zinc-300">{TOTAL_ISSUES}</span>
+            <span className="font-mono text-zinc-300">{total}</span>
+          </div>
+        </div>
+
+        {/* Severity Summary */}
+        <div className="bg-[#0d1117] border border-zinc-900 p-6">
+          <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-6">By Severity</p>
+          <div className="space-y-4">
+            {[
+              { label: 'Critical', color: '#ef4444', count: issues.filter(i => i.Severity === 'Critical').length },
+              { label: 'High', color: '#f97316', count: issues.filter(i => i.Severity === 'High').length },
+              { label: 'Medium', color: '#eab308', count: issues.filter(i => i.Severity === 'Medium').length },
+              { label: 'Low', color: '#71717a', count: issues.filter(i => i.Severity === 'Low').length },
+            ].map(s => (
+              <div key={s.label} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                  <span className="text-xs text-zinc-400">{s.label}</span>
+                </div>
+                <span className="text-lg font-bold" style={{ color: s.color }}>{s.count}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -148,54 +134,37 @@ export default function ProjectManagerDashboard() {
             <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">Recent Issues</p>
             <p className="text-xs text-zinc-500 mt-0.5">Sorted by latest activity</p>
           </div>
-          <div className="flex items-center gap-2">
-            <select className="bg-[#050505] border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 focus:outline-none focus:border-zinc-600">
-              <option>All Statuses</option>
-              <option>Open</option>
-              <option>In Progress</option>
-              <option>Resolved</option>
-            </select>
-            <select className="bg-[#050505] border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 focus:outline-none focus:border-zinc-600">
-              <option>All Severities</option>
-              <option>Critical</option>
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
-            </select>
-            <button className="border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 hover:border-zinc-600 transition-colors">
-              Export CSV
-            </button>
-          </div>
         </div>
-        <IssueTable issues={MOCK_ISSUES} />
-        <div className="px-6 py-3 border-t border-zinc-900 flex items-center justify-between">
-          <span className="text-xs text-zinc-400">Showing {MOCK_ISSUES.length} issues</span>
-          <div className="flex items-center gap-2">
-            <button className="text-xs text-zinc-400 hover:text-zinc-400 px-2 py-1 border border-zinc-900 hover:border-zinc-700 transition-colors">← Prev</button>
-            <span className="text-xs text-zinc-500 font-mono px-2">1 / 1</span>
-            <button className="text-xs text-zinc-400 hover:text-zinc-400 px-2 py-1 border border-zinc-900 hover:border-zinc-700 transition-colors">Next →</button>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-5 h-5 border-2 border-zinc-700 border-t-[#1ef2c1] rounded-full animate-spin" />
           </div>
-        </div>
+        ) : (
+          <IssueTable issues={issueTableData} />
+        )}
       </section>
 
-      {/* Audit Log preview */}
+      {/* Audit Log */}
       <section className="bg-[#0d1117] border border-zinc-900 p-6">
         <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-4">Recent Audit Log</p>
         <div className="space-y-2 font-mono text-xs">
-          {[
-            { time: '15:01:43', user: 'dev01', action: 'Transitioned #BTS-012', from: 'InProgress', to: 'Resolved' },
-            { time: '14:47:11', user: 'admin', action: 'Reassigned #BTS-006', from: 'dev02', to: 'dev01' },
-            { time: '13:22:08', user: 'test01', action: 'Filed #BTS-010', from: '—', to: 'Open' },
-            { time: '11:55:30', user: 'dev04', action: 'Transitioned #BTS-009', from: 'Resolved', to: 'Reopened' },
-            { time: '10:14:02', user: 'test02', action: 'Commented on #BTS-003', from: '—', to: '—' },
-          ].map((entry, i) => (
-            <div key={i} className="flex items-center gap-4 py-1.5 border-b border-zinc-900/50 last:border-0">
-              <span className="text-zinc-500 w-16 shrink-0">{entry.time}</span>
-              <span className="text-[#1ef2c1]/60 w-16 shrink-0">{entry.user}</span>
-              <span className="text-zinc-400 flex-1">{entry.action}</span>
-              <span className="text-zinc-500">{entry.from} → {entry.to}</span>
+          {loading ? (
+            <div className="flex items-center justify-center py-6">
+              <div className="w-4 h-4 border-2 border-zinc-700 border-t-[#1ef2c1] rounded-full animate-spin" />
             </div>
-          ))}
+          ) : auditLogs.length === 0 ? (
+            <p className="text-zinc-600 italic">No audit entries yet.</p>
+          ) : (
+            auditLogs.slice(0, 10).map((entry) => (
+              <div key={entry.AuditID} className="flex items-center gap-4 py-1.5 border-b border-zinc-900/50 last:border-0">
+                <span className="text-zinc-500 w-16 shrink-0">
+                  {new Date(entry.AuditTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                <span className="text-[#1ef2c1]/60 w-16 shrink-0">{entry.User.Username}</span>
+                <span className="text-zinc-400 flex-1">{entry.AuditDesc}</span>
+              </div>
+            ))
+          )}
         </div>
       </section>
     </main>

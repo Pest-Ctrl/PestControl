@@ -1,93 +1,271 @@
-import Scrollable from "@/components/Scrollable";
-import IssueTable, { Issue } from "@/components/dashboard/IssueTable";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Sidebar from "@/components/dashboard/Sidebar";
-// Sample data for now we will be updaitng this 
-const MOCK_ISSUES: Issue[] = [
-  { id: '#BTS-001', title: 'Auth token not refreshing on session expiry', status: 'Open',        severity: 'Critical', type: 'Security',      assignee: 'Unassigned',   reporter: 'test01',   createdAt: '2026-08-18' },
-  { id: '#BTS-002', title: 'Dashboard fails to load on Safari 17',         status: 'InProgress', severity: 'High',     type: 'Compatibility', assignee: 'dev02',        reporter: 'test02',   createdAt: '2026-08-19' },
-  { id: '#BTS-003', title: 'Issue filter clears on page refresh',           status: 'UnderReview',severity: 'Medium',   type: 'Functional',    assignee: 'dev01',        reporter: 'admin',    createdAt: '2026-08-19' },
-  { id: '#BTS-004', title: 'MTTR endpoint response time > 1s at 90 days',  status: 'Open',       severity: 'High',     type: 'Performance',   assignee: 'Unassigned',   reporter: 'test01',   createdAt: '2026-08-20' },
-];
+import Scrollable from "@/components/Scrollable";
 
-const STATUS_COUNTS = MOCK_ISSUES.reduce((acc, i) => {
-  acc[i.status] = (acc[i.status] || 0) + 1;
-  return acc;
-}, {} as Record<string, number>);
+interface Repo {
+  RepoID: string;
+  GHOwner: string;
+  GHName: string;
+}
 
-const VELOCITY_WEEKS = [
-  { week: 'W32', closed: 3 },
-  { week: 'W33', closed: 5 },
-  { week: 'W34', closed: 4 },
-  { week: 'W35', closed: 6 },
-];
-const MAX_VELOCITY = Math.max(...VELOCITY_WEEKS.map(w => w.closed));
+interface Commit {
+  CommitID: string;
+  SHA: string;
+  Message: string;
+}
 
-const STATUS_DONUT = [
-  { label: 'Open',         count: STATUS_COUNTS['Open'] || 0,        color: '#eab308' },
-  { label: 'In Progress',  count: STATUS_COUNTS['InProgress'] || 0,  color: '#3b82f6' },
-  { label: 'Under Review', count: STATUS_COUNTS['UnderReview'] || 0, color: '#a855f7' },
-  { label: 'Resolved',     count: STATUS_COUNTS['Resolved'] || 0,    color: '#00ff00' },
-  { label: 'Closed',       count: STATUS_COUNTS['Closed'] || 0,      color: '#71717a' },
-  { label: 'Reopened',     count: STATUS_COUNTS['Reopened'] || 0,    color: '#ef4444' },
-];
-const TOTAL_ISSUES = MOCK_ISSUES.length;
+export default function CreateIssuePage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [repos, setRepos] = useState<Repo[]>([]);
+  const [commits, setCommits] = useState<Commit[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-export default function DashboardPage() {
-  const openIssues = MOCK_ISSUES.filter(i => i.status === 'Open').length;
-  const closedThisWeek = 6;
-  const totalCouldClose = 9;
-  const closureRate = Math.round((closedThisWeek / totalCouldClose) * 100);
+  // Form state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [severity, setSeverity] = useState("Medium");
+  const [bugType, setBugType] = useState("Functional");
+  const [repoId, setRepoId] = useState("");
+  const [commitId, setCommitId] = useState("");
+  const [filePath, setFilePath] = useState("");
+  const [lineRange, setLineRange] = useState("");
+  const [environment, setEnvironment] = useState("");
+
+  useEffect(() => {
+    fetch("/api/repos")
+      .then((r) => r.json())
+      .then((data) => setRepos(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (repoId) {
+      fetch(`/api/commits?repoId=${repoId}`)
+        .then((r) => r.json())
+        .then((data) => setCommits(Array.isArray(data) ? data : []))
+        .catch(() => {});
+    } else {
+      setCommits([]);
+    }
+  }, [repoId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          severity,
+          bugType,
+          repoId: repoId || undefined,
+          commitId: commitId || undefined,
+          filePath: filePath || undefined,
+          lineRange: lineRange || undefined,
+          environment: environment || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to create issue");
+      }
+
+      setSuccess(true);
+      setTimeout(() => router.push("/dashboard/issues"), 1500);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-[#050505] text-white font-sans">
       <Sidebar />
-
-      {/* Main */}
       <Scrollable className="flex-1 flex flex-col h-screen">
-        {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-white tracking-wide">Overview</h1>
-            <p className="text-xs text-zinc-600">Sprint 4 · Aug 18 – Aug 31, 2026</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-[#0d1117] border border-zinc-800 px-3 py-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00ff00] animate-pulse" />
-              <span className="text-xs text-zinc-400">Live</span>
-            </div>
-            <button className="bg-[#00ff00] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#00cc00] transition-colors tracking-wider uppercase">
-              + New Issue
-            </button>
-          </div>
+        <header className="sticky top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-8 py-4">
+          <h1 className="text-lg font-bold text-white tracking-wide">Create Issue</h1>
+          <p className="text-xs text-zinc-400">File a new defect report</p>
         </header>
 
-        <section className="bg-[#0d1117] border border-zinc-900">
-        <div className="px-6 py-4 border-b border-zinc-900 flex items-center justify-between">
-            <div>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">Recent Issues</p>
-            <p className="text-xs text-zinc-700 mt-0.5">Sorted by latest activity</p>
+        <main className="flex-1 p-8 max-w-4xl">
+          {success ? (
+            <div className="bg-[#1ef2c1]/10 border border-[#1ef2c1]/30 p-6 rounded-lg text-center">
+              <p className="text-[#1ef2c1] font-bold text-lg mb-2">Issue Created Successfully</p>
+              <p className="text-zinc-400 text-sm">Redirecting to issues board...</p>
             </div>
-            <div className="flex items-center gap-2">
-            <select className="bg-[#050505] border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 focus:outline-none focus:border-zinc-600">
-                <option>All Statuses</option>
-                <option>Open</option>
-                <option>In Progress</option>
-                <option>Resolved</option>
-            </select>
-            <select className="bg-[#050505] border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 focus:outline-none focus:border-zinc-600">
-                <option>All Severities</option>
-                <option>Critical</option>
-                <option>High</option>
-                <option>Medium</option>
-                <option>Low</option>
-            </select>
-            <button className="border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 hover:border-zinc-600 transition-colors">
-                Export CSV
-            </button>
-            </div>
-        </div>
-        <IssueTable issues={MOCK_ISSUES} />
-        </section>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="bg-red-900/40 border border-red-500/60 text-red-300 px-4 py-3 text-sm rounded-lg">
+                  ⚠ {error}
+                </div>
+              )}
+
+              {/* Title */}
+              <div>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
+                  Title <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Brief description of the defect"
+                  className="w-full bg-[#0d1117] border border-zinc-800 py-3 px-4 text-white placeholder-zinc-600 focus:outline-none focus:border-[#1ef2c1]/50 text-sm rounded-lg"
+                  maxLength={200}
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
+                  Description <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Steps to reproduce, expected vs actual behavior..."
+                  rows={6}
+                  className="w-full bg-[#0d1117] border border-zinc-800 py-3 px-4 text-white placeholder-zinc-600 focus:outline-none focus:border-[#1ef2c1]/50 text-sm rounded-lg resize-none"
+                  required
+                />
+              </div>
+
+              {/* Severity & Bug Type */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
+                    Severity
+                  </label>
+                  <select
+                    value={severity}
+                    onChange={(e) => setSeverity(e.target.value)}
+                    className="w-full bg-[#0d1117] border border-zinc-800 py-3 px-4 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50"
+                  >
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
+                    Bug Type
+                  </label>
+                  <select
+                    value={bugType}
+                    onChange={(e) => setBugType(e.target.value)}
+                    className="w-full bg-[#0d1117] border border-zinc-800 py-3 px-4 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50"
+                  >
+                    <option value="Functional">Functional</option>
+                    <option value="Performance">Performance</option>
+                    <option value="Security">Security</option>
+                    <option value="UI">UI</option>
+                    <option value="Compatibility">Compatibility</option>
+                    <option value="Data">Data</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Repo & Commit Reference */}
+              <div className="border border-zinc-800 p-5 rounded-lg space-y-4">
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Repository Reference</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] text-zinc-500 block mb-1">Repository</label>
+                    <select
+                      value={repoId}
+                      onChange={(e) => { setRepoId(e.target.value); setCommitId(""); }}
+                      className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50"
+                    >
+                      <option value="">Select a repository</option>
+                      {repos.map((r) => (
+                        <option key={r.RepoID} value={r.RepoID}>{r.GHOwner}/{r.GHName}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-zinc-500 block mb-1">Commit</label>
+                    <select
+                      value={commitId}
+                      onChange={(e) => setCommitId(e.target.value)}
+                      disabled={!repoId}
+                      className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 disabled:opacity-40"
+                    >
+                      <option value="">Select a commit</option>
+                      {commits.map((c) => (
+                        <option key={c.CommitID} value={c.CommitID}>{c.SHA.slice(0, 7)} — {c.Message.slice(0, 50)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] text-zinc-500 block mb-1">File Path</label>
+                    <input
+                      type="text"
+                      value={filePath}
+                      onChange={(e) => setFilePath(e.target.value)}
+                      placeholder="src/auth/token.ts"
+                      className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-zinc-500 block mb-1">Line Range</label>
+                    <input
+                      type="text"
+                      value={lineRange}
+                      onChange={(e) => setLineRange(e.target.value)}
+                      placeholder="42-58"
+                      className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Environment */}
+              <div>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
+                  Environment
+                </label>
+                <input
+                  type="text"
+                  value={environment}
+                  onChange={(e) => setEnvironment(e.target.value)}
+                  placeholder="Chrome 128 / macOS 15 / v2.1.0 / Build #491"
+                  className="w-full bg-[#0d1117] border border-zinc-800 py-3 px-4 text-white placeholder-zinc-600 focus:outline-none focus:border-[#1ef2c1]/50 text-sm rounded-lg"
+                />
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading || !title || !description}
+                className="w-full py-3.5 font-bold tracking-widest uppercase transition-all duration-300
+                  bg-transparent text-[#1ef2c1] border-2 border-[#1ef2c1] shadow-[0_0_12px_rgba(30,242,193,0.3)]
+                  hover:bg-[#1ef2c1] hover:text-black hover:shadow-[0_0_25px_rgba(30,242,193,0.6)]
+                  disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+              >
+                {loading ? "Creating..." : "File Issue"}
+              </button>
+            </form>
+          )}
+        </main>
       </Scrollable>
     </div>
   );

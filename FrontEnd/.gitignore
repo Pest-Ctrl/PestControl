@@ -47,3 +47,7 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# SQLite mock database (generated locally via prisma seed)
+prisma/mock.db
+prisma/mock.db-journal

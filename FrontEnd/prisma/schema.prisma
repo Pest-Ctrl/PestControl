@@ -22,6 +22,7 @@ model Users {
   Email           String    @unique @db.VarChar(255)
   PassHash        String?   @db.VarChar(255)
   GHOAuth         String?   @db.VarChar(255)
+  Role            String    @default("Developer") @db.VarChar(50)
   CreatedAt       DateTime  @default(now()) @db.Timestamp(6)
   
   SpacesOwned     Space[]   @relation("SpaceOwner")
@@ -50,6 +51,7 @@ model Space {
   Issues      Issues[]
   Members     SpaceMembers[]
   AuditLogs   AuditLog[]
+  Repos       Repo[]
 }
 
 model Inbox {
@@ -63,18 +65,61 @@ model Inbox {
   User        Users     @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
 }
 
+model Repo {
+  RepoID        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  SpaceID       String    @db.Uuid
+  GHOwner       String    @db.VarChar(255)
+  GHName        String    @db.VarChar(255)
+  DefaultBranch String    @default("main") @db.VarChar(100)
+  ImportedAt    DateTime  @default(now()) @db.Timestamp(6)
+  ImportedBy    String    @db.Uuid
+
+  Space         Space     @relation(fields: [SpaceID], references: [SpaceID], onDelete: Cascade)
+  Issues        Issues[]
+  Commits       Commit[]
+
+  @@unique([SpaceID, GHOwner, GHName])
+}
+
+model Commit {
+  CommitID      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  RepoID        String    @db.Uuid
+  SHA           String    @db.VarChar(40)
+  Message       String    @db.Text
+  AuthorName    String    @db.VarChar(255)
+  AuthorEmail   String?   @db.VarChar(255)
+  CommittedAt   DateTime  @db.Timestamp(6)
+  URL           String?   @db.VarChar(255)
+
+  Repo          Repo      @relation(fields: [RepoID], references: [RepoID], onDelete: Cascade)
+  Issues        Issues[]
+
+  @@unique([RepoID, SHA])
+}
+
 model Issues {
   IssueID     String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   SpaceID     String      @db.Uuid
   ReporterID  String      @db.Uuid
   AssigneeID  String?     @db.Uuid
+  RepoID      String?     @db.Uuid
+  CommitID    String?     @db.Uuid
   Title       String      @db.VarChar(255)
-  desc        String      @db.Text
+  Description String      @db.Text
   Status      IssueStatus @default(Open)
+  Severity    String      @default("Medium") @db.VarChar(50)
+  BugType     String      @default("Functional") @db.VarChar(50)
+  FilePath    String?     @db.VarChar(255)
+  LineRange   String?     @db.VarChar(50)
+  Environment String?     @db.VarChar(255)
+  CreatedAt   DateTime    @default(now()) @db.Timestamp(6)
+  UpdatedAt   DateTime    @updatedAt @db.Timestamp(6)
   
   Space       Space       @relation(fields: [SpaceID], references: [SpaceID], onDelete: Cascade)
   Reporter    Users       @relation("IssueReporter", fields: [ReporterID], references: [UserID], onDelete: Cascade)
   Assignee    Users?      @relation("IssueAssignee", fields: [AssigneeID], references: [UserID], onDelete: SetNull)
+  Repo        Repo?       @relation(fields: [RepoID], references: [RepoID], onDelete: SetNull)
+  Commit      Commit?     @relation(fields: [CommitID], references: [CommitID], onDelete: SetNull)
   Comments    Comments[]
   Tags        IssueTags[]
   AuditLogs   AuditLog[]
