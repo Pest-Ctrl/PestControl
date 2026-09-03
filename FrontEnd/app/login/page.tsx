@@ -6,7 +6,12 @@ import { useRouter } from 'next/navigation';
 import NeonBackground from '@/components/NeonBackground';
 import Scrollable from '@/components/Scrollable';
 
-
+// Dummy credentials for testing (no DB required)
+const DUMMY_USERS = [
+  { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer' },
+  { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QA Engineer' },
+  { email: 'admin@gmail.com', password: 'admin@123', name: 'Admin User', role: 'Project Manager' },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,23 +42,14 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    try {
-      const response = await fetch('http://localhost:8080/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, password: password }),
-      });
-      if (response.ok) {
-        router.push('/dashboard');
-      } else {
-        const errorText = await response.text();
-        setError(errorText || 'Invalid email or password.');
-      }
-    } catch (err) {
-      setError('Unable to connect to the server.');
-    } finally {
-      setLoading(false);
+    // Check dummy credentials
+    const user = DUMMY_USERS.find(u => u.email === email && u.password === password);
+    if (user) {
+      router.push('/dashboard');
+    } else {
+      setError('Invalid email or password.');
     }
+    setLoading(false);
   };
 
   const handleGithubLogin = async () => {
@@ -160,7 +156,23 @@ export default function LoginPage() {
             </a>
           </div>
 
-
+          {/* Test credentials hint */}
+          <div className="mt-10 border border-zinc-800/50 bg-[#000000]/40 p-4 rounded-lg">
+            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-3 font-bold text-center">Demo Credentials</p>
+            <div className="space-y-1">
+              {DUMMY_USERS.map(u => (
+                <button
+                  key={u.email}
+                  type="button"
+                  onClick={() => { setEmail(u.email); setPassword(u.password); }}
+                  className="w-full text-left px-3 py-2 text-[11px] text-zinc-400 hover:bg-zinc-800/50 hover:text-[#1ef2c1] transition-colors flex justify-between rounded-md"
+                >
+                  <span className="font-mono">{u.email}</span>
+                  <span className="text-zinc-600">{u.role}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </Scrollable>
     </div>
