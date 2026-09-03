@@ -11,6 +11,7 @@ const DUMMY_USERS = [
   { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer' },
   { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QA Engineer' },
   { email: 'admin@gmail.com',  password: 'admin@123',  name: 'Admin User',   role: 'Project Manager' },
+  { email: 'importer@gmail.com', password: 'password@3', name: 'Importer User', role: 'Repository Importer' },
 ];
 
 export default function LoginPage() {
@@ -42,12 +43,16 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    // Check dummy credentials
-    const user = DUMMY_USERS.find(u => u.email === email && u.password === password);
-    if (user) {
-      router.push('/dashboard');
-    } else {
+    const result = await signIn('credentials', {
+      redirect: false,
+      email,
+      password,
+    });
+
+    if (result?.error) {
       setError('Invalid email or password.');
+    } else {
+      router.push('/dashboard');
     }
     setLoading(false);
   };
