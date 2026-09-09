@@ -12,5 +12,6 @@
 			"username": "pestcontrol",
 			"password": "pstctrldbpass"
 		}
-	]
+	],
+	"java.compile.nullAnalysis.mode": "automatic"
 }

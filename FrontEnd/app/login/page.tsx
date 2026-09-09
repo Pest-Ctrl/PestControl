@@ -42,14 +42,24 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    // Check dummy credentials
-    const user = DUMMY_USERS.find(u => u.email === email && u.password === password);
-    if (user) {
-      router.push('/dashboard');
-    } else {
-      setError('Invalid email or password.');
+    try {
+      const response = await fetch('http://localhost:8080/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        router.push('/dashboard');
+      } else {
+        setError(data.message || 'Invalid credentials');
+      }
+    } catch (err) {
+      setError('Network error');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+
   };
 
   const handleGithubLogin = async () => {
