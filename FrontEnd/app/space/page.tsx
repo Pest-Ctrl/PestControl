@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Scrollable from "@/components/Scrollable";
 import FileTreeVisualizer from "@/components/dashboard/FileTreeVisualizer";
+import CodeViewer from "@/components/dashboard/CodeViewer";
 
 interface Repo {
   RepoID: string;
@@ -39,6 +40,9 @@ export default function CreateIssuePage() {
   const [filePath, setFilePath] = useState("");
   const [lineRange, setLineRange] = useState("");
   const [environment, setEnvironment] = useState("");
+  
+  const [fileContent, setFileContent] = useState("");
+  const [loadingFile, setLoadingFile] = useState(false);
 
   useEffect(() => {
     fetch("/api/repos")
@@ -57,6 +61,27 @@ export default function CreateIssuePage() {
       setCommits([]);
     }
   }, [repoId]);
+
+  useEffect(() => {
+    if (repoId && filePath) {
+      setLoadingFile(true);
+      setFileContent("");
+      fetch(`/api/repos/file?repoId=${repoId}&path=${encodeURIComponent(filePath)}`)
+        .then(async (res) => {
+          if (!res.ok) throw new Error("Failed to load file");
+          const text = await res.text();
+          setFileContent(text);
+          setLoadingFile(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setFileContent("Error: Could not load file from GitHub.");
+          setLoadingFile(false);
+        });
+    } else {
+      setFileContent("");
+    }
+  }, [repoId, filePath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,11 +268,25 @@ export default function CreateIssuePage() {
                       type="text"
                       value={lineRange}
                       onChange={(e) => setLineRange(e.target.value)}
-                      placeholder="42-58"
+                      placeholder="42-58 (Select lines below)"
                       className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
                     />
                   </div>
                 </div>
+
+                {filePath && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-zinc-500 block mb-2">File Viewer</label>
+                      <CodeViewer 
+                        content={fileContent}
+                        loading={loadingFile}
+                        selectedRange={lineRange}
+                        onRangeSelect={setLineRange}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Environment */}

@@ -36,6 +36,8 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
   const [importError, setImportError] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [pat, setPat] = useState("");
+  const [githubRepos, setGithubRepos] = useState<any[]>([]);
+  const [loadingGithubRepos, setLoadingGithubRepos] = useState(false);
 
   useEffect(() => {
     fetch("/api/repos")
@@ -47,7 +49,18 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
       .then((r) => r.json())
       .then((data) => { setIssues(Array.isArray(data) ? data : []); setLoadingIssues(false); })
       .catch(() => setLoadingIssues(false));
-  }, []);
+    setLoadingGithubRepos(true);
+    fetch(`/api/github/repos${pat ? `?pat=${pat}` : ''}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.error) setGithubRepos(data);
+        setLoadingGithubRepos(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch repos", err);
+        setLoadingGithubRepos(false);
+      });
+  }, [pat]);
 
   const handleImport = async () => {
     if (!importOwner || !importName) return;
@@ -169,26 +182,6 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
             )}
             <div className="space-y-3 mb-6">
               <div>
-                <label className="text-[10px] text-zinc-500 block mb-1">Repository Owner</label>
-                <input
-                  type="text"
-                  value={importOwner}
-                  onChange={(e) => setImportOwner(e.target.value)}
-                  placeholder="octocat"
-                  className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-zinc-500 block mb-1">Repository Name</label>
-                <input
-                  type="text"
-                  value={importName}
-                  onChange={(e) => setImportName(e.target.value)}
-                  placeholder="Hello-World"
-                  className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
-                />
-              </div>
-              <div>
                 <label className="text-[10px] text-zinc-500 block mb-2">Visibility</label>
                 <div className="flex gap-2 bg-[#050505] p-1 rounded-lg border border-zinc-800">
                   <button
@@ -218,6 +211,63 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
                   <p className="text-[9px] text-zinc-500 mt-1">Required to read the file tree of private repositories.</p>
                 </div>
               )}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="text-[10px] text-zinc-500 block mb-1">Select Repository</label>
+                  {loadingGithubRepos ? (
+                    <div className="text-xs text-zinc-500 p-2">Loading your repositories...</div>
+                  ) : !githubRepos.length ? (
+                    <div className="text-xs text-zinc-500 p-2">No repositories found.</div>
+                  ) : (
+                    <select
+                      className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50"
+                      onChange={(e) => {
+                        const repo = githubRepos.find(r => r.full_name === e.target.value);
+                        if (repo) {
+                          setImportOwner(repo.owner.login);
+                          setImportName(repo.name);
+                        }
+                      }}
+                      value={importOwner && importName ? `${importOwner}/${importName}` : ""}
+                    >
+                      <option value="" disabled>-- Select a Repository --</option>
+                      {githubRepos.map(repo => (
+                        <option key={repo.id} value={repo.full_name}>
+                          {repo.full_name} {repo.private ? '(Private)' : '(Public)'}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {(!githubRepos.length && !loadingGithubRepos) && (
+                    <p className="text-[9px] text-zinc-500 mt-1">
+                      If the list is empty, ensure you logged in with GitHub or provide a PAT above. You can still type manually below if needed.
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-zinc-500 block mb-1">Repository Owner (Manual)</label>
+                  <input
+                    type="text"
+                    value={importOwner}
+                    onChange={(e) => setImportOwner(e.target.value)}
+                    placeholder="facebook"
+                    className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-zinc-500 block mb-1">Repository Name (Manual)</label>
+                  <input
+                    type="text"
+                    value={importName}
+                    onChange={(e) => setImportName(e.target.value)}
+                    placeholder="react"
+                    className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex gap-3">
               <button

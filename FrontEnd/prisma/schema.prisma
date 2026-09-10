@@ -72,6 +72,7 @@ model Repo {
   GHName        String    @db.VarChar(255)
   DefaultBranch String    @default("main") @db.VarChar(100)
   IsPrivate     Boolean   @default(false)
+  PAT           String?   @db.VarChar(255)
   FileTree      Json?
   ImportedAt    DateTime  @default(now()) @db.Timestamp(6)
   ImportedBy    String    @db.Uuid

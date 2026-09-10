@@ -97,6 +97,7 @@ export async function POST(request: Request) {
         GHName: name,
         DefaultBranch: defaultBranch || 'main',
         IsPrivate: isPrivate || false,
+        PAT: pat || null,
         FileTree: fileTree ? fileTree : undefined,
         ImportedBy: user.UserID,
       },

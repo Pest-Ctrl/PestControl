@@ -15,6 +15,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     GitHub({
       clientId: process.env.AUTH_GITHUB_ID,
       clientSecret: process.env.AUTH_GITHUB_SECRET,
+      authorization: { params: { scope: "read:user user:email repo" } },
       profile(profile) {
         return {
           id: profile.id.toString(),
@@ -65,7 +66,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      if (account && account.provider === 'github') {
+        token.githubToken = account.access_token;
+      }
       if (user) {
         token.role = user.role;
       }
@@ -77,6 +81,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       if (session.user && token.role) {
         session.user.role = token.role as string;
+      }
+      if (token.githubToken) {
+        (session as any).githubToken = token.githubToken;
       }
       return session;
     },
