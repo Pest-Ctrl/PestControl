@@ -27,7 +27,7 @@ async function main() {
       for (const d of dbs) {
         const url = `postgresql://${u}:${p}@localhost:5432/${d}?schema=public`;
         if (await check(url)) {
-          process.exit(0);
+          console.log("Found:", url);
         }
       }
     }

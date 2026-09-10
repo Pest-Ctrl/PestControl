@@ -47,6 +47,22 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {session?.user?.role === "Project Manager" && (
+          <Link
+            href="/dashboard/admin"
+            className={`flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 group mt-4
+              ${pathname === "/dashboard/admin"
+                ? "bg-[#1ef2c1]/10 text-[#1ef2c1] border-l-2 border-[#1ef2c1]"
+                : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 border-l-2 border-transparent"
+              }`}
+          >
+            <span className={`font-mono text-base ${pathname === "/dashboard/admin" ? "text-[#1ef2c1]" : "text-zinc-700 group-hover:text-zinc-400"}`}>
+              {/* Shield Icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+            User Management
+          </Link>
+        )}
       </nav>
 
       {/* User section */}

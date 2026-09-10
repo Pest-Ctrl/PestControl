@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { SignJWT, jwtVerify } from "jose";
+import { prisma } from "@/lib/db";
 
 const DUMMY_USERS = [
   { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer' },
@@ -22,7 +23,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: profile.name || profile.login,
           email: profile.email,
           image: profile.avatar_url,
-          role: "Repository Importer", // Default role for GitHub users
+          role: "Developer", // Default role, will be overridden by DB
         };
       },
     }),
@@ -35,12 +36,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         
-        const user = DUMMY_USERS.find(
+        const dummyUser = DUMMY_USERS.find(
           (u) => u.email === credentials.email && u.password === credentials.password
         );
 
-        if (user) {
-          return { id: user.email, name: user.name, email: user.email, role: user.role };
+        if (dummyUser) {
+          let dbUser = await prisma.users.findUnique({ where: { Email: dummyUser.email } });
+          if (!dbUser) {
+            dbUser = await prisma.users.create({
+              data: {
+                Email: dummyUser.email,
+                Username: dummyUser.name,
+                Role: dummyUser.role,
+                PassHash: "dummy"
+              }
+            });
+          }
+          return { id: dbUser.UserID, name: dbUser.Username, email: dbUser.Email, role: dbUser.Role };
         }
         return null;
       }
@@ -70,8 +82,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account && account.provider === 'github') {
         token.githubToken = account.access_token;
       }
-      if (user) {
-        token.role = user.role;
+      
+      if (user && user.email) {
+        let dbUser = await prisma.users.findUnique({ where: { Email: user.email } });
+        if (!dbUser) {
+          dbUser = await prisma.users.create({
+            data: {
+              Email: user.email,
+              Username: user.name || user.email.split('@')[0],
+              Role: account?.provider === 'github' ? 'Developer' : (user.role || 'Developer'),
+              GHOAuth: account?.provider === 'github' ? account.providerAccountId : null
+            }
+          });
+        }
+        token.sub = dbUser.UserID;
+        token.role = dbUser.Role;
+      } else if (token.sub) {
+        // Fetch fresh role from DB to instantly reflect role changes
+        const dbUser = await prisma.users.findUnique({ where: { UserID: token.sub } });
+        if (dbUser) {
+          token.role = dbUser.Role;
+        }
       }
       return token;
     },
