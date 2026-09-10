@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Scrollable from "@/components/Scrollable";
+import FileTreeVisualizer from "@/components/dashboard/FileTreeVisualizer";
 
 interface Repo {
   RepoID: string;
   GHOwner: string;
   GHName: string;
+  FileTree?: any;
 }
 
 interface Commit {
@@ -215,13 +217,23 @@ export default function CreateIssuePage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="text-[10px] text-zinc-500 block mb-2">Repository File Directory (Visual)</label>
+                    <FileTreeVisualizer 
+                      files={repos.find(r => r.RepoID === repoId)?.FileTree || []}
+                      selectedFile={filePath}
+                      onFileSelect={setFilePath}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] text-zinc-500 block mb-1">File Path</label>
                     <input
                       type="text"
                       value={filePath}
                       onChange={(e) => setFilePath(e.target.value)}
-                      placeholder="src/auth/token.ts"
+                      placeholder="src/auth/token.ts (Select from tree above)"
                       className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
                     />
                   </div>
