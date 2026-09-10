@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { signIn, useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import NeonBackground from '@/components/NeonBackground';
 import Scrollable from '@/components/Scrollable';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 
 // Dummy credentials for testing (no DB required)
 const DUMMY_USERS = [
@@ -46,7 +46,7 @@ export default function LoginPage() {
       const response = await fetch('http://localhost:8080/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
       if (response.ok) {

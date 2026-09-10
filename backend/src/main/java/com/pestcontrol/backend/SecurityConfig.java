@@ -1,7 +1,9 @@
 package com.pestcontrol.backend;
+import java.nio.charset.StandardCharsets;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,7 +62,7 @@ public class SecurityConfig {
 		http
 		.csrf(csrf -> csrf.disable())
 		.authorizeHttpRequests(authz -> authz
-			.requestMatchers("/", "/error", "/api/github/**").permitAll()
+			.requestMatchers("/", "/error", "/api/github/**", "/api/login").permitAll()
 			.anyRequest().authenticated()
 		)
 		.oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));
