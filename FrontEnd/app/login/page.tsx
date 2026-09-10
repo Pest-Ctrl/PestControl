@@ -43,16 +43,18 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const response = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
       });
-      const data = await response.json();
-      if (response.ok) {
+      if (response?.error) {
+        setError(response.error);
+      } else if (response?.ok) {
         router.push('/dashboard');
+        router.refresh();
       } else {
-        setError(data.message || 'Invalid credentials');
+        setError('Invalid credentials');
       }
     } catch (err) {
       setError('Network error');
