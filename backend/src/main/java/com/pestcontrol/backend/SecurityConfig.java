@@ -19,9 +19,10 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${nextauth.secret}")
-    private String nextAuthSecret;
+	@Value("${nextauth.secret}")
+	private String nextAuthSecret;
 
+<<<<<<< HEAD
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -52,4 +53,24 @@ public class SecurityConfig {
         SecretKey secretKey = new SecretKeySpec(nextAuthSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(secretKey).build();
     }
+}
+=======
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
+		.csrf(csrf -> csrf.disable())
+		.authorizeHttpRequests(authz -> authz
+			.requestMatchers("/", "/error", "/api/github/**").permitAll()
+			.anyRequest().authenticated()
+		)
+		.oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));
+			
+		return http.build();
+	}
+
+	@Bean
+	public JwtDecoder jwtDecoder() {
+		SecretKey secretKey = new SecretKeySpec(nextAuthSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+		return NimbusJwtDecoder.withSecretKey(secretKey).build();
+	}
 }
