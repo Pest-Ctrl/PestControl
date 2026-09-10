@@ -1,7 +1,6 @@
 package com.pestcontrol.backend;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 
@@ -37,10 +36,10 @@ public class GitHubController
 		}
 
 		return Response.retrieve()
-			.onStatus(HttpStatusCode::is4xxClientError, (request,response) -> {
+			.onStatus(code -> code.is4xxClientError(), (request,response) -> {
 				throw new RuntimeException("Client Error from GitHub: " + response.getStatusCode());
 			})
-			.onStatus(HttpStatusCode::is5xxServerError, (request,response) -> {
+			.onStatus(code -> code.is5xxServerError(), (request,response) -> {
 				throw new RuntimeException("Server Error from GitHub: " + response.getStatusCode());
 			})
 			.toEntity(String.class);
@@ -64,10 +63,10 @@ public class GitHubController
 			}
 
 			return Response.retrieve()
-				.onStatus(HttpStatusCode::is4xxClientError, (request,response) -> {
+				.onStatus(code -> code.is4xxClientError(), (request,response) -> {
 					throw new RuntimeException("Client Error from GitHub: " + response.getStatusCode());
 				})
-				.onStatus(HttpStatusCode::is5xxServerError, (request,response) -> {
+				.onStatus(code -> code.is5xxServerError(), (request,response) -> {
 					throw new RuntimeException("Server Error from GitHub: " + response.getStatusCode());
 				})
 				.toEntity(String.class);
