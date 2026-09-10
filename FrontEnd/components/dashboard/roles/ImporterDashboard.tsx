@@ -12,7 +12,8 @@ interface Repo {
   _count: { Issues: number; Commits: number };
 }
 
-interface Issue {
+interface Issue 
+{
   IssueID: string;
   Title: string;
   Status: string;
@@ -33,6 +34,8 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
   const [importName, setImportName] = useState("");
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [pat, setPat] = useState("");
 
   useEffect(() => {
     fetch("/api/repos")
@@ -55,7 +58,7 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
       const res = await fetch("/api/repos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ owner: importOwner, name: importName }),
+        body: JSON.stringify({ owner: importOwner, name: importName, isPrivate, pat }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Import failed");
@@ -119,6 +122,9 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
                   <div className="flex items-center gap-3">
                     <span className="text-zinc-500">github.com/</span>
                     <span className="text-white font-mono">{repo.GHOwner}/{repo.GHName}</span>
+                    {(repo as any).IsPrivate && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-zinc-800 text-zinc-400 uppercase tracking-wider font-bold">Private</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-zinc-500 font-mono">{repo._count?.Issues || 0} issues · {repo._count?.Commits || 0} commits</span>
@@ -182,6 +188,36 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
                   className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
                 />
               </div>
+              <div>
+                <label className="text-[10px] text-zinc-500 block mb-2">Visibility</label>
+                <div className="flex gap-2 bg-[#050505] p-1 rounded-lg border border-zinc-800">
+                  <button
+                    onClick={() => { setIsPrivate(false); setPat(""); }}
+                    className={`flex-1 py-1.5 text-xs rounded-md font-bold transition-colors ${!isPrivate ? 'bg-[#1ef2c1] text-black' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  >
+                    Public
+                  </button>
+                  <button
+                    onClick={() => setIsPrivate(true)}
+                    className={`flex-1 py-1.5 text-xs rounded-md font-bold transition-colors ${isPrivate ? 'bg-[#1ef2c1] text-black' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  >
+                    Private
+                  </button>
+                </div>
+              </div>
+              {isPrivate && (
+                <div>
+                  <label className="text-[10px] text-zinc-500 block mb-1">GitHub Personal Access Token</label>
+                  <input
+                    type="password"
+                    value={pat}
+                    onChange={(e) => setPat(e.target.value)}
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                    className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
+                  />
+                  <p className="text-[9px] text-zinc-500 mt-1">Required to read the file tree of private repositories.</p>
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button

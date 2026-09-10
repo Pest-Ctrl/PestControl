@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { owner, name, defaultBranch } = body;
+  const { owner, name, defaultBranch, isPrivate, pat } = body;
 
   if (!owner || !name) {
     return NextResponse.json({ error: 'Owner and name are required' }, { status: 400 });
@@ -45,20 +45,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Repository already imported', repo: existing }, { status: 409 });
   }
 
+  // Set up GitHub API headers
+  const ghHeaders: any = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+  if (isPrivate && pat) {
+    ghHeaders['Authorization'] = `Bearer ${pat}`;
+  }
+
   // Fetch commits from GitHub API
   let githubCommits = [];
   try {
     const ghRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=15`, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      headers: ghHeaders,
     });
     if (ghRes.ok) {
       githubCommits = await ghRes.json();
     }
   } catch (err) {
-    console.error('Failed to fetch from GitHub API:', err);
+    console.error('Failed to fetch commits from GitHub API:', err);
+  }
+
+  // Fetch file tree
+  let fileTree = null;
+  try {
+    const treeRes = await fetch(`https://api.github.com/repos/${owner}/${name}/git/trees/${defaultBranch || 'main'}?recursive=1`, {
+      headers: ghHeaders,
+    });
+    if (treeRes.ok) {
+      const treeData = await treeRes.json();
+      if (treeData.tree && Array.isArray(treeData.tree)) {
+        // Simplify the tree to just the essential data to save space
+        fileTree = treeData.tree.map((item: any) => ({
+          path: item.path,
+          type: item.type, // 'blob' or 'tree'
+          size: item.size
+        }));
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch file tree from GitHub API:', err);
   }
 
   // Use a transaction to create repo and commits
@@ -69,6 +96,8 @@ export async function POST(request: Request) {
         GHOwner: owner,
         GHName: name,
         DefaultBranch: defaultBranch || 'main',
+        IsPrivate: isPrivate || false,
+        FileTree: fileTree ? fileTree : undefined,
         ImportedBy: user.UserID,
       },
     });

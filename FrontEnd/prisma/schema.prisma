@@ -71,6 +71,8 @@ model Repo {
   GHOwner       String    @db.VarChar(255)
   GHName        String    @db.VarChar(255)
   DefaultBranch String    @default("main") @db.VarChar(100)
+  IsPrivate     Boolean   @default(false)
+  FileTree      Json?
   ImportedAt    DateTime  @default(now()) @db.Timestamp(6)
   ImportedBy    String    @db.Uuid
 
