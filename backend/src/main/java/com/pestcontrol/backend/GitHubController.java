@@ -11,9 +11,9 @@ public class GitHubController
 {
 	private final RestClient restClient;
 
-	public GitHubController()
+	public GitHubController(RestClient.Builder restClientBuilder)
 	{
-		this.restClient = RestClient.builder()
+		this.restClient = restClientBuilder
 			.baseUrl("https://api.github.com")
 			.defaultHeader("Accept","application/vnd.github.v3+json")
 			.build();
