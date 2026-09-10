@@ -24,11 +24,12 @@ public class GitHubController
 	public ResponseEntity<String> GetCommitHistory(
 		@RequestHeader(value = "Authorization", required=false) String AuthHeader,
 		@RequestParam("owner") String Owner,
-		@RequestParam("repo") String Repo
+		@RequestParam("repo") String Repo,
+		@RequestParam(value = "branch", defaultValue = "main") String Branch
 	)
 	{
 		var Response = restClient.get()
-			.uri("/repos/{owner}/{repo}/commits",Owner,Repo);
+			.uri("/repos/{owner}/{repo}/commits?sha={branch}",Owner,Repo, Branch);
 
 		if (AuthHeader != null && !AuthHeader.isBlank())
 		{
@@ -49,9 +50,9 @@ public class GitHubController
 	@GetMapping("/directory-tree")
 	public ResponseEntity<String> GetDirectoryTree(
 		@RequestHeader(value = "Authorization", required = false) String AuthHeader,
-		@RequestParam("Owner") String Owner,
-		@RequestParam("Repo") String Repo,
-		@RequestParam(value = "Branch", defaultValue = "main") String Branch
+		@RequestParam("owner") String Owner,
+		@RequestParam("repo") String Repo,
+		@RequestParam(value = "branch", defaultValue = "main") String Branch
 	)
 	{
 		var Response = restClient.get()
