@@ -18,13 +18,15 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid role provided" }, { status: 400 });
     }
 
+    const resolvedParams = await params;
+    
     // You cannot change your own role to prevent locking yourself out
-    if (session.user.id === params.id) {
+    if (session.user.id === resolvedParams.id) {
       return NextResponse.json({ error: "Cannot change your own role" }, { status: 403 });
     }
 
     const updatedUser = await prisma.users.update({
-      where: { UserID: params.id },
+      where: { UserID: resolvedParams.id },
       data: { Role: role },
     });
 

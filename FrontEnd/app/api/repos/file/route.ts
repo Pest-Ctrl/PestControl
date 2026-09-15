@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       'X-GitHub-Api-Version': '2022-11-28',
     };
 
-    if (repo.IsPrivate && (repo as any).PAT) {
+    if ((repo as any).PAT) {
       ghHeaders['Authorization'] = `Bearer ${(repo as any).PAT}`;
     }
 

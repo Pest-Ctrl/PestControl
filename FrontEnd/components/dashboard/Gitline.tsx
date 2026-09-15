@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 interface CommitIssue {
   IssueID: string;
@@ -16,6 +16,7 @@ interface CommitNode {
   Message: string;
   AuthorName: string;
   CommittedAt: string;
+  ParentSHAs: string[];
   Issues: CommitIssue[];
 }
 
@@ -29,6 +30,8 @@ const SEVERITY_COLORS: Record<string, string> = {
 export default function Gitline() {
   const [commits, setCommits] = useState<CommitNode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dotPositions, setDotPositions] = useState<Record<string, { x: number; y: number }>>({});
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/commits")
@@ -39,6 +42,35 @@ export default function Gitline() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (commits.length === 0 || !containerRef.current) return;
+
+    const calculatePositions = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const positions: Record<string, { x: number; y: number }> = {};
+      
+      commits.forEach((commit) => {
+        const el = document.getElementById(`dot-${commit.SHA}`);
+        if (el) {
+          positions[commit.SHA] = {
+            x: el.offsetLeft + el.offsetWidth / 2,
+            y: el.offsetTop + el.offsetHeight / 2,
+          };
+        }
+      });
+      setDotPositions(positions);
+    };
+
+    // Calculate after rendering
+    const timer = setTimeout(calculatePositions, 100);
+    window.addEventListener("resize", calculatePositions);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", calculatePositions);
+    };
+  }, [commits]);
 
   if (loading) {
     return (
@@ -56,12 +88,55 @@ export default function Gitline() {
     );
   }
 
-  return (
-    <div className="relative">
-      {/* The vertical line */}
-      <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-zinc-800" />
+  // Draw SVG lines for branches/merges
+  const renderSVGPaths = () => {
+    if (Object.keys(dotPositions).length === 0) return null;
 
-      <div className="space-y-0">
+    const paths: React.ReactNode[] = [];
+    
+    commits.forEach((commit) => {
+      const start = dotPositions[commit.SHA];
+      if (!start || !commit.ParentSHAs) return;
+
+      commit.ParentSHAs.forEach((parentSha, index) => {
+        const end = dotPositions[parentSha];
+        if (end) {
+          const isMerge = commit.ParentSHAs.length > 1;
+          const strokeColor = isMerge && index > 0 ? "#a855f7" : "#3f3f46"; // Merge lines are purple, direct are gray
+          
+          // Draw curved path
+          const pathD = `M ${start.x} ${start.y} 
+                         C ${start.x} ${start.y + 20}, 
+                           ${end.x} ${end.y - 20}, 
+                           ${end.x} ${end.y}`;
+                           
+          paths.push(
+            <path
+              key={`${commit.SHA}-${parentSha}`}
+              d={pathD}
+              fill="none"
+              stroke={strokeColor}
+              strokeWidth="2"
+              className={isMerge && index > 0 ? "opacity-70" : "opacity-100"}
+            />
+          );
+        }
+      });
+    });
+
+    return (
+      <svg className="absolute inset-0 z-0 pointer-events-none w-full h-full" style={{ minHeight: '100%' }}>
+        {paths}
+      </svg>
+    );
+  };
+
+  return (
+    <div className="relative" ref={containerRef}>
+      {/* Background SVG for branch connections */}
+      {renderSVGPaths()}
+
+      <div className="space-y-6">
         {commits.map((commit, index) => {
           const hasIssues = commit.Issues.length > 0;
           const isNew = index === 0 && hasIssues;
@@ -74,13 +149,18 @@ export default function Gitline() {
             : null;
           const nodeColor = hasIssues
             ? SEVERITY_COLORS[highestSeverity || "Medium"]
-            : "#3f3f46";
+            : "#1ef2c1";
+
+          // Calculate offset track if we want to visually indent branches (simple logic)
+          // For now, keep them aligned, the curves handle the branching visually
+          const marginLeft = "ml-0"; 
 
           return (
-            <div key={commit.CommitID} className="relative pl-10 py-3 group">
+            <div key={commit.CommitID} className={`relative pl-12 py-1 group ${marginLeft}`}>
               {/* Node dot */}
               <div
-                className={`absolute left-[9px] top-[18px] w-[14px] h-[14px] rounded-full border-2 z-10 transition-all
+                id={`dot-${commit.SHA}`}
+                className={`absolute left-[16px] top-[14px] w-[12px] h-[12px] rounded-full border-2 z-10 transition-all
                   ${hasIssues ? "border-transparent" : "border-zinc-700 bg-zinc-900"}
                   ${isNew ? "gitline-glow-pulse" : ""}`}
                 style={
@@ -95,11 +175,11 @@ export default function Gitline() {
 
               {/* Commit info */}
               <div
-                className={`border rounded-lg p-3 transition-all cursor-default
+                className={`border rounded-lg p-3 transition-all cursor-default relative z-10
                   ${
                     hasIssues
-                      ? "border-zinc-700 bg-zinc-900/80 hover:border-zinc-600"
-                      : "border-zinc-800/50 bg-transparent hover:bg-zinc-900/30"
+                      ? "border-zinc-700 bg-[#0d1117] hover:border-zinc-500"
+                      : "border-zinc-800/50 bg-[#050505] hover:bg-zinc-900/50"
                   }`}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -122,11 +202,11 @@ export default function Gitline() {
 
                 {/* Linked issues */}
                 {hasIssues && (
-                  <div className="mt-2 space-y-1">
+                  <div className="mt-3 space-y-1">
                     {commit.Issues.map((issue) => (
                       <div
                         key={issue.IssueID}
-                        className="flex items-center gap-2 px-2 py-1 rounded bg-zinc-800/60 border border-zinc-700/50"
+                        className="flex items-center gap-2 px-2 py-1.5 rounded bg-zinc-900 border border-zinc-800"
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full flex-shrink-0"

@@ -58,6 +58,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     })
   ],
+  pages: {
+    signIn: '/login',
+    error: '/auth/error',
+  },
   jwt: {
     async encode({ secret, token }) {
       if (!token) return "";
@@ -118,8 +122,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
-  },
-  pages: {
-    signIn: "/login",
-  },
+  }
 });

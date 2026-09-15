@@ -14,17 +14,28 @@ interface Issue {
 
 export default function AnalyticsPage() {
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [repos, setRepos] = useState<any[]>([]);
+  const [selectedRepoId, setSelectedRepoId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/issues")
+    fetch("/api/repos")
+      .then((r) => r.json())
+      .then((data) => setRepos(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    const url = selectedRepoId ? `/api/issues?repoId=${selectedRepoId}` : "/api/issues";
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         setIssues(data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [selectedRepoId]);
 
   // Compute metrics from real data
   const total = issues.length;
@@ -57,9 +68,23 @@ export default function AnalyticsPage() {
     <div className="flex min-h-screen bg-[#050505] text-white font-sans">
       <Sidebar />
       <Scrollable className="flex-1 flex flex-col h-screen">
-        <header className="sticky top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-8 py-4">
-          <h1 className="text-lg font-bold text-white tracking-wide">Analytics</h1>
-          <p className="text-xs text-zinc-400">Process improvement metrics & audit trail</p>
+        <header className="sticky top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-8 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-white tracking-wide">Analytics</h1>
+            <p className="text-xs text-zinc-400">Process improvement metrics & audit trail</p>
+          </div>
+          <select
+            value={selectedRepoId}
+            onChange={(e) => setSelectedRepoId(e.target.value)}
+            className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-4 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg"
+          >
+            <option value="">All Repositories</option>
+            {repos.map((r) => (
+              <option key={r.RepoID} value={r.RepoID}>
+                {r.GHOwner}/{r.GHName}
+              </option>
+            ))}
+          </select>
         </header>
 
         <div className="flex-1 flex">

@@ -25,7 +25,10 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { owner, name, defaultBranch, isPrivate, pat } = body;
+  const { owner, name, defaultBranch, isPrivate } = body;
+  
+  // Use provided PAT or fallback to session GitHub token
+  let pat = body.pat || (session as any).githubToken;
 
   if (!owner || !name) {
     return NextResponse.json({ error: 'Owner and name are required' }, { status: 400 });
@@ -50,7 +53,7 @@ export async function POST(request: Request) {
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
   };
-  if (isPrivate && pat) {
+  if (pat) {
     ghHeaders['Authorization'] = `Bearer ${pat}`;
   }
 
@@ -112,6 +115,7 @@ export async function POST(request: Request) {
           AuthorName: c.commit.author.name,
           AuthorEmail: c.commit.author.email || null,
           CommittedAt: new Date(c.commit.author.date),
+          ParentSHAs: c.parents ? c.parents.map((p: any) => p.sha) : [],
         })),
         skipDuplicates: true,
       });

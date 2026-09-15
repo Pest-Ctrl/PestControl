@@ -16,7 +16,12 @@ export async function GET(request: Request) {
   }
 
   if (!token) {
-    return NextResponse.json({ error: 'No GitHub token available. Please provide a PAT.' }, { status: 400 });
+    // Return demo data for test users
+    return NextResponse.json([
+      { id: 1, full_name: 'facebook/react', name: 'react', owner: { login: 'facebook' }, private: false },
+      { id: 2, full_name: 'vercel/next.js', name: 'next.js', owner: { login: 'vercel' }, private: false },
+      { id: 3, full_name: 'vuejs/core', name: 'core', owner: { login: 'vuejs' }, private: false }
+    ]);
   }
 
   try {

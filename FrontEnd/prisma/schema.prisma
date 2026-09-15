@@ -93,6 +93,7 @@ model Commit {
   AuthorEmail   String?   @db.VarChar(255)
   CommittedAt   DateTime  @db.Timestamp(6)
   URL           String?   @db.VarChar(255)
+  ParentSHAs    String[]
 
   Repo          Repo      @relation(fields: [RepoID], references: [RepoID], onDelete: Cascade)
   Issues        Issues[]

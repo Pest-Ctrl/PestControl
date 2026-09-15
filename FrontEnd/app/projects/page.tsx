@@ -1,52 +1,33 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Scrollable from "@/components/Scrollable";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Link from "next/link";
 
-// Dummy workspace data
-const WORKSPACES = [
-  { 
-    id: 'ws-01', 
-    name: 'Flowstate', 
-    description: 'Main web application repository and tracker.',
-    role: 'Owner', 
-    status: 'Active', 
-    issueCount: 24, 
-    lastUpdated: '2 hours ago',
-    color: 'var(--color-neon)'
-  },
-  { 
-    id: 'ws-02', 
-    name: 'Bug Tracking System', 
-    description: 'Bug monitoring and logging service.',
-    role: 'Admin', 
-    status: 'Active', 
-    issueCount: 8, 
-    lastUpdated: '5 hours ago',
-    color: 'var(--color-neon)'
-  },
-  { 
-    id: 'ws-03', 
-    name: 'Math solver', 
-    description: 'Math-Solver',
-    role: 'Owner', 
-    status: 'Completed', 
-    issueCount: 0, 
-    lastUpdated: '2 weeks ago',
-    color: '#3b82f6' // Blue for completed/stable
-  },
-  { 
-    id: 'ws-04', 
-    name: 'ChainReaction', 
-    description: 'Legacy multiplayer game project.',
-    role: 'Viewer', 
-    status: 'Archived', 
-    issueCount: 2, 
-    lastUpdated: '6 months ago',
-    color: '#71717a' // Zinc for archived
-  },
-];
+interface Repo {
+  RepoID: string;
+  GHOwner: string;
+  GHName: string;
+  ImportedAt: string;
+  IsPrivate: boolean;
+  _count: { Issues: number; Commits: number };
+}
 
 export default function WorkspacePage() {
+  const [repos, setRepos] = useState<Repo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/repos")
+      .then((r) => r.json())
+      .then((data) => {
+        setRepos(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-[#050505] text-white font-sans">
       <Sidebar />
@@ -60,7 +41,7 @@ export default function WorkspacePage() {
             <p className="text-xs text-zinc-600">Select a project context to view issues</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="bg-neon text-black text-xs font-bold px-4 py-1.5 hover:bg-neon-hover transition-colors tracking-wider uppercase">
+            <button className="bg-[#1ef2c1] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#16b892] transition-colors tracking-wider uppercase rounded-md">
               + New Workspace
             </button>
           </div>
@@ -75,7 +56,7 @@ export default function WorkspacePage() {
               
               {/* Optional Filter/Sort - matching your dashboard style */}
               <div className="flex items-center gap-2">
-                <select className="bg-[#050505] border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 focus:outline-none focus:border-zinc-600">
+                <select className="bg-[#050505] border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 focus:outline-none focus:border-zinc-600 rounded-md">
                   <option>All Statuses</option>
                   <option>Active</option>
                   <option>Completed</option>
@@ -84,57 +65,63 @@ export default function WorkspacePage() {
               </div>
             </div>
 
-            {/* Workspace Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {WORKSPACES.map((workspace) => (
-                <Link 
-                  href="/space" 
-                  key={workspace.id}
-                  className="group block bg-surface border border-neon/40 shadow-[0_0_20px_rgba(0,255,0,0.08)] hover:border-neon transition-all duration-200 relative overflow-hidden flex flex-col h-48"
-                >
-                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neon to-transparent" />
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-5 h-5 border-2 border-zinc-700 border-t-[#1ef2c1] rounded-full animate-spin" />
+              </div>
+            ) : repos.length === 0 ? (
+              <p className="text-zinc-500 text-sm italic text-center py-12">No workspaces found. Import a repository to get started.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {repos.map((repo) => (
+                  <Link 
+                    href="/dashboard/issues" 
+                    key={repo.RepoID}
+                    className="group block bg-[#0d1117] border border-zinc-800 hover:border-[#1ef2c1]/50 shadow-[0_0_20px_rgba(30,242,193,0.02)] transition-all duration-200 relative overflow-hidden flex flex-col h-48 rounded-lg"
+                  >
+                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#1ef2c1]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                  <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h2 className="text-base font-bold text-zinc-100 group-hover:text-white transition-colors">
-                          {workspace.name}
-                        </h2>
-                        <p className="text-xs text-zinc-500 mt-1 line-clamp-1">
-                          {workspace.description}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 bg-[#050505] border border-zinc-800 px-2 py-1">
-                        <span 
-                          className={`w-1.5 h-1.5 rounded-full ${workspace.status === 'Active' ? 'animate-pulse' : ''}`} 
-                          style={{ backgroundColor: workspace.color }}
-                        />
-                        <span className="text-[10px] text-zinc-400 uppercase tracking-wide">
-                          {workspace.status}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-auto pt-4 border-t border-zinc-900/50 flex items-center justify-between">
-                      <div className="flex gap-4">
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start mb-4">
                         <div>
-                          <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Issues</p>
-                          <p className="text-xs font-mono text-zinc-300 mt-0.5">{workspace.issueCount}</p>
+                          <h2 className="text-base font-bold text-zinc-100 group-hover:text-white transition-colors">
+                            {repo.GHName}
+                          </h2>
+                          <p className="text-xs text-zinc-500 mt-1 line-clamp-1">
+                            github.com/{repo.GHOwner}/{repo.GHName}
+                          </p>
                         </div>
-                        <div>
-                          <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Role</p>
-                          <p className="text-xs text-zinc-300 mt-0.5">{workspace.role}</p>
+                        <div className="flex items-center gap-2 bg-[#050505] border border-zinc-800 px-2 py-1 rounded">
+                          <span 
+                            className="w-1.5 h-1.5 rounded-full animate-pulse bg-[#1ef2c1]" 
+                          />
+                          <span className="text-[10px] text-zinc-400 uppercase tracking-wide">
+                            Active
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Updated</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">{workspace.lastUpdated}</p>
+
+                      <div className="mt-auto pt-4 border-t border-zinc-900/50 flex items-center justify-between">
+                        <div className="flex gap-4">
+                          <div>
+                            <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Issues</p>
+                            <p className="text-xs font-mono text-zinc-300 mt-0.5">{repo._count.Issues}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Commits</p>
+                            <p className="text-xs text-zinc-300 mt-0.5 font-mono">{repo._count.Commits}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Visibility</p>
+                          <p className="text-xs text-zinc-500 mt-0.5">{repo.IsPrivate ? 'Private' : 'Public'}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
         </main>
       </Scrollable>
