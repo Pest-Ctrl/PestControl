@@ -22,6 +22,22 @@ public class ApiController {
     @Autowired private CommitRepository commitRepository;
     @Autowired private SpaceRepository spaceRepository;
     @Autowired private AuditLogRepository auditLogRepository;
+    @Autowired private InboxRepository inboxRepository;
+
+    @GetMapping("/inbox")
+    public List<Inbox> getInbox(@RequestParam("userId") UUID userId) {
+        return inboxRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    @PatchMapping("/inbox/{id}")
+    public Inbox markInboxRead(@PathVariable UUID id) {
+        Inbox inbox = inboxRepository.findById(id).orElse(null);
+        if (inbox != null) {
+            inbox.setIsRead(true);
+            return inboxRepository.save(inbox);
+        }
+        return null;
+    }
 
     @GetMapping("/repos")
     public List<Repo> getRepos() {

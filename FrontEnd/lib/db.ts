@@ -99,6 +99,21 @@ export const prisma = {
     create: async () => null,
     findMany: async () => await fetchJava('/audit') || []
   },
+  inbox: {
+    findMany: async ({ where }: any) => {
+      if (where?.UserID) {
+        return await fetchJava(`/inbox?userId=${where.UserID}`) || [];
+      }
+      return [];
+    },
+    findUnique: async ({ where }: any) => null,
+    update: async ({ where, data }: any) => {
+      if (data?.IsRead) {
+        return await fetchJava(`/inbox/${where.NotifID || where.NotifId}`, { method: 'PATCH' });
+      }
+      return null;
+    }
+  },
   $transaction: async (cb: any) => {
     return cb(prisma);
   }

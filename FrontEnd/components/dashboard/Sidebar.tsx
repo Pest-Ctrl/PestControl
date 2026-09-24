@@ -3,6 +3,7 @@
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Notifications from "./Notifications";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "⬡" },
@@ -88,17 +89,20 @@ export default function Sidebar() {
               {session?.user?.email ?? ""}
             </p>
           </div>
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            title="Sign out"
-            className="shrink-0 p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-900/50 rounded-md transition-all flex items-center justify-center border border-transparent hover:border-zinc-800"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <Notifications />
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              title="Sign out"
+              className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-900/50 rounded-md transition-all flex items-center justify-center border border-transparent hover:border-zinc-800"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </aside>

@@ -22,6 +22,11 @@ export default function UserManagementPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
+  // Add User State
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ username: '', email: '', password: '', role: 'Developer' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
@@ -75,6 +80,34 @@ export default function UserManagementPage() {
     }
   };
 
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setMessage({ text: 'User created successfully', type: 'success' });
+        setUsers([data, ...users]);
+        setIsAddUserModalOpen(false);
+        setNewUser({ username: '', email: '', password: '', role: 'Developer' });
+      } else {
+        setMessage({ text: data.error || 'Failed to create user', type: 'error' });
+      }
+    } catch (err) {
+      setMessage({ text: 'An error occurred', type: 'error' });
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen bg-[#050505]">
@@ -115,6 +148,13 @@ export default function UserManagementPage() {
                   <h2 className="text-zinc-100 font-medium">All Users</h2>
                   <p className="text-zinc-500 text-sm mt-1">Manage global platform roles for all registered users.</p>
                 </div>
+                <button
+                  onClick={() => setIsAddUserModalOpen(true)}
+                  className="bg-[#1ef2c1] text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1ef2c1]/90 transition-colors flex items-center gap-2"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  Add User
+                </button>
               </div>
 
               <div className="overflow-x-auto">
@@ -175,6 +215,83 @@ export default function UserManagementPage() {
 
           </div>
         </Scrollable>
+
+        {/* Add User Modal */}
+        {isAddUserModalOpen && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-[#0a0a0a] border border-zinc-800 rounded-xl w-full max-w-md p-6 shadow-2xl animate-fade-in-up">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-medium text-zinc-100">Add New User</h3>
+                <button onClick={() => setIsAddUserModalOpen(false)} className="text-zinc-500 hover:text-zinc-300">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              
+              <form onSubmit={handleAddUser} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1">Username</label>
+                  <input
+                    type="text"
+                    required
+                    value={newUser.username}
+                    onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                    className="w-full bg-[#050505] border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-[#1ef2c1]/50 focus:ring-1 focus:ring-[#1ef2c1]/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                    className="w-full bg-[#050505] border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-[#1ef2c1]/50 focus:ring-1 focus:ring-[#1ef2c1]/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1">Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                    className="w-full bg-[#050505] border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-[#1ef2c1]/50 focus:ring-1 focus:ring-[#1ef2c1]/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1">Role</label>
+                  <select
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({...newUser, role: e.target.value})}
+                    className="w-full bg-[#050505] border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-[#1ef2c1]/50 focus:ring-1 focus:ring-[#1ef2c1]/50"
+                  >
+                    <option value="Developer">Developer</option>
+                    <option value="QA Engineer">QA Engineer</option>
+                    <option value="Repository Importer">Repository Importer</option>
+                    <option value="Project Manager">Project Manager (Super Admin)</option>
+                  </select>
+                </div>
+                
+                <div className="pt-4 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddUserModalOpen(false)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-[#1ef2c1] text-black hover:bg-[#1ef2c1]/90 disabled:opacity-50 transition-colors"
+                  >
+                    {isSubmitting ? 'Creating...' : 'Create User'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
