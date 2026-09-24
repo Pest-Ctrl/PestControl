@@ -44,4 +44,23 @@ public class Repo {
     private UUID importedBy;
 
     // Getters and Setters
+
+    public UUID getRepoId() { return repoId; }
+    public void setRepoId(UUID repoId) { this.repoId = repoId; }
+    public UUID getSpaceId() { return spaceId; }
+    public void setSpaceId(UUID spaceId) { this.spaceId = spaceId; }
+    public String getGhOwner() { return ghOwner; }
+    public void setGhOwner(String ghOwner) { this.ghOwner = ghOwner; }
+    public String getGhName() { return ghName; }
+    public void setGhName(String ghName) { this.ghName = ghName; }
+    public String getDefaultBranch() { return defaultBranch; }
+    public void setDefaultBranch(String defaultBranch) { this.defaultBranch = defaultBranch; }
+    public Boolean getIsPrivate() { return isPrivate; }
+    public void setIsPrivate(Boolean isPrivate) { this.isPrivate = isPrivate; }
+    public String getFileTree() { return fileTree; }
+    public void setFileTree(String fileTree) { this.fileTree = fileTree; }
+    public LocalDateTime getImportedAt() { return importedAt; }
+    public void setImportedAt(LocalDateTime importedAt) { this.importedAt = importedAt; }
+    public UUID getImportedBy() { return importedBy; }
+    public void setImportedBy(UUID importedBy) { this.importedBy = importedBy; }
 }

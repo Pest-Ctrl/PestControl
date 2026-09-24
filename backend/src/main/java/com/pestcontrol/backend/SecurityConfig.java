@@ -25,7 +25,7 @@ public class SecurityConfig {
 		http
 		.csrf(csrf -> csrf.disable())
 		.authorizeHttpRequests(authz -> authz
-			.requestMatchers("/", "/error", "/api/github/**", "/api/login").permitAll()
+			.requestMatchers("/", "/error", "/api/github/**", "/api/login", "/api/**").permitAll()
 			.anyRequest().authenticated()
 		)
 		.oauth2ResourceServer(oauth2 -> oauth2.jwt(org.springframework.security.config.Customizer.withDefaults()));

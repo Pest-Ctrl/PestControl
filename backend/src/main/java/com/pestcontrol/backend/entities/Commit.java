@@ -40,4 +40,21 @@ public class Commit {
     private String url;
 
     // Getters and Setters
+
+    public UUID getCommitId() { return commitId; }
+    public void setCommitId(UUID commitId) { this.commitId = commitId; }
+    public UUID getRepoId() { return repoId; }
+    public void setRepoId(UUID repoId) { this.repoId = repoId; }
+    public String getSha() { return sha; }
+    public void setSha(String sha) { this.sha = sha; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    public String getAuthorName() { return authorName; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+    public String getAuthorEmail() { return authorEmail; }
+    public void setAuthorEmail(String authorEmail) { this.authorEmail = authorEmail; }
+    public LocalDateTime getCommittedAt() { return committedAt; }
+    public void setCommittedAt(LocalDateTime committedAt) { this.committedAt = committedAt; }
+    public String getUrl() { return url; }
+    public void setUrl(String url) { this.url = url; }
 }

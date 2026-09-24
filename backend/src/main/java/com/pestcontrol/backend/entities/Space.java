@@ -28,4 +28,13 @@ public class Space {
     private LocalDateTime createdAt;
 
     // Getters and Setters
+
+    public UUID getSpaceId() { return spaceId; }
+    public void setSpaceId(UUID spaceId) { this.spaceId = spaceId; }
+    public UUID getOwnerId() { return ownerId; }
+    public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
+    public String getSpaceName() { return spaceName; }
+    public void setSpaceName(String spaceName) { this.spaceName = spaceName; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

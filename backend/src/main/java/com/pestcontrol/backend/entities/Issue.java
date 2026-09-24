@@ -64,4 +64,37 @@ public class Issue {
     private LocalDateTime updatedAt;
 
     // Getters and Setters
+
+    public UUID getIssueId() { return issueId; }
+    public void setIssueId(UUID issueId) { this.issueId = issueId; }
+    public UUID getSpaceId() { return spaceId; }
+    public void setSpaceId(UUID spaceId) { this.spaceId = spaceId; }
+    public UUID getReporterId() { return reporterId; }
+    public void setReporterId(UUID reporterId) { this.reporterId = reporterId; }
+    public UUID getAssigneeId() { return assigneeId; }
+    public void setAssigneeId(UUID assigneeId) { this.assigneeId = assigneeId; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public UUID getRepoId() { return repoId; }
+    public void setRepoId(UUID repoId) { this.repoId = repoId; }
+    public UUID getCommitId() { return commitId; }
+    public void setCommitId(UUID commitId) { this.commitId = commitId; }
+    public String getSeverity() { return severity; }
+    public void setSeverity(String severity) { this.severity = severity; }
+    public String getBugType() { return bugType; }
+    public void setBugType(String bugType) { this.bugType = bugType; }
+    public String getFilePath() { return filePath; }
+    public void setFilePath(String filePath) { this.filePath = filePath; }
+    public String getLineRange() { return lineRange; }
+    public void setLineRange(String lineRange) { this.lineRange = lineRange; }
+    public String getEnvironment() { return environment; }
+    public void setEnvironment(String environment) { this.environment = environment; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
