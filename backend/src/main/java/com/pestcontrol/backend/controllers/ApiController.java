@@ -48,6 +48,16 @@ public class ApiController {
         return userRepository.save(user);
     }
 
+    @PutMapping("/users/{id}/role")
+    public User updateUserRole(@PathVariable UUID id, @RequestBody java.util.Map<String, String> body) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user != null && body.containsKey("role")) {
+            user.setRole(body.get("role"));
+            return userRepository.save(user);
+        }
+        return null;
+    }
+
     @GetMapping("/issues")
     public List<Issue> getIssues() {
         return issueRepository.findAll();

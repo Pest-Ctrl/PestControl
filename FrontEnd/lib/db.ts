@@ -64,7 +64,15 @@ export const prisma = {
       return null;
     },
     create: async ({ data }: any) => await fetchJava('/users', { method: 'POST', body: JSON.stringify(mapKeysToCamelCase(data)) }),
-    update: async ({ where, data }: any) => null, 
+    update: async ({ where, data }: any) => {
+      if (data.Role) {
+        return await fetchJava(`/users/${where.UserID || where.UserId}/role`, {
+          method: 'PUT',
+          body: JSON.stringify({ role: data.Role })
+        });
+      }
+      return null;
+    },
     findMany: async () => await fetchJava('/users') || []
   },
   repo: {
