@@ -11,32 +11,29 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "\"Commit\"")
+@Table(name = "commit")
 public class Commit {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "\"CommitID\"")
+    @Column(name = "commitid")
     private UUID commitId;
 
-    @Column(name = "\"RepoID\"", nullable = false)
+    @Column(name = "repoid", nullable = false)
     private UUID repoId;
 
-    @Column(name = "\"SHA\"", nullable = false)
-    private String sha;
-
-    @Column(name = "\"Message\"", nullable = false)
+    @Column(name = "message", nullable = false)
     private String message;
 
-    @Column(name = "\"AuthorName\"", nullable = false)
+    @Column(name = "authorname", nullable = false)
     private String authorName;
 
-    @Column(name = "\"AuthorEmail\"")
+    @Column(name = "authoremail", nullable = false)
     private String authorEmail;
 
-    @Column(name = "\"CommittedAt\"", nullable = false)
+    @Column(name = "committedat", nullable = false)
     private LocalDateTime committedAt;
 
-    @Column(name = "\"URL\"")
+    @Column(name = "\"url\"", nullable = false)
     private String url;
 
     // Getters and Setters
@@ -45,8 +42,6 @@ public class Commit {
     public void setCommitId(UUID commitId) { this.commitId = commitId; }
     public UUID getRepoId() { return repoId; }
     public void setRepoId(UUID repoId) { this.repoId = repoId; }
-    public String getSha() { return sha; }
-    public void setSha(String sha) { this.sha = sha; }
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
     public String getAuthorName() { return authorName; }

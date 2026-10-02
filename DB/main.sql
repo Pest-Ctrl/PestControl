@@ -48,7 +48,7 @@ END $$;
 
 DO $$
 BEGIN
-    CREATE TYPE Roles AS ENUM ('Developer', 'QA Engineer', 'Repository Importer', 'Admin');
+    CREATE TYPE Roles AS ENUM ('Developer', 'QAEngineer', 'RepoImporter', 'Admin');
 EXCEPTION
     WHEN duplicate_object THEN
         NULL;
@@ -57,7 +57,7 @@ END $$;
 -- CREATE TABLES
 CREATE TABLE Users (
     UserID UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    Username VARCHAR(255) UNIQUE NOT NULL,
+    Username VARCHAR(255) NOT NULL,
     Email VARCHAR(255) UNIQUE NOT NULL,
     PassHash VARCHAR(255) NULL,
     GHOAuth VARCHAR(255) NULL,

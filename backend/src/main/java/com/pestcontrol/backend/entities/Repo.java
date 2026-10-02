@@ -15,32 +15,32 @@ import jakarta.persistence.Table;
 public class Repo {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "\"RepoID\"")
+    @Column(name = "repo")
     private UUID repoId;
 
-    @Column(name = "\"SpaceID\"", nullable = false)
+    @Column(name = "spaceid", nullable = false)
     private UUID spaceId;
 
-    @Column(name = "\"GHOwner\"", nullable = false)
+    @Column(name = "ghowner", nullable = false)
     private String ghOwner;
 
-    @Column(name = "\"GHName\"", nullable = false)
+    @Column(name = "ghname", nullable = false)
     private String ghName;
 
-    @Column(name = "\"DefaultBranch\"", nullable = false)
+    @Column(name = "defaultbranch", nullable = false)
     private String defaultBranch = "main";
 
-    @Column(name = "\"IsPrivate\"", nullable = false)
+    @Column(name = "isprivate", nullable = false)
     private Boolean isPrivate = false;
 
     // Use a custom converter or mapping for JSONB if needed
-    @Column(name = "\"FileTree\"", columnDefinition = "jsonb")
+    @Column(name = "filetree", columnDefinition = "jsonb")
     private String fileTree;
 
-    @Column(name = "\"ImportedAt\"", insertable = false, updatable = false)
+    @Column(name = "importedat", insertable = false, updatable = false)
     private LocalDateTime importedAt;
 
-    @Column(name = "\"ImportedBy\"", nullable = false)
+    @Column(name = "importedby", nullable = false)
     private UUID importedBy;
 
     // Getters and Setters

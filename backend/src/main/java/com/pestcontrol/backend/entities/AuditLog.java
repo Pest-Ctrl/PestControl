@@ -11,29 +11,29 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "\"AuditLog\"")
+@Table(name = "auditlog")
 public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "\"AuditID\"")
+    @Column(name = "auditid")
     private UUID auditId;
 
-    @Column(name = "\"UserID\"", nullable = false)
+    @Column(name = "userid", nullable = false)
     private UUID userId;
 
-    @Column(name = "\"SpaceID\"", nullable = false)
+    @Column(name = "spaceid", nullable = false)
     private UUID spaceId;
 
-    @Column(name = "\"IssueID\"")
+    @Column(name = "issueid")
     private UUID issueId;
 
-    @Column(name = "\"AuditTitle\"", nullable = false)
+    @Column(name = "audittitle", nullable = false)
     private String auditTitle;
 
-    @Column(name = "\"AuditDesc\"", nullable = false)
+    @Column(name = "auditdesc", nullable = false)
     private String auditDesc;
 
-    @Column(name = "\"AuditTime\"", insertable = false, updatable = false)
+    @Column(name = "audittime", insertable = false, updatable = false)
     private LocalDateTime auditTime;
 
     public UUID getAuditId() { return auditId; }

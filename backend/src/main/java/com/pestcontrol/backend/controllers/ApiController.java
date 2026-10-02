@@ -1,15 +1,32 @@
 package com.pestcontrol.backend.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import com.pestcontrol.backend.entities.*;
-import com.pestcontrol.backend.repositories.*;
-
 import java.util.List;
 import java.util.UUID;
-import java.time.LocalDateTime;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.pestcontrol.backend.entities.AuditLog;
+import com.pestcontrol.backend.entities.Commit;
+import com.pestcontrol.backend.entities.Inbox;
+import com.pestcontrol.backend.entities.Issue;
+import com.pestcontrol.backend.entities.Repo;
+import com.pestcontrol.backend.entities.User;
+import com.pestcontrol.backend.repositories.AuditLogRepository;
+import com.pestcontrol.backend.repositories.CommitRepository;
+import com.pestcontrol.backend.repositories.InboxRepository;
+import com.pestcontrol.backend.repositories.IssueRepository;
+import com.pestcontrol.backend.repositories.RepoRepository;
+import com.pestcontrol.backend.repositories.UserRepository;
 
 @RestController
 @RequestMapping("/api")
@@ -20,7 +37,6 @@ public class ApiController {
     @Autowired private RepoRepository repoRepository;
     @Autowired private IssueRepository issueRepository;
     @Autowired private CommitRepository commitRepository;
-    @Autowired private SpaceRepository spaceRepository;
     @Autowired private AuditLogRepository auditLogRepository;
     @Autowired private InboxRepository inboxRepository;
 
@@ -68,7 +84,7 @@ public class ApiController {
     public User updateUserRole(@PathVariable UUID id, @RequestBody java.util.Map<String, String> body) {
         User user = userRepository.findById(id).orElse(null);
         if (user != null && body.containsKey("role")) {
-            user.setRole(body.get("role"));
+            user.setRole(User.fromString(body.get("role")));
             return userRepository.save(user);
         }
         return null;

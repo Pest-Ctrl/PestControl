@@ -15,22 +15,22 @@ import jakarta.persistence.Table;
 public class Inbox {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "\"notifid\"")
+    @Column(name = "notifid")
     private UUID notifId;
 
-    @Column(name = "\"userid\"", nullable = false)
+    @Column(name = "userid", nullable = false)
     private UUID userId;
 
-    @Column(name = "\"notiftitle\"", nullable = false)
+    @Column(name = "notiftitle", nullable = false)
     private String notifTitle;
 
-    @Column(name = "\"notifdesc\"", nullable = false, columnDefinition="TEXT")
+    @Column(name = "notifdesc", nullable = false, columnDefinition="TEXT")
     private String notifDesc;
 
-    @Column(name = "\"isread\"")
+    @Column(name = "isread")
     private boolean isRead = false;
 
-    @Column(name = "\"createdat\"", insertable = false, updatable = false)
+    @Column(name = "createdat", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
     // Getters and Setters
