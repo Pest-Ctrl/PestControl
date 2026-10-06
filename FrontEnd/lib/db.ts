@@ -73,31 +73,42 @@ export const prisma = {
       }
       return null;
     },
-    findMany: async () => await fetchJava('/users') || []
+    findMany: async (args?: any) => await fetchJava('/users') || []
   },
   repo: {
-    findFirst: async () => { const repos = await fetchJava('/repos'); return repos ? repos[0] : null; },
-    findMany: async () => await fetchJava('/repos') || [],
-    findUnique: async () => { const repos = await fetchJava('/repos'); return repos ? repos[0] : null; },
+    findFirst: async (args?: any) => { const repos = await fetchJava('/repos'); return repos ? repos[0] : null; },
+    findMany: async (args?: any) => await fetchJava('/repos') || [],
+    findUnique: async (args?: any) => { const repos = await fetchJava('/repos'); return repos ? repos[0] : null; },
     create: async ({ data }: any) => await fetchJava('/repos', { method: 'POST', body: JSON.stringify(mapKeysToCamelCase(data)) })
   },
   commit: {
-    findMany: async () => await fetchJava('/commits') || [],
+    findMany: async (args?: any) => await fetchJava('/commits') || [],
     createMany: async ({ data }: any) => { return []; }
   },
   issues: {
-    findMany: async () => await fetchJava('/issues') || [],
+    findMany: async (args?: any) => await fetchJava('/issues') || [],
     findUnique: async ({ where }: any) => await fetchJava(`/issues/${where.IssueID || where.IssueId}`),
     create: async ({ data }: any) => await fetchJava('/issues', { method: 'POST', body: JSON.stringify(mapKeysToCamelCase(data)) }),
     update: async ({ where, data }: any) => await fetchJava(`/issues/${where.IssueID || where.IssueId}`, { method: 'PUT', body: JSON.stringify(mapKeysToCamelCase(data)) })
   },
   space: {
-    findFirst: async () => null,
-    findUnique: async () => null
+    findFirst: async (args?: any) => null,
+    findUnique: async (args?: any) => null
   },
   auditLog: {
-    create: async () => null,
-    findMany: async () => await fetchJava('/audit') || []
+    create: async ({ data }: any) => {
+      const payload = mapKeysToCamelCase(data);
+      return await fetchJava('/audit', { method: 'POST', body: JSON.stringify(payload) });
+    },
+    findMany: async ({ where }: any = {}) => {
+      let path = '/audit';
+      const params = new URLSearchParams();
+      if (where?.SpaceID) params.set('spaceId', where.SpaceID);
+      if (where?.IssueID) params.set('issueId', where.IssueID);
+      const qs = params.toString();
+      if (qs) path += `?${qs}`;
+      return await fetchJava(path) || [];
+    }
   },
   inbox: {
     findMany: async ({ where }: any) => {

@@ -1,44 +1,37 @@
 package com.pestcontrol.backend.controllers;
 
-import java.util.List;
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import com.pestcontrol.backend.entities.AuditLog;
-import com.pestcontrol.backend.entities.Commit;
-import com.pestcontrol.backend.entities.Inbox;
-import com.pestcontrol.backend.entities.Issue;
-import com.pestcontrol.backend.entities.Repo;
-import com.pestcontrol.backend.entities.User;
-import com.pestcontrol.backend.repositories.AuditLogRepository;
-import com.pestcontrol.backend.repositories.CommitRepository;
-import com.pestcontrol.backend.repositories.InboxRepository;
-import com.pestcontrol.backend.repositories.IssueRepository;
-import com.pestcontrol.backend.repositories.RepoRepository;
-import com.pestcontrol.backend.repositories.UserRepository;
+import com.pestcontrol.backend.entities.*;
+import com.pestcontrol.backend.repositories.*;
+import com.pestcontrol.backend.services.AuditLogService;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:3000")
 public class ApiController {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private RepoRepository repoRepository;
-    @Autowired private IssueRepository issueRepository;
-    @Autowired private CommitRepository commitRepository;
-    @Autowired private AuditLogRepository auditLogRepository;
-    @Autowired private InboxRepository inboxRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RepoRepository repoRepository;
+    @Autowired
+    private IssueRepository issueRepository;
+    @Autowired
+    private CommitRepository commitRepository;
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+    @Autowired
+    private InboxRepository inboxRepository;
+    @Autowired
+    private AuditLogService auditLogService;
 
     @GetMapping("/inbox")
     public List<Inbox> getInbox(@RequestParam("userId") UUID userId) {
@@ -61,8 +54,17 @@ public class ApiController {
     }
 
     @PostMapping("/repos")
-    public Repo createRepo(@RequestBody Repo repo) {
-        return repoRepository.save(repo);
+    public ResponseEntity<?> createRepo(@RequestBody Repo repo) {
+        Repo savedRepo = repoRepository.save(repo);
+
+        // Audit log: repository imported
+        auditLogService.logRepoImported(
+                repo.getImportedBy(),
+                repo.getSpaceId(),
+                repo.getGhOwner(),
+                repo.getGhName());
+
+        return ResponseEntity.status(201).body(savedRepo);
     }
 
     @GetMapping("/commits")
@@ -81,7 +83,7 @@ public class ApiController {
     }
 
     @PutMapping("/users/{id}/role")
-    public User updateUserRole(@PathVariable UUID id, @RequestBody java.util.Map<String, String> body) {
+    public User updateUserRole(@PathVariable UUID id, @RequestBody Map<String, String> body) {
         User user = userRepository.findById(id).orElse(null);
         if (user != null && body.containsKey("role")) {
             user.setRole(User.fromString(body.get("role")));
@@ -96,8 +98,17 @@ public class ApiController {
     }
 
     @PostMapping("/issues")
-    public Issue createIssue(@RequestBody Issue issue) {
-        return issueRepository.save(issue);
+    public ResponseEntity<?> createIssue(@RequestBody Issue issue) {
+        Issue savedIssue = issueRepository.save(issue);
+
+        // Audit log: issue created
+        auditLogService.logIssueCreated(
+                issue.getReporterId(),
+                issue.getSpaceId(),
+                savedIssue.getIssueId(),
+                issue.getTitle());
+
+        return ResponseEntity.status(201).body(savedIssue);
     }
 
     @GetMapping("/issues/{id}")
@@ -106,18 +117,112 @@ public class ApiController {
     }
 
     @PutMapping("/issues/{id}")
-    public Issue updateIssue(@PathVariable UUID id, @RequestBody Issue issueDetails) {
+    public ResponseEntity<?> updateIssue(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
         Issue issue = issueRepository.findById(id).orElse(null);
-        if (issue != null) {
-            issue.setStatus(issueDetails.getStatus());
-            // Update other fields as necessary
-            return issueRepository.save(issue);
+        if (issue == null) {
+            return ResponseEntity.notFound().build();
         }
-        return null;
+
+        UUID actorId = issue.getReporterId();
+        if (body.containsKey("userId")) {
+            actorId = UUID.fromString(body.get("userId").toString());
+        }
+
+        // Track severity change
+        if (body.containsKey("severity")) {
+            String newSeverityStr = body.get("severity").toString();
+            Issue.SeverityStatus newSeverity = Issue.fromStringSeverityStatus(newSeverityStr);
+            Issue.SeverityStatus oldSeverity = issue.getSeverity();
+            if (!newSeverity.equals(oldSeverity)) {
+                auditLogService.logSeverityChanged(
+                        actorId, issue.getSpaceId(), issue.getIssueId(),
+                        oldSeverity != null ? oldSeverity.name() : null, newSeverity.name());
+            }
+            issue.setSeverity(newSeverity);
+        }
+
+        // Track deadline change
+        if (body.containsKey("deadline")) {
+            Object deadlineValue = body.get("deadline");
+            LocalDateTime newDeadline = null;
+            if (deadlineValue != null && !deadlineValue.toString().isBlank()) {
+                newDeadline = LocalDateTime.parse(deadlineValue.toString());
+            }
+            LocalDateTime oldDeadline = issue.getDeadline();
+            boolean changed = (oldDeadline == null && newDeadline != null)
+                    || (oldDeadline != null && !oldDeadline.equals(newDeadline));
+            if (changed) {
+                auditLogService.logDueDateChanged(
+                        actorId, issue.getSpaceId(), issue.getIssueId(),
+                        oldDeadline != null ? oldDeadline.toString() : null,
+                        newDeadline != null ? newDeadline.toString() : null);
+            }
+            issue.setDeadline(newDeadline);
+        }
+
+        // Track status change
+        if (body.containsKey("status")) {
+            String newStatusStr = body.get("status").toString();
+            Issue.IssueStatus newStatus = Issue.fromStringIssueStatus(newStatusStr);
+            Issue.IssueStatus oldStatus = issue.getStatus();
+            if (!newStatus.equals(oldStatus)) {
+                auditLogService.logStatusChanged(
+                        actorId, issue.getSpaceId(), issue.getIssueId(),
+                        oldStatus != null ? oldStatus.name() : null, newStatus.name());
+            }
+            issue.setStatus(newStatus);
+        }
+
+        // Handle assignee change
+        if (body.containsKey("assigneeId")) {
+            Object assigneeValue = body.get("assigneeId");
+            UUID newAssigneeId = null;
+            if (assigneeValue != null && !assigneeValue.toString().isBlank()) {
+                newAssigneeId = UUID.fromString(assigneeValue.toString());
+            }
+            issue.setAssigneeId(newAssigneeId);
+            auditLogService.logIssueReassigned(
+                    actorId, issue.getSpaceId(), issue.getIssueId(),
+                    "Issue reassigned");
+        }
+
+        Issue savedIssue = issueRepository.save(issue);
+        return ResponseEntity.ok(savedIssue);
     }
 
+    // Audit Log endpoints
+
     @GetMapping("/audit")
-    public List<AuditLog> getAuditLogs() {
+    public List<AuditLog> getAuditLogs(
+            @RequestParam(value = "spaceId", required = false) UUID spaceId,
+            @RequestParam(value = "issueId", required = false) UUID issueId) {
+        if (issueId != null) {
+            return auditLogRepository.findByIssueIdOrderByAuditTimeDesc(issueId);
+        }
+        if (spaceId != null) {
+            return auditLogRepository.findBySpaceIdOrderByAuditTimeDesc(spaceId);
+        }
         return auditLogRepository.findAll();
+    }
+
+    @PostMapping("/audit")
+    public ResponseEntity<?> createAuditLog(@RequestBody Map<String, String> body) {
+        String userIdStr = body.get("userId");
+        String spaceIdStr = body.get("spaceId");
+        String issueIdStr = body.get("issueId");
+        String auditTitle = body.get("auditTitle");
+        String auditDesc = body.get("auditDesc");
+
+        if (userIdStr == null || spaceIdStr == null || auditTitle == null || auditDesc == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "userId, spaceId, auditTitle, and auditDesc are required"));
+        }
+
+        UUID userId = UUID.fromString(userIdStr);
+        UUID spaceId = UUID.fromString(spaceIdStr);
+        UUID issueId = (issueIdStr != null && !issueIdStr.isBlank()) ? UUID.fromString(issueIdStr) : null;
+
+        AuditLog log = auditLogService.createEntry(userId, spaceId, issueId, auditTitle, auditDesc);
+        return ResponseEntity.status(201).body(log);
     }
 }

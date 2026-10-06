@@ -193,8 +193,8 @@ CREATE TABLE AuditLog (
 -- Insert dummy data
 
 INSERT INTO Users (UserID, Username, Email, PassHash, "role", CreatedAt) VALUES
-('1d190b3e-7282-4815-bab1-dbc69cd6dd0b', 'Importer User', 'importer@gmail.com', 'dummy', 'Repository Importer', '2026-09-24 11:31:57.4592'),
+('1d190b3e-7282-4815-bab1-dbc69cd6dd0b', 'Importer User', 'importer@gmail.com', 'dummy', 'RepoImporter', '2026-09-24 11:31:57.4592'),
 ('f2cac24a-8e85-4094-a6b7-2df7208e73e2', 'Test User 01', 'test01@gmail.com', 'dummy', 'Developer', '2026-09-10 12:47:25.817706'),
-('dfc45cce-95b4-49c2-9307-ea4457da073d', 'Test User 02', 'test02@gmail.com', 'dummy', 'QA Engineer', '2026-09-24 11:18:28.202379'),
+('dfc45cce-95b4-49c2-9307-ea4457da073d', 'Test User 02', 'test02@gmail.com', 'dummy', 'QAEngineer', '2026-09-24 11:18:28.202379'),
 ('45c2752d-190d-4cdf-8f4e-10742770fbc5', 'Admin User', 'admin@gmail.com', 'dummy', 'Admin', '2026-09-24 11:18:40.810412')
 ON CONFLICT (Email) DO NOTHING;
