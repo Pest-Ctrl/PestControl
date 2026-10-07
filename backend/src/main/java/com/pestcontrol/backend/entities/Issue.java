@@ -31,7 +31,7 @@ public class Issue {
 
     public enum BugTypes
     {
-        Functional, Performance, Security, UI, Compatiblity, Data
+        Functional, Performance, Security, UI, Compatibility, Data
     }
 
     public static IssueStatus fromStringIssueStatus(String text)
@@ -62,7 +62,7 @@ public class Issue {
     {
         for (BugTypes r : BugTypes.values()) 
         {
-            if (r.name().equalsIgnoreCase(text))
+            if (r.name().equalsIgnoreCase(text) || (text != null && text.equalsIgnoreCase("Compatiblity") && r == BugTypes.Compatibility))
             {
                 return r;
             }

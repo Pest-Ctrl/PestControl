@@ -27,11 +27,13 @@ interface Issue
 export default function ImporterDashboard({ userName }: { userName: string }) {
   const [repos, setRepos] = useState<Repo[]>([]);
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [spaces, setSpaces] = useState<{SpaceID: string; SpaceName: string}[]>([]);
   const [loadingRepos, setLoadingRepos] = useState(true);
   const [loadingIssues, setLoadingIssues] = useState(true);
   const [importModal, setImportModal] = useState(false);
   const [importOwner, setImportOwner] = useState("");
   const [importName, setImportName] = useState("");
+  const [importSpaceId, setImportSpaceId] = useState("");
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
@@ -49,6 +51,12 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
       .then((r) => r.json())
       .then((data) => { setIssues(Array.isArray(data) ? data : []); setLoadingIssues(false); })
       .catch(() => setLoadingIssues(false));
+
+    fetch("/api/spaces")
+      .then((r) => r.json())
+      .then((data) => setSpaces(Array.isArray(data) ? data : []))
+      .catch(() => {});
+
     setLoadingGithubRepos(true);
     fetch(`/api/github/repos${pat ? `?pat=${pat}` : ''}`)
       .then((res) => res.json())
@@ -64,6 +72,10 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
 
   const handleImport = async () => {
     if (!importOwner || !importName) return;
+    if (!importSpaceId) {
+      setImportError("Please select a workspace first.");
+      return;
+    }
     setImporting(true);
     setImportError("");
 
@@ -71,7 +83,7 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
       const res = await fetch("/api/repos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ owner: importOwner, name: importName, isPrivate, pat }),
+        body: JSON.stringify({ owner: importOwner, name: importName, isPrivate, pat, spaceId: importSpaceId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Import failed");
@@ -80,6 +92,7 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
       setImportModal(false);
       setImportOwner("");
       setImportName("");
+      setImportSpaceId("");
     } catch (err: any) {
       setImportError(err.message);
     } finally {
@@ -181,6 +194,27 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
               </div>
             )}
             <div className="space-y-3 mb-6">
+              {/* Workspace Selector — required */}
+              <div>
+                <label className="text-[10px] text-zinc-500 block mb-1">Select Workspace <span className="text-red-400">*</span></label>
+                {spaces.length === 0 ? (
+                  <p className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/30 rounded-lg px-3 py-2">
+                    No workspaces found. Please create a workspace first from the{" "}
+                    <a href="/projects" className="underline">Projects page</a>.
+                  </p>
+                ) : (
+                  <select
+                    value={importSpaceId}
+                    onChange={e => setImportSpaceId(e.target.value)}
+                    className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-sm rounded-lg focus:outline-none focus:border-[#1ef2c1]/50"
+                  >
+                    <option value="">-- Select a Workspace --</option>
+                    {spaces.map(s => (
+                      <option key={s.SpaceID} value={s.SpaceID}>{s.SpaceName}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
               <div>
                 <label className="text-[10px] text-zinc-500 block mb-2">Visibility</label>
                 <div className="flex gap-2 bg-[#050505] p-1 rounded-lg border border-zinc-800">

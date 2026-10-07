@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Sidebar from "@/components/dashboard/Sidebar";
 import Scrollable from "@/components/Scrollable";
+import { isAdmin, toSchemaRole } from "@/lib/roles";
 
 interface User {
   UserID: string;
@@ -30,13 +31,13 @@ export default function UserManagementPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated" && session?.user?.role !== "Project Manager") {
+    } else if (status === "authenticated" && !isAdmin(session?.user?.role)) {
       router.push("/dashboard");
     }
   }, [status, session, router]);
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.role === "Project Manager") {
+    if (status === "authenticated" && isAdmin(session?.user?.role)) {
       fetchUsers();
     }
   }, [status, session]);
@@ -59,24 +60,26 @@ export default function UserManagementPage() {
     setUpdatingId(userId);
     setMessage(null);
     try {
+      const schemaRole = toSchemaRole(newRole);
       const res = await fetch(`/api/users/${userId}/role`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ role: schemaRole }),
       });
-      
-      if (res.ok) {
-        setMessage({ text: "Role updated successfully!", type: "success" });
-        setUsers(users.map(u => u.UserID === userId ? { ...u, Role: newRole } : u));
-      } else {
+
+      if (!res.ok) {
         const data = await res.json();
-        setMessage({ text: data.error || "Failed to update role", type: "error" });
+        throw new Error(data.error || "Failed to update role");
       }
-    } catch (err) {
-      setMessage({ text: "An error occurred", type: "error" });
+
+      setUsers((prev) =>
+        prev.map((u) => (u.UserID === userId ? { ...u, Role: schemaRole } : u))
+      );
+      setMessage({ text: "Role updated successfully!", type: "success" });
+    } catch (err: any) {
+      setMessage({ text: err.message, type: "error" });
     } finally {
       setUpdatingId(null);
-      setTimeout(() => setMessage(null), 3000);
     }
   };
 
@@ -84,96 +87,104 @@ export default function UserManagementPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage(null);
+
     try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser)
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newUser,
+          role: toSchemaRole(newUser.role),
+        }),
       });
-      const data = await res.json();
-      
-      if (res.ok) {
-        setMessage({ text: 'User created successfully', type: 'success' });
-        setUsers([data, ...users]);
-        setIsAddUserModalOpen(false);
-        setNewUser({ username: '', email: '', password: '', role: 'Developer' });
-      } else {
-        setMessage({ text: data.error || 'Failed to create user', type: 'error' });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to create user");
       }
-    } catch (err) {
-      setMessage({ text: 'An error occurred', type: 'error' });
+
+      const createdUser = await res.json();
+      setUsers([createdUser, ...users]);
+      setIsAddUserModalOpen(false);
+      setNewUser({ username: '', email: '', password: '', role: 'Developer' });
+      setMessage({ text: "User created successfully!", type: "success" });
+    } catch (err: any) {
+      setMessage({ text: err.message, type: "error" });
     } finally {
       setIsSubmitting(false);
-      setTimeout(() => setMessage(null), 3000);
     }
   };
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen bg-[#050505]">
+      <div className="flex h-screen bg-[#050505] text-white">
         <Sidebar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-[#1ef2c1] border-t-transparent rounded-full animate-spin"></div>
-        </main>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1ef2c1]"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-[#050505]">
+    <div className="flex h-screen bg-[#050505] text-white overflow-hidden">
       <Sidebar />
-      
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Header */}
-        <header className="flex-none h-16 border-b border-zinc-900 flex items-center justify-between px-8 bg-[#0a0a0a]/50 backdrop-blur-xl">
-          <h1 className="text-zinc-100 font-medium tracking-wide">User Management (Super Admin)</h1>
+      <div className="flex-1 flex flex-col h-full bg-[#050505] relative overflow-hidden">
+        {/* Top Header */}
+        <header className="h-16 border-b border-zinc-900 px-8 flex items-center justify-between shrink-0 bg-[#050505]/80 backdrop-blur z-10">
+          <div>
+            <h1 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+              <span className="text-[#1ef2c1]">⚙</span> Admin & User Management
+            </h1>
+            <p className="text-xs text-zinc-500">Universal schema access control and roles</p>
+          </div>
+          <button
+            onClick={() => setIsAddUserModalOpen(true)}
+            className="flex items-center gap-2 bg-[#1ef2c1] hover:bg-[#1ef2c1]/80 text-black px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shadow-[0_0_15px_rgba(30,242,193,0.2)]"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add New User
+          </button>
         </header>
 
-        {/* Message Toast */}
-        {message && (
-          <div className={`absolute top-20 right-8 px-4 py-2 rounded shadow-lg text-sm font-medium animate-fade-in-down z-50 ${
-            message.type === 'success' ? 'bg-[#1ef2c1]/20 text-[#1ef2c1] border border-[#1ef2c1]/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'
-          }`}>
-            {message.text}
-          </div>
-        )}
-
-        {/* Main Content */}
         <Scrollable className="flex-1 p-8">
-          <div className="max-w-6xl mx-auto space-y-6">
-            
-            <div className="bg-[#0a0a0a] border border-zinc-900 rounded-xl overflow-hidden">
-              <div className="px-6 py-5 border-b border-zinc-900 flex items-center justify-between">
-                <div>
-                  <h2 className="text-zinc-100 font-medium">All Users</h2>
-                  <p className="text-zinc-500 text-sm mt-1">Manage global platform roles for all registered users.</p>
-                </div>
-                <button
-                  onClick={() => setIsAddUserModalOpen(true)}
-                  className="bg-[#1ef2c1] text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1ef2c1]/90 transition-colors flex items-center gap-2"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  Add User
-                </button>
-              </div>
+          <div className="max-w-5xl mx-auto space-y-6">
 
+            {message && (
+              <div className={`p-4 rounded-lg text-sm border flex items-center gap-3 ${
+                message.type === 'success' 
+                  ? 'bg-[#1ef2c1]/10 border-[#1ef2c1]/20 text-[#1ef2c1]' 
+                  : 'bg-red-500/10 border-red-500/20 text-red-400'
+              }`}>
+                <span>{message.type === 'success' ? '✓' : '⚠'}</span>
+                {message.text}
+              </div>
+            )}
+
+            {/* Table Area */}
+            <div className="bg-[#0a0a0a] border border-zinc-800/80 rounded-xl overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-zinc-900 bg-zinc-900/20 flex justify-between items-center">
+                <span className="text-xs font-medium text-zinc-400">Total Registered: {users.length}</span>
+                <span className="text-xs text-zinc-600 font-mono">Schema: Universal Roles</span>
+              </div>
+              
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-zinc-900 bg-[#050505]">
-                      <th className="px-6 py-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">User</th>
-                      <th className="px-6 py-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">Email</th>
-                      <th className="px-6 py-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">Joined</th>
-                      <th className="px-6 py-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">Global Role</th>
+                    <tr className="border-b border-zinc-800 text-[10px] uppercase tracking-wider text-zinc-500 font-semibold bg-zinc-900/40">
+                      <th className="px-6 py-3">User</th>
+                      <th className="px-6 py-3">Email</th>
+                      <th className="px-6 py-3">Created</th>
+                      <th className="px-6 py-3">Universal Role</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-900/50">
+                  <tbody className="divide-y divide-zinc-900/60">
                     {users.map((user) => (
-                      <tr key={user.UserID} className="hover:bg-zinc-900/20 transition-colors">
+                      <tr key={user.UserID} className="hover:bg-zinc-900/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400 text-xs font-bold">
-                              {user.Username?.[0]?.toUpperCase() || "U"}
+                            <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-zinc-400">
+                              {user.Username.charAt(0).toUpperCase()}
                             </div>
                             <span className="text-sm font-medium text-zinc-200">{user.Username}</span>
                           </div>
@@ -186,7 +197,7 @@ export default function UserManagementPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <select
-                            value={user.Role}
+                            value={toSchemaRole(user.Role)}
                             disabled={updatingId === user.UserID || session?.user?.id === user.UserID}
                             onChange={(e) => handleRoleChange(user.UserID, e.target.value)}
                             className={`bg-[#050505] border py-1.5 px-3 text-xs rounded-lg focus:outline-none transition-colors ${
@@ -194,9 +205,9 @@ export default function UserManagementPage() {
                             }`}
                           >
                             <option value="Developer">Developer</option>
-                            <option value="QA Engineer">QA Engineer</option>
-                            <option value="Repository Importer">Repository Importer</option>
-                            <option value="Project Manager">Project Manager (Super Admin)</option>
+                            <option value="QAEngineer">QA Engineer</option>
+                            <option value="RepoImporter">Repository Importer</option>
+                            <option value="Admin">Admin (Project Manager)</option>
                           </select>
                         </td>
                       </tr>
@@ -259,16 +270,16 @@ export default function UserManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">Role</label>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1">Universal Role</label>
                   <select
                     value={newUser.role}
                     onChange={(e) => setNewUser({...newUser, role: e.target.value})}
                     className="w-full bg-[#050505] border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-[#1ef2c1]/50 focus:ring-1 focus:ring-[#1ef2c1]/50"
                   >
                     <option value="Developer">Developer</option>
-                    <option value="QA Engineer">QA Engineer</option>
-                    <option value="Repository Importer">Repository Importer</option>
-                    <option value="Project Manager">Project Manager (Super Admin)</option>
+                    <option value="QAEngineer">QA Engineer</option>
+                    <option value="RepoImporter">Repository Importer</option>
+                    <option value="Admin">Admin (Project Manager)</option>
                   </select>
                 </div>
                 
@@ -283,16 +294,16 @@ export default function UserManagementPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-[#1ef2c1] text-black hover:bg-[#1ef2c1]/90 disabled:opacity-50 transition-colors"
+                    className="bg-[#1ef2c1] hover:bg-[#1ef2c1]/80 text-black px-5 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
                   >
-                    {isSubmitting ? 'Creating...' : 'Create User'}
+                    {isSubmitting ? "Creating..." : "Save User"}
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

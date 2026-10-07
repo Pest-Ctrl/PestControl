@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { isAdmin, toSchemaRole } from "@/lib/roles";
 
 export async function GET() {
   try {
     const session = await auth();
-    if (!session || session.user?.role !== "Project Manager") {
+    if (!session || !isAdmin(session.user?.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -32,7 +33,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session || session.user?.role !== "Project Manager") {
+    if (!session || !isAdmin(session.user?.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -50,12 +51,16 @@ export async function POST(req: Request) {
         Username: username,
         Email: email,
         PassHash: hashedPassword,
-        Role: role || "Developer",
+        Role: toSchemaRole(role || "Developer"),
       }
     });
 
+    if (!newUser) {
+      return NextResponse.json({ error: "Failed to create user in backend" }, { status: 500 });
+    }
+
     return NextResponse.json({ 
-      UserID: newUser.UserID,
+      UserID: newUser.UserID || newUser.UserId,
       Username: newUser.Username,
       Email: newUser.Email,
       Role: newUser.Role,

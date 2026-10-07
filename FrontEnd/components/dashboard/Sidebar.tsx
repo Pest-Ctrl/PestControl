@@ -4,6 +4,7 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Notifications from "./Notifications";
+import { isAdmin, toDisplayRole } from "@/lib/roles";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "⬡" },
@@ -48,7 +49,7 @@ export default function Sidebar() {
             </Link>
           );
         })}
-        {session?.user?.role === "Project Manager" && (
+        {isAdmin(session?.user?.role) && (
           <Link
             href="/dashboard/admin"
             className={`flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-150 group mt-4
@@ -85,8 +86,8 @@ export default function Sidebar() {
             <p className="text-zinc-300 text-xs font-medium truncate">
               {session?.user?.name ?? "Developer"}
             </p>
-            <p className="text-zinc-600 text-[10px] truncate">
-              {session?.user?.email ?? ""}
+            <p className="text-[#1ef2c1]/70 text-[10px] truncate font-medium">
+              {toDisplayRole(session?.user?.role)}
             </p>
           </div>
           <div className="flex items-center gap-1 shrink-0">

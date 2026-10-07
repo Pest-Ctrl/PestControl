@@ -3,6 +3,9 @@ package com.pestcontrol.backend.entities;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,7 +18,7 @@ import jakarta.persistence.Table;
 public class Repo {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "repo")
+    @Column(name = "repoid")
     private UUID repoId;
 
     @Column(name = "spaceid", nullable = false)
@@ -33,7 +36,7 @@ public class Repo {
     @Column(name = "isprivate", nullable = false)
     private Boolean isPrivate = false;
 
-    // Use a custom converter or mapping for JSONB if needed
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "filetree", columnDefinition = "jsonb")
     private String fileTree;
 

@@ -1,4 +1,4 @@
 echo "Running FrontEnd Tests"
 npm --prefix FrontEnd test
 echo "Running BackEnd Tests"
-./gradlew :backend:test
+(cd backend && ./gradlew test)

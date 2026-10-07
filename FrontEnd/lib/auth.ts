@@ -3,12 +3,14 @@ import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/db";
+import { toSchemaRole, SchemaRole } from "@/lib/roles";
 
-const DUMMY_USERS = [
+// Universal schema roles: Developer, QAEngineer, RepoImporter, Admin
+const DUMMY_USERS: { email: string; password: string; name: string; role: SchemaRole }[] = [
   { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer' },
-  { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QA Engineer' },
-  { email: 'admin@gmail.com',  password: 'admin@123',  name: 'Admin User',   role: 'Project Manager' },
-  { email: 'importer@gmail.com', password: 'password@3', name: 'Importer User', role: 'Repository Importer' }
+  { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QAEngineer' },
+  { email: 'admin@gmail.com',  password: 'admin@123',  name: 'Admin User',   role: 'Admin' },
+  { email: 'importer@gmail.com', password: 'password@3', name: 'Importer User', role: 'RepoImporter' }
 ];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -41,18 +43,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (dummyUser) {
-          let dbUser = await prisma.users.findUnique({ where: { Email: dummyUser.email } });
-          if (!dbUser) {
-            dbUser = await prisma.users.create({
-              data: {
-                Email: dummyUser.email,
-                Username: dummyUser.name,
-                Role: dummyUser.role,
-                PassHash: "dummy"
-              }
-            });
+          let dbUser: any = null;
+          try {
+            dbUser = await prisma.users.findUnique({ where: { Email: dummyUser.email } });
+            if (!dbUser) {
+              dbUser = await prisma.users.create({
+                data: {
+                  Email: dummyUser.email,
+                  Username: dummyUser.name,
+                  Role: toSchemaRole(dummyUser.role),
+                  PassHash: "dummy"
+                }
+              });
+            }
+          } catch (err) {
+            console.warn("Backend user lookup/creation error:", err);
           }
-          return { id: dbUser.UserID, name: dbUser.Username, email: dbUser.Email, role: dbUser.Role };
+
+          const userId = dbUser?.UserID || dbUser?.UserId || dbUser?.id || dummyUser.email;
+          const userRole = toSchemaRole(dbUser?.Role || dummyUser.role);
+          const userName = dbUser?.Username || dummyUser.name;
+          const userEmail = dbUser?.Email || dummyUser.email;
+
+          return { id: userId, name: userName, email: userEmail, role: userRole };
         }
         return null;
       }
@@ -88,24 +101,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       
       if (user && user.email) {
-        let dbUser = await prisma.users.findUnique({ where: { Email: user.email } });
-        if (!dbUser) {
-          dbUser = await prisma.users.create({
-            data: {
-              Email: user.email,
-              Username: user.name || user.email.split('@')[0],
-              Role: account?.provider === 'github' ? 'Developer' : (user.role || 'Developer'),
-              GHOAuth: account?.provider === 'github' ? account.providerAccountId : null
-            }
-          });
+        let dbUser: any = null;
+        try {
+          dbUser = await prisma.users.findUnique({ where: { Email: user.email } });
+          if (!dbUser) {
+            dbUser = await prisma.users.create({
+              data: {
+                Email: user.email,
+                Username: user.name || user.email.split('@')[0],
+                Role: toSchemaRole(account?.provider === 'github' ? 'Developer' : ((user as any).role || 'Developer')),
+                GHOAuth: account?.provider === 'github' ? account.providerAccountId : null
+              }
+            });
+          }
+        } catch (err) {
+          console.warn("Could not sync OAuth user with DB:", err);
         }
-        token.sub = dbUser.UserID;
-        token.role = dbUser.Role;
+
+        token.sub = dbUser?.UserID || dbUser?.UserId || (user as any).id || user.email;
+        token.role = toSchemaRole(dbUser?.Role || (user as any).role || 'Developer');
       } else if (token.sub) {
-        // Fetch fresh role from DB to instantly reflect role changes
-        const dbUser = await prisma.users.findUnique({ where: { UserID: token.sub } });
-        if (dbUser) {
-          token.role = dbUser.Role;
+        try {
+          const dbUser = await prisma.users.findUnique({ where: { UserID: token.sub } });
+          if (dbUser?.Role) {
+            token.role = toSchemaRole(dbUser.Role);
+          }
+        } catch (err) {
+          // Keep existing token.role if lookup fails
         }
       }
       return token;
@@ -115,7 +137,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub;
       }
       if (session.user && token.role) {
-        session.user.role = token.role as string;
+        session.user.role = toSchemaRole(token.role as string);
       }
       if (token.githubToken) {
         (session as any).githubToken = token.githubToken;
@@ -124,3 +146,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   }
 });
+

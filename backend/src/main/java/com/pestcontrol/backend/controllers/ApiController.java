@@ -31,6 +31,8 @@ public class ApiController {
     @Autowired
     private InboxRepository inboxRepository;
     @Autowired
+    private SpaceRepository spaceRepository;
+    @Autowired
     private AuditLogService auditLogService;
 
     @GetMapping("/inbox")
@@ -224,5 +226,16 @@ public class ApiController {
 
         AuditLog log = auditLogService.createEntry(userId, spaceId, issueId, auditTitle, auditDesc);
         return ResponseEntity.status(201).body(log);
+    }
+
+    // Space / Workspace endpoints
+    @GetMapping("/spaces")
+    public List<Space> getSpaces() {
+        return spaceRepository.findAll();
+    }
+
+    @PostMapping("/spaces")
+    public Space createSpace(@RequestBody Space space) {
+        return spaceRepository.save(space);
     }
 }

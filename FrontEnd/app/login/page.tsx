@@ -6,11 +6,12 @@ import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
-// Dummy credentials for testing (no DB required)
+// Demo credentials matching universal schema (Developer, QAEngineer, Admin, RepoImporter)
 const DUMMY_USERS = [
-  { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer' },
-  { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QA Engineer' },
-  { email: 'admin@gmail.com', password: 'admin@123', name: 'Admin User', role: 'Project Manager' },
+  { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer', label: 'Developer' },
+  { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QAEngineer', label: 'QA Engineer' },
+  { email: 'admin@gmail.com', password: 'admin@123', name: 'Admin User', role: 'Admin', label: 'Admin (Project Manager)' },
+  { email: 'importer@gmail.com', password: 'password@3', name: 'Importer User', role: 'RepoImporter', label: 'Repository Importer' },
 ];
 
 export default function LoginPage() {
@@ -180,7 +181,7 @@ export default function LoginPage() {
                   className="w-full text-left px-3 py-2 text-[11px] text-zinc-400 hover:bg-zinc-800/50 hover:text-[#1ef2c1] transition-colors flex justify-between rounded-md"
                 >
                   <span className="font-mono">{u.email}</span>
-                  <span className="text-zinc-600">{u.role}</span>
+                  <span className="text-zinc-600">{u.label || u.role}</span>
                 </button>
               ))}
             </div>
