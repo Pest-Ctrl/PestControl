@@ -84,10 +84,7 @@ public class ApiController {
         return userRepository.findAll();
     }
 
-    @PostMapping("/users")
-    public User createUser(@RequestBody User user) {
-        return userRepository.save(user);
-    }
+    // The createUser method was removed to avoid duplicate POST /users mapping
 
     @PutMapping("/users/{id}/role")
     public User updateUserRole(@PathVariable UUID id, @RequestBody Map<String, String> body) {
@@ -282,5 +279,40 @@ public class ApiController {
             notif.setNotifDesc(desc);
             inboxRepository.save(notif);
         }
+    }
+
+    @PostMapping("/users")
+    public ResponseEntity<?> registerUser(@RequestBody Map<String, String> body) {
+        String username = body.get("username");
+        String email = body.get("email");
+        String password = body.containsKey("password") ? body.get("password") : body.get("passHash");
+        String role = body.get("role");
+
+        if (username == null || email == null || password == null || role == null) {
+            return ResponseEntity.badRequest().body("Missing required fields");
+        }
+        User.UserRole userRole;
+        try{
+            userRole = User.fromString(role);
+        }catch(IllegalArgumentException e){
+            return ResponseEntity.badRequest().body("Invalid role");
+        }
+
+        // Check if username or email already exists (case-insensitive for email)
+        if(userRepository.existsByUsername(username)){
+            return ResponseEntity.badRequest().body("Username already exists");
+        }
+        if(userRepository.existsByEmail(email)){
+            return ResponseEntity.badRequest().body("Email already exists");
+        }
+
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setEmail(email);
+        newUser.setPassHash(password);
+        newUser.setRole(userRole);
+
+        User savedUser = userRepository.save(newUser);
+        return ResponseEntity.status(201).body(savedUser);
     }
 }
