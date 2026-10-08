@@ -110,14 +110,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 Email: user.email,
                 Username: user.name || user.email.split('@')[0],
                 Role: toSchemaRole(account?.provider === 'github' ? 'Developer' : ((user as any).role || 'Developer')),
-                GHOAuth: account?.provider === 'github' ? account.providerAccountId : null
+                GHOAuth: account?.provider === 'github' ? account.access_token : null
               }
             });
-          } else if (account?.provider === 'github' && !dbUser.GHOAuth) {
-            // Link github account if not already linked
+          } else if (account?.provider === 'github') {
+            // Always update GHOAuth to keep the access token fresh
             dbUser = await prisma.users.update({
               where: { UserID: dbUser.UserID || dbUser.UserId || dbUser.id },
-              data: { GHOAuth: account.providerAccountId }
+              data: { GHOAuth: account.access_token }
             });
           }
         } catch (err) {

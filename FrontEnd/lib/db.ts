@@ -233,6 +233,9 @@ export const prisma = {
       const mapped = commits.map((c: any) => ({ ...c, SHA: c.CommitID || c.commitId }));
       if (args?.where?.RepoID || args?.where?.repoId) {
         const rid = args.where.RepoID || args.where.repoId;
+        if (typeof rid === 'object' && rid !== null && rid.in) {
+          return mapped.filter((c: any) => rid.in.includes(c.RepoID) || rid.in.includes(c.repoId));
+        }
         return mapped.filter((c: any) => c.RepoID === rid || c.repoId === rid);
       }
       return mapped;
