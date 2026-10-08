@@ -37,27 +37,34 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "userid")
+    @com.fasterxml.jackson.annotation.JsonProperty("userId")
     private UUID userId;
 
     @Column(name = "username", unique = false, nullable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty("username")
     private String username;
 
     @Column(name = "email", unique = true, nullable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty("email")
     private String email;
 
     @Column(name = "passhash")
+    @com.fasterxml.jackson.annotation.JsonProperty("passHash")
     private String passHash;
 
     @Column(name = "ghoauth")
+    @com.fasterxml.jackson.annotation.JsonProperty("ghOAuth")
     private String ghOAuth;
 
     @Column(name = "createdat", insertable = false, updatable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty("createdAt")
     private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     @Column(name = "role", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonProperty("role")
     private UserRole role = UserRole.Developer;
-
     // Getters and Setters
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
@@ -71,8 +78,8 @@ public class User {
     public String getPassHash() { return passHash; }
     public void setPassHash(String passHash) { this.passHash = passHash; }
 
-    public String getGHOAuth() { return ghOAuth; }
-    public void setGHOAuth(String ghOAuth) { this.ghOAuth = ghOAuth; }
+    public String getGhOAuth() { return ghOAuth; }
+    public void setGhOAuth(String ghOAuth) { this.ghOAuth = ghOAuth; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

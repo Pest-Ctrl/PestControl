@@ -139,6 +139,12 @@ export const prisma = {
           body: JSON.stringify({ role: schemaRole })
         });
       }
+      if (data.GHOAuth || data.ghOAuth !== undefined) {
+        return await fetchJava(`/users/${userId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ ghOAuth: data.GHOAuth || data.ghOAuth })
+        });
+      }
       return null;
     },
     findMany: async (args?: any) => {
@@ -150,7 +156,12 @@ export const prisma = {
     findFirst: async (args?: any) => {
       const repos = await fetchJava('/repos');
       if (!repos || repos.length === 0) return null;
-      return { ...repos[0], _count: repos[0]._count || { Issues: 0, Commits: 0 } };
+      const issues = await fetchJava('/issues') || [];
+      const commits = await fetchJava('/commits') || [];
+      const r = repos[0];
+      const repoIssues = issues.filter((i: any) => i.RepoID === r.RepoID || i.repoId === r.RepoID);
+      const repoCommits = commits.filter((c: any) => c.RepoID === r.RepoID || c.repoId === r.RepoID);
+      return { ...r, _count: { Issues: repoIssues.length, Commits: repoCommits.length } };
     },
     findMany: async (args?: any) => {
       let repos = await fetchJava('/repos') || [];
@@ -158,10 +169,25 @@ export const prisma = {
         const sid = args.where.SpaceID || args.where.spaceId;
         repos = repos.filter((r: any) => r.SpaceID === sid || r.spaceId === sid);
       }
-      return repos.map((r: any) => ({
-        ...r,
-        _count: r._count || { Issues: 0, Commits: 0 }
-      }));
+      
+      let issues: any[] = [];
+      let commits: any[] = [];
+      if (args?.include?._count) {
+         issues = await fetchJava('/issues') || [];
+         commits = await fetchJava('/commits') || [];
+      }
+
+      return repos.map((r: any) => {
+        let counts = { Issues: 0, Commits: 0 };
+        if (args?.include?._count) {
+          counts.Issues = issues.filter((i: any) => i.RepoID === r.RepoID || i.repoId === r.RepoID).length;
+          counts.Commits = commits.filter((c: any) => c.RepoID === r.RepoID || c.repoId === r.RepoID).length;
+        }
+        return {
+          ...r,
+          _count: counts
+        };
+      });
     },
     findUnique: async (args?: any) => {
       const repos = await fetchJava('/repos');
@@ -173,7 +199,15 @@ export const prisma = {
       } else {
         r = repos[0] || null;
       }
-      return r ? { ...r, _count: r._count || { Issues: 0, Commits: 0 } } : null;
+      
+      if (!r) return null;
+      
+      const issues = await fetchJava('/issues') || [];
+      const commits = await fetchJava('/commits') || [];
+      const repoIssues = issues.filter((i: any) => i.RepoID === r.RepoID || i.repoId === r.RepoID);
+      const repoCommits = commits.filter((c: any) => c.RepoID === r.RepoID || c.repoId === r.RepoID);
+      
+      return { ...r, _count: { Issues: repoIssues.length, Commits: repoCommits.length } };
     },
     create: async ({ data }: any) => {
       const payload: any = {
@@ -196,13 +230,31 @@ export const prisma = {
   commit: {
     findMany: async (args?: any) => {
       const commits = await fetchJava('/commits') || [];
+      const mapped = commits.map((c: any) => ({ ...c, SHA: c.CommitID || c.commitId }));
       if (args?.where?.RepoID || args?.where?.repoId) {
         const rid = args.where.RepoID || args.where.repoId;
-        return commits.filter((c: any) => c.RepoID === rid || c.repoId === rid);
+        return mapped.filter((c: any) => c.RepoID === rid || c.repoId === rid);
       }
-      return commits;
+      return mapped;
     },
-    createMany: async (args?: any) => { return []; }
+    createMany: async (args?: any) => {
+      const { data } = args;
+      const created = [];
+      for (const item of data) {
+        const payload: any = {
+          commitId: item.CommitID || item.CommitId || item.commitId || item.SHA || item.sha,
+          repoId: item.RepoID || item.RepoId || item.repoId,
+          message: item.Message || item.message,
+          authorName: item.AuthorName || item.authorName,
+          authorEmail: item.AuthorEmail || item.authorEmail,
+          committedAt: item.CommittedAt || item.committedAt,
+          url: item.URL || item.url || item.Url,
+        };
+        const res = await fetchJava('/commits', { method: 'POST', body: JSON.stringify(payload) });
+        if (res) created.push(res);
+      }
+      return { count: created.length };
+    }
   },
   issues: {
     findMany: async (args?: any) => {

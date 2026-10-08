@@ -44,17 +44,48 @@ export default function IssuesPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterSeverity, setFilterSeverity] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [users, setUsers] = useState<{ UserID: string; Username: string; Email: string }[]>([]);
 
   useEffect(() => {
     fetchIssues();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = () => {
+    fetch("/api/users")
+      .then(r => r.json())
+      .then(data => setUsers(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  };
 
   const fetchIssues = () => {
     setLoading(true);
     fetch("/api/issues")
       .then((r) => r.json())
-      .then((data) => { setIssues(data); setLoading(false); })
+      .then((data) => { setIssues(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
+  };
+
+  const handleAssigneeChange = async (issueId: string, assigneeId: string) => {
+    try {
+      const res = await fetch(`/api/issues/${issueId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assigneeId: assigneeId || null }),
+      });
+      if (res.ok) {
+        // Update local state instantly
+        setIssues(prev => prev.map(issue => {
+          if (issue.IssueID === issueId) {
+            const newAssignee = users.find(u => u.UserID === assigneeId) || null;
+            return { ...issue, Assignee: newAssignee };
+          }
+          return issue;
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to update assignee", err);
+    }
   };
 
   const filteredIssues = issues.filter((issue) => {
@@ -221,7 +252,19 @@ export default function IssuesPage() {
                                     </div>
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Assignee</p>
-                                      <p className="text-xs text-zinc-300">{issue.Assignee?.Username || "Unassigned"}</p>
+                                      <select 
+                                        className="w-full bg-[#050505] border border-zinc-800 text-xs text-zinc-300 py-1.5 px-2 rounded focus:outline-none focus:border-[#1ef2c1]/50"
+                                        value={issue.Assignee?.UserID || ""}
+                                        onChange={(e) => handleAssigneeChange(issue.IssueID, e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <option value="">Unassigned</option>
+                                        {users.map(u => (
+                                          <option key={u.UserID} value={u.UserID}>
+                                            {u.Username}
+                                          </option>
+                                        ))}
+                                      </select>
                                     </div>
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Created</p>

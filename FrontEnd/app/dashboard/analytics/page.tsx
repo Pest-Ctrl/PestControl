@@ -14,11 +14,18 @@ interface Issue {
 
 export default function AnalyticsPage() {
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [spaces, setSpaces] = useState<any[]>([]);
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string>("");
   const [repos, setRepos] = useState<any[]>([]);
   const [selectedRepoId, setSelectedRepoId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetch("/api/spaces")
+      .then((r) => r.json())
+      .then((data) => setSpaces(Array.isArray(data) ? data : []))
+      .catch(() => {});
+      
     fetch("/api/repos")
       .then((r) => r.json())
       .then((data) => setRepos(Array.isArray(data) ? data : []))
@@ -27,15 +34,18 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     setLoading(true);
-    const url = selectedRepoId ? `/api/issues?repoId=${selectedRepoId}` : "/api/issues";
+    let url = "/api/issues?";
+    if (selectedRepoId) url += `repoId=${selectedRepoId}&`;
+    if (selectedSpaceId) url += `spaceId=${selectedSpaceId}&`;
+    
     fetch(url)
       .then((r) => r.json())
       .then((data) => {
-        setIssues(data);
+        setIssues(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [selectedRepoId]);
+  }, [selectedRepoId, selectedSpaceId]);
 
   // Compute metrics from real data
   const total = issues.length;
@@ -73,18 +83,37 @@ export default function AnalyticsPage() {
             <h1 className="text-lg font-bold text-white tracking-wide">Analytics</h1>
             <p className="text-xs text-zinc-400">Process improvement metrics & audit trail</p>
           </div>
-          <select
-            value={selectedRepoId}
-            onChange={(e) => setSelectedRepoId(e.target.value)}
-            className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-4 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg"
-          >
-            <option value="">All Repositories</option>
-            {repos.map((r) => (
-              <option key={r.RepoID} value={r.RepoID}>
-                {r.GHOwner}/{r.GHName}
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-4">
+            <select
+              value={selectedSpaceId}
+              onChange={(e) => {
+                setSelectedSpaceId(e.target.value);
+                setSelectedRepoId(""); // Reset repo filter when space changes
+              }}
+              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-4 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg"
+            >
+              <option value="">All Workspaces</option>
+              {spaces.map((s) => (
+                <option key={s.SpaceID} value={s.SpaceID}>
+                  {s.SpaceName}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedRepoId}
+              onChange={(e) => setSelectedRepoId(e.target.value)}
+              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-4 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg"
+            >
+              <option value="">All Repositories</option>
+              {repos
+                .filter(r => !selectedSpaceId || r.SpaceID === selectedSpaceId)
+                .map((r) => (
+                <option key={r.RepoID} value={r.RepoID}>
+                  {r.GHOwner}/{r.GHName}
+                </option>
+              ))}
+            </select>
+          </div>
         </header>
 
         <div className="flex-1 flex">
@@ -172,7 +201,7 @@ export default function AnalyticsPage() {
               <p className="text-[10px] text-zinc-600 mt-1">Commits with linked issues</p>
             </div>
             <div className="p-3">
-              <Gitline />
+              <Gitline spaceId={selectedSpaceId} repoId={selectedRepoId} />
             </div>
           </aside>
         </div>

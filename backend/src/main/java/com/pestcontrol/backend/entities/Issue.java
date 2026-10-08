@@ -89,6 +89,8 @@ public class Issue {
     @Column(name = "\"desc\"", nullable = false)
     private String description;
 
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     @Column(name = "\"status\"", nullable = false)
     private IssueStatus status = IssueStatus.Open;
 
@@ -96,11 +98,15 @@ public class Issue {
     private UUID repoId;
 
     @Column(name = "commitid")
-    private UUID commitId;
+    private String commitId;
 
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     @Column(name = "severity", nullable = false)
     private SeverityStatus severity = SeverityStatus.Medium;
 
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     @Column(name = "bugtype", nullable = false)
     private BugTypes bugType = BugTypes.Functional;
 
@@ -137,8 +143,8 @@ public class Issue {
     public void setStatus(IssueStatus status) { this.status = status; }
     public UUID getRepoId() { return repoId; }
     public void setRepoId(UUID repoId) { this.repoId = repoId; }
-    public UUID getCommitId() { return commitId; }
-    public void setCommitId(UUID commitId) { this.commitId = commitId; }
+    public String getCommitId() { return commitId; }
+    public void setCommitId(String commitId) { this.commitId = commitId; }
     public SeverityStatus getSeverity() { return severity; }
     public void setSeverity(SeverityStatus severity) { this.severity = severity; }
     public BugTypes getBugType() { return bugType; }

@@ -13,11 +13,16 @@ export async function GET(request: Request) {
   const severity = searchParams.get('severity');
   const assignee = searchParams.get('assignee');
   const search = searchParams.get('search');
+  const repoId = searchParams.get('repoId');
+  const spaceId = searchParams.get('spaceId');
 
   const where: any = {};
   if (status) where.Status = status;
   if (severity) where.Severity = severity;
   if (assignee) where.AssigneeID = assignee;
+  if (repoId) where.RepoID = repoId;
+  if (spaceId) where.SpaceID = spaceId;
+  
   if (search) {
     where.OR = [
       { Title: { contains: search } },
@@ -25,16 +30,23 @@ export async function GET(request: Request) {
     ];
   }
 
-  const issues = await prisma.issues.findMany({
+  let issues = await prisma.issues.findMany({
     where,
-    include: {
-      Reporter: { select: { UserID: true, Username: true, Email: true } },
-      Assignee: { select: { UserID: true, Username: true, Email: true } },
-      Repo: { select: { RepoID: true, GHOwner: true, GHName: true } },
-      Commit: { select: { CommitID: true, SHA: true, Message: true } },
-      _count: { select: { Comments: true } },
-    },
     orderBy: { CreatedAt: 'desc' },
+  });
+
+  const users = await prisma.users.findMany();
+  
+  issues = issues.map((issue: any) => {
+    const reporter = users.find((u: any) => u.UserID === issue.ReporterID || u.UserId === issue.ReporterID);
+    const assignee = users.find((u: any) => u.UserID === issue.AssigneeID || u.UserId === issue.AssigneeID);
+    
+    return {
+      ...issue,
+      Reporter: reporter ? { UserID: reporter.UserID, Username: reporter.Username || reporter.username, Email: reporter.Email || reporter.email } : null,
+      Assignee: assignee ? { UserID: assignee.UserID, Username: assignee.Username || assignee.username, Email: assignee.Email || assignee.email } : null,
+      _count: { Comments: 0 }
+    };
   });
 
   return NextResponse.json(issues);
