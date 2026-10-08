@@ -94,14 +94,13 @@ export default function CreateIssuePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
-          description,
+          description: environment ? `${description}\n\n**Environment:**\n${environment}` : description,
           severity,
           bugType,
           repoId: repoId || undefined,
           commitId: commitId || undefined,
           filePath: filePath || undefined,
           lineRange: lineRange || undefined,
-          environment: environment || undefined,
         }),
       });
 
@@ -306,7 +305,7 @@ export default function CreateIssuePage() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={loading || !title || !description}
+                disabled={loading || !title || !description || !repoId || !commitId}
                 className="w-full py-3.5 font-bold tracking-widest uppercase transition-all duration-300
                   bg-transparent text-[#1ef2c1] border-2 border-[#1ef2c1] shadow-[0_0_12px_rgba(30,242,193,0.3)]
                   hover:bg-[#1ef2c1] hover:text-black hover:shadow-[0_0_25px_rgba(30,242,193,0.6)]

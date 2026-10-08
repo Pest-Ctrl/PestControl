@@ -5,8 +5,6 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -14,9 +12,8 @@ import jakarta.persistence.Table;
 @Table(name = "commit")
 public class Commit {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "commitid")
-    private UUID commitId;
+    private String commitId;
 
     @Column(name = "repoid", nullable = false)
     private UUID repoId;
@@ -38,8 +35,8 @@ public class Commit {
 
     // Getters and Setters
 
-    public UUID getCommitId() { return commitId; }
-    public void setCommitId(UUID commitId) { this.commitId = commitId; }
+    public String getCommitId() { return commitId; }
+    public void setCommitId(String commitId) { this.commitId = commitId; }
     public UUID getRepoId() { return repoId; }
     public void setRepoId(UUID repoId) { this.repoId = repoId; }
     public String getMessage() { return message; }

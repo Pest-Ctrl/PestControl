@@ -107,6 +107,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to import repository. It may already exist.' }, { status: 500 });
     }
 
+    // Save commits to the database
+    if (githubCommits.length > 0) {
+      try {
+        const mappedCommits = githubCommits.map((c: any) => ({
+          CommitID: c.sha,
+          RepoID: repo.RepoID || repo.RepoId || repo.repoId,
+          Message: c.commit.message,
+          AuthorName: c.commit.author.name,
+          AuthorEmail: c.commit.author.email,
+          CommittedAt: new Date(c.commit.author.date).toISOString(),
+          URL: c.html_url,
+        }));
+        await prisma.commit.createMany({ data: mappedCommits });
+      } catch (err) {
+        console.error('Failed to save commits to database:', err);
+      }
+    }
+
     // Create audit log (non-critical, ignore errors)
     try {
       await prisma.auditLog.create({

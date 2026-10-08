@@ -21,11 +21,24 @@ interface FileTreeVisualizerProps {
 }
 
 export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }: FileTreeVisualizerProps) {
+  // Parse files if it was sent as a JSON string
+  const parsedFiles = useMemo(() => {
+    let p = files;
+    if (typeof files === 'string') {
+      try {
+        p = JSON.parse(files);
+      } catch (e) {
+        p = [];
+      }
+    }
+    return Array.isArray(p) ? p : [];
+  }, [files]);
+
   // Build nested tree from flat paths
   const root = useMemo(() => {
     const treeRoot: TreeNode = { name: 'root', fullPath: '', type: 'tree', children: {} };
     
-    files.forEach(file => {
+    parsedFiles.forEach(file => {
       const parts = file.path.split('/');
       let current = treeRoot;
       
@@ -45,7 +58,7 @@ export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }
     });
     
     return treeRoot;
-  }, [files]);
+  }, [parsedFiles]);
 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
@@ -123,7 +136,7 @@ export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }
     );
   };
 
-  if (!files || files.length === 0) {
+  if (!parsedFiles || parsedFiles.length === 0) {
     return (
       <div className="w-full h-40 flex items-center justify-center border border-dashed border-zinc-800 rounded-lg">
         <p className="text-zinc-500 text-sm italic font-mono">No files found in this repository.</p>

@@ -74,6 +74,11 @@ public class ApiController {
         return commitRepository.findAll();
     }
 
+    @PostMapping("/commits")
+    public Commit createCommit(@RequestBody Commit commit) {
+        return commitRepository.save(commit);
+    }
+
     @GetMapping("/users")
     public List<User> getUsers() {
         return userRepository.findAll();
@@ -94,6 +99,18 @@ public class ApiController {
         return null;
     }
 
+    @PutMapping("/users/{id}")
+    public User updateUser(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user != null) {
+            if (body.containsKey("ghOAuth")) {
+                user.setGhOAuth(body.get("ghOAuth") != null ? body.get("ghOAuth").toString() : null);
+            }
+            return userRepository.save(user);
+        }
+        return null;
+    }
+
     @GetMapping("/issues")
     public List<Issue> getIssues() {
         return issueRepository.findAll();
@@ -109,6 +126,10 @@ public class ApiController {
                 issue.getSpaceId(),
                 savedIssue.getIssueId(),
                 issue.getTitle());
+
+        createNotification(savedIssue.getAssigneeId(), savedIssue.getReporterId(), 
+                "New Issue Assigned", 
+                "You have been assigned to a new issue: " + savedIssue.getTitle());
 
         return ResponseEntity.status(201).body(savedIssue);
     }
@@ -171,6 +192,10 @@ public class ApiController {
                 auditLogService.logStatusChanged(
                         actorId, issue.getSpaceId(), issue.getIssueId(),
                         oldStatus != null ? oldStatus.name() : null, newStatus.name());
+                        
+                createNotification(issue.getAssigneeId(), actorId, 
+                        "Issue Status Changed", 
+                        "Status changed to " + newStatus.name() + " for issue: " + issue.getTitle());
             }
             issue.setStatus(newStatus);
         }
@@ -182,10 +207,20 @@ public class ApiController {
             if (assigneeValue != null && !assigneeValue.toString().isBlank()) {
                 newAssigneeId = UUID.fromString(assigneeValue.toString());
             }
-            issue.setAssigneeId(newAssigneeId);
-            auditLogService.logIssueReassigned(
-                    actorId, issue.getSpaceId(), issue.getIssueId(),
-                    "Issue reassigned");
+            
+            UUID oldAssigneeId = issue.getAssigneeId();
+            if (newAssigneeId == null || !newAssigneeId.equals(oldAssigneeId)) {
+                issue.setAssigneeId(newAssigneeId);
+                auditLogService.logIssueReassigned(
+                        actorId, issue.getSpaceId(), issue.getIssueId(),
+                        newAssigneeId == null ? "Issue unassigned" : "Issue reassigned");
+                        
+                if (newAssigneeId != null) {
+                    createNotification(newAssigneeId, actorId, 
+                            "Issue Assigned", 
+                            "You have been assigned to issue: " + issue.getTitle());
+                }
+            }
         }
 
         Issue savedIssue = issueRepository.save(issue);
@@ -237,5 +272,15 @@ public class ApiController {
     @PostMapping("/spaces")
     public Space createSpace(@RequestBody Space space) {
         return spaceRepository.save(space);
+    }
+
+    private void createNotification(UUID targetUserId, UUID actorId, String title, String desc) {
+        if (targetUserId != null && !targetUserId.equals(actorId)) {
+            Inbox notif = new Inbox();
+            notif.setUserId(targetUserId);
+            notif.setNotifTitle(title);
+            notif.setNotifDesc(desc);
+            inboxRepository.save(notif);
+        }
     }
 }

@@ -46,6 +46,27 @@ export default function ProjectManagerDashboard() {
   const closedCount = issues.filter(i => i.Status === 'Closed').length;
   const closureRate = total > 0 ? Math.round((closedCount / total) * 100) : 0;
 
+  // Calculate MTTR dynamically
+  const resolvedIssues = issues.filter(i => i.Status === 'Resolved' || i.Status === 'Closed');
+  let mttrValue = "—";
+  if (resolvedIssues.length > 0) {
+    let totalMs = 0;
+    let count = 0;
+    resolvedIssues.forEach(i => {
+      const created = new Date(i.CreatedAt).getTime();
+      // Use UpdatedAt if available, otherwise fallback to current time minus created time as an estimate
+      const resolved = (i as any).UpdatedAt ? new Date((i as any).UpdatedAt).getTime() : new Date().getTime();
+      if (resolved > created) {
+        totalMs += (resolved - created);
+        count++;
+      }
+    });
+    if (count > 0) {
+      const avgHrs = totalMs / count / (1000 * 60 * 60);
+      mttrValue = avgHrs.toFixed(1);
+    }
+  }
+
   const statusBreakdown = [
     { label: 'Open', count: issues.filter(i => i.Status === 'Open').length, color: '#eab308' },
     { label: 'In Progress', count: issues.filter(i => i.Status === 'InProgress').length, color: '#3b82f6' },
@@ -73,7 +94,7 @@ export default function ProjectManagerDashboard() {
         <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-4 font-bold">Key Metrics</p>
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <KpiCard title="Open Issues" value={loading ? "—" : openIssues} subtitle={`${total} total tracked`} trend={{ value: `${openIssues} need attention`, positive: openIssues === 0 }} accent />
-          <KpiCard title="MTTR" value="18.4" unit="hrs" subtitle="Mean time to resolution" trend={{ value: '↓ 3.2h vs last sprint', positive: true }} accent />
+          <KpiCard title="MTTR" value={loading ? "—" : mttrValue} unit="hrs" subtitle="Mean time to resolution" trend={{ value: mttrValue !== "—" ? 'Current Average' : 'No data', positive: true }} accent />
           <KpiCard title="Bug Closure Rate" value={loading ? "—" : closureRate} unit="%" subtitle={`${closedCount}/${total} closed`} trend={{ value: closureRate >= 70 ? 'Healthy' : '⚠ Below 70%', positive: closureRate >= 70 }} accent />
           <KpiCard title="Total Issues" value={loading ? "—" : total} subtitle="All tracked defects" trend={{ value: 'All time', positive: true }} accent />
         </div>

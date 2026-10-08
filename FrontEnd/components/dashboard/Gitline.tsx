@@ -27,14 +27,19 @@ const SEVERITY_COLORS: Record<string, string> = {
   Low: "#71717a",
 };
 
-export default function Gitline() {
+export default function Gitline({ spaceId, repoId }: { spaceId?: string; repoId?: string }) {
   const [commits, setCommits] = useState<CommitNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [dotPositions, setDotPositions] = useState<Record<string, { x: number; y: number }>>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/commits")
+    setLoading(true);
+    let url = "/api/commits?";
+    if (repoId) url += `repoId=${repoId}&`;
+    if (spaceId) url += `spaceId=${spaceId}&`;
+    
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         setCommits(data);

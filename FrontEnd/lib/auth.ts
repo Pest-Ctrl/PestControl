@@ -113,6 +113,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 GHOAuth: account?.provider === 'github' ? account.providerAccountId : null
               }
             });
+          } else if (account?.provider === 'github' && !dbUser.GHOAuth) {
+            // Link github account if not already linked
+            dbUser = await prisma.users.update({
+              where: { UserID: dbUser.UserID || dbUser.UserId || dbUser.id },
+              data: { GHOAuth: account.providerAccountId }
+            });
           }
         } catch (err) {
           console.warn("Could not sync OAuth user with DB:", err);
