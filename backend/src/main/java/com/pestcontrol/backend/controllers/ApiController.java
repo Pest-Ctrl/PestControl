@@ -79,8 +79,35 @@ public class ApiController {
     }
 
     @PostMapping("/commits")
-    public Commit createCommit(@RequestBody Commit commit) {
-        return commitRepository.save(commit);
+    public ResponseEntity<?> createCommit(@RequestBody Commit commit) {
+        return ResponseEntity.status(201).body(commitRepository.save(commit));
+    }
+
+    @PostMapping("/commits/batch")
+    @Transactional
+    public ResponseEntity<?> createCommitsBatch(@RequestBody List<Map<String, Object>> commits) {
+        int saved = 0;
+        for (Map<String, Object> item : commits) {
+            try {
+                Commit commit = new Commit();
+                commit.setCommitId(item.get("commitId") != null ? item.get("commitId").toString() : null);
+                commit.setRepoId(UUID.fromString(item.get("repoId").toString()));
+                commit.setMessage(item.get("message") != null ? item.get("message").toString() : "No message");
+                commit.setAuthorName(item.get("authorName") != null ? item.get("authorName").toString() : "Unknown");
+                commit.setAuthorEmail(item.get("authorEmail") != null ? item.get("authorEmail").toString() : "noreply@github.com");
+                String dateStr = item.get("committedAt") != null ? item.get("committedAt").toString() : null;
+                commit.setCommittedAt(dateStr != null ? java.time.LocalDateTime.parse(dateStr.replace("Z", "").replace("+00:00", "")) : java.time.LocalDateTime.now());
+                commit.setUrl(item.get("url") != null ? item.get("url").toString() : "");
+                // Skip if already exists
+                if (!commitRepository.existsById(commit.getCommitId())) {
+                    commitRepository.save(commit);
+                    saved++;
+                }
+            } catch (Exception e) {
+                // Skip invalid entries
+            }
+        }
+        return ResponseEntity.ok(Map.of("saved", saved, "total", commits.size()));
     }
 
     @GetMapping("/users")
@@ -101,28 +128,29 @@ public class ApiController {
     }
 
     @PutMapping("/users/{id}")
-    public User updateUser(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> updateUser(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
         User user = userRepository.findById(id).orElse(null);
-        if (user != null) {
-            if (body.containsKey("ghOAuth")) {
-                Object ghVal = body.get("ghOAuth");
-                user.setGhOAuth(ghVal != null && !ghVal.toString().isBlank() ? ghVal.toString() : null);
-            }
-            if (body.containsKey("username")) {
-                Object uVal = body.get("username");
-                if (uVal != null && !uVal.toString().isBlank()) {
-                    user.setUsername(uVal.toString());
-                }
-            }
-            if (body.containsKey("passHash")) {
-                Object pVal = body.get("passHash");
-                if (pVal != null && !pVal.toString().isBlank()) {
-                    user.setPassHash(pVal.toString());
-                }
-            }
-            return userRepository.save(user);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
         }
-        return null;
+        // Allow explicit null to clear ghOAuth (for GitHub disconnect)
+        if (body.containsKey("ghOAuth")) {
+            Object ghVal = body.get("ghOAuth");
+            user.setGhOAuth((ghVal == null || ghVal.toString().isBlank()) ? null : ghVal.toString());
+        }
+        if (body.containsKey("username")) {
+            Object uVal = body.get("username");
+            if (uVal != null && !uVal.toString().isBlank()) {
+                user.setUsername(uVal.toString());
+            }
+        }
+        if (body.containsKey("passHash")) {
+            Object pVal = body.get("passHash");
+            if (pVal != null && !pVal.toString().isBlank()) {
+                user.setPassHash(pVal.toString());
+            }
+        }
+        return ResponseEntity.ok(userRepository.save(user));
     }
 
     @GetMapping("/issues")

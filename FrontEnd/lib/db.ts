@@ -96,8 +96,15 @@ const fetchJava = async (path: string, options: any = {}) => {
       console.error(`Java API returned ${res.status} for ${path}`);
       return null;
     }
-    const data = await res.json();
-    return mapKeysToPascalCase(data);
+    // Handle responses with no body (204, or DELETE responses)
+    const text = await res.text();
+    if (!text || text.trim() === '') return { success: true };
+    try {
+      const data = JSON.parse(text);
+      return mapKeysToPascalCase(data);
+    } catch {
+      return { success: true };
+    }
   } catch (err) {
     console.error(`Error calling Java API ${path}:`, err);
     return null;
@@ -253,21 +260,19 @@ export const prisma = {
     },
     createMany: async (args?: any) => {
       const { data } = args;
-      const created = [];
-      for (const item of data) {
-        const payload: any = {
-          commitId: item.CommitID || item.CommitId || item.commitId || item.SHA || item.sha,
-          repoId: item.RepoID || item.RepoId || item.repoId,
-          message: item.Message || item.message,
-          authorName: item.AuthorName || item.authorName,
-          authorEmail: item.AuthorEmail || item.authorEmail,
-          committedAt: item.CommittedAt || item.committedAt,
-          url: item.URL || item.url || item.Url,
-        };
-        const res = await fetchJava('/commits', { method: 'POST', body: JSON.stringify(payload) });
-        if (res) created.push(res);
-      }
-      return { count: created.length };
+      if (!data || data.length === 0) return { count: 0 };
+      // Use batch endpoint for efficiency
+      const payload = data.map((item: any) => ({
+        commitId: item.CommitID || item.CommitId || item.commitId || item.SHA || item.sha,
+        repoId: item.RepoID || item.RepoId || item.repoId,
+        message: item.Message || item.message,
+        authorName: item.AuthorName || item.authorName,
+        authorEmail: item.AuthorEmail || item.authorEmail,
+        committedAt: item.CommittedAt || item.committedAt,
+        url: item.URL || item.url || item.Url,
+      }));
+      const res = await fetchJava('/commits/batch', { method: 'POST', body: JSON.stringify(payload) });
+      return { count: res?.Saved ?? res?.saved ?? payload.length };
     },
     deleteMany: async (args?: any) => {
       const repoId = args?.where?.RepoID || args?.where?.repoId;
@@ -358,9 +363,14 @@ export const prisma = {
     },
     update: async ({ where, data }: any) => {
       const id = where.SpaceId || where.SpaceID || where.id;
+      // Map the Pascal-case key to the Java camelCase key expected by the controller
+      const payload: any = {};
+      if (data.SpaceName !== undefined || data.spaceName !== undefined) {
+        payload.spaceName = data.SpaceName ?? data.spaceName;
+      }
       return await fetchJava(`/spaces/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(mapKeysToCamelCase(data))
+        body: JSON.stringify(payload)
       });
     },
     delete: async ({ where }: any) => {
