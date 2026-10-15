@@ -51,3 +51,7 @@ node_modules/
 # SQLite mock database (generated locally via prisma seed)
 prisma/mock.db
 prisma/mock.db-journal
+
+# Next.js generated agent rules
+AGENTS.md
+CLAUDE.md

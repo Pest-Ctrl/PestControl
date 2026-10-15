@@ -132,20 +132,31 @@ export const prisma = {
     },
     update: async ({ where, data }: any) => {
       const userId = where.UserID || where.UserId || where.userId || where.id;
+      let res = null;
       if (data.Role || data.role) {
         const schemaRole = toSchemaRole(data.Role || data.role);
-        return await fetchJava(`/users/${userId}/role`, {
+        res = await fetchJava(`/users/${userId}/role`, {
           method: 'PUT',
           body: JSON.stringify({ role: schemaRole })
         });
       }
-      if (data.GHOAuth || data.ghOAuth !== undefined) {
-        return await fetchJava(`/users/${userId}`, {
+      const userPayload: any = {};
+      if (data.GHOAuth !== undefined || data.ghOAuth !== undefined) {
+        userPayload.ghOAuth = data.GHOAuth ?? data.ghOAuth;
+      }
+      if (data.Username !== undefined || data.username !== undefined) {
+        userPayload.username = data.Username ?? data.username;
+      }
+      if (data.PassHash !== undefined || data.passHash !== undefined) {
+        userPayload.passHash = data.PassHash ?? data.passHash;
+      }
+      if (Object.keys(userPayload).length > 0) {
+        res = await fetchJava(`/users/${userId}`, {
           method: 'PUT',
-          body: JSON.stringify({ ghOAuth: data.GHOAuth || data.ghOAuth })
+          body: JSON.stringify(userPayload)
         });
       }
-      return null;
+      return res;
     },
     findMany: async (args?: any) => {
       const users = await fetchJava('/users') || [];
@@ -257,6 +268,13 @@ export const prisma = {
         if (res) created.push(res);
       }
       return { count: created.length };
+    },
+    deleteMany: async (args?: any) => {
+      const repoId = args?.where?.RepoID || args?.where?.repoId;
+      if (repoId) {
+        return await fetchJava(`/commits?repoId=${repoId}`, { method: 'DELETE' });
+      }
+      return null;
     }
   },
   issues: {
@@ -338,6 +356,17 @@ export const prisma = {
       };
       return await fetchJava('/spaces', { method: 'POST', body: JSON.stringify(payload) });
     },
+    update: async ({ where, data }: any) => {
+      const id = where.SpaceId || where.SpaceID || where.id;
+      return await fetchJava(`/spaces/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(mapKeysToCamelCase(data))
+      });
+    },
+    delete: async ({ where }: any) => {
+      const id = where.SpaceId || where.SpaceID || where.id;
+      return await fetchJava(`/spaces/${id}`, { method: 'DELETE' });
+    }
   },
   auditLog: {
     create: async ({ data }: any) => {

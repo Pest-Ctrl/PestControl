@@ -9,6 +9,7 @@ import com.pestcontrol.backend.repositories.*;
 import com.pestcontrol.backend.services.AuditLogService;
 
 import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -70,7 +71,10 @@ public class ApiController {
     }
 
     @GetMapping("/commits")
-    public List<Commit> getCommits() {
+    public List<Commit> getCommits(@RequestParam(value = "repoId", required = false) UUID repoId) {
+        if (repoId != null) {
+            return commitRepository.findByRepoIdOrderByCommittedAtDesc(repoId);
+        }
         return commitRepository.findAll();
     }
 
@@ -101,7 +105,20 @@ public class ApiController {
         User user = userRepository.findById(id).orElse(null);
         if (user != null) {
             if (body.containsKey("ghOAuth")) {
-                user.setGhOAuth(body.get("ghOAuth") != null ? body.get("ghOAuth").toString() : null);
+                Object ghVal = body.get("ghOAuth");
+                user.setGhOAuth(ghVal != null && !ghVal.toString().isBlank() ? ghVal.toString() : null);
+            }
+            if (body.containsKey("username")) {
+                Object uVal = body.get("username");
+                if (uVal != null && !uVal.toString().isBlank()) {
+                    user.setUsername(uVal.toString());
+                }
+            }
+            if (body.containsKey("passHash")) {
+                Object pVal = body.get("passHash");
+                if (pVal != null && !pVal.toString().isBlank()) {
+                    user.setPassHash(pVal.toString());
+                }
             }
             return userRepository.save(user);
         }
@@ -269,6 +286,60 @@ public class ApiController {
     @PostMapping("/spaces")
     public Space createSpace(@RequestBody Space space) {
         return spaceRepository.save(space);
+    }
+
+    @PutMapping("/spaces/{id}")
+    public ResponseEntity<?> updateSpace(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        Space space = spaceRepository.findById(id).orElse(null);
+        if (space == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (body.containsKey("spaceName") && body.get("spaceName") != null) {
+            space.setSpaceName(body.get("spaceName").toString());
+        }
+        return ResponseEntity.ok(spaceRepository.save(space));
+    }
+
+    @DeleteMapping("/spaces/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteSpace(@PathVariable UUID id) {
+        if (!spaceRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        // Delete issues for this space
+        List<Issue> issues = issueRepository.findBySpaceIdOrderByCreatedAtDesc(id);
+        if (issues != null && !issues.isEmpty()) {
+            issueRepository.deleteAll(issues);
+        }
+        // Delete audit logs for this space
+        List<AuditLog> auditLogs = auditLogRepository.findBySpaceIdOrderByAuditTimeDesc(id);
+        if (auditLogs != null && !auditLogs.isEmpty()) {
+            auditLogRepository.deleteAll(auditLogs);
+        }
+        // Delete repos and commits belonging to this space
+        List<Repo> allRepos = repoRepository.findAll();
+        for (Repo r : allRepos) {
+            if (id.equals(r.getSpaceId())) {
+                List<Commit> commits = commitRepository.findByRepoIdOrderByCommittedAtDesc(r.getRepoId());
+                if (commits != null && !commits.isEmpty()) {
+                    commitRepository.deleteAll(commits);
+                }
+                repoRepository.delete(r);
+            }
+        }
+        spaceRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Space deleted successfully"));
+    }
+
+    @DeleteMapping("/commits")
+    @Transactional
+    public ResponseEntity<?> clearCommits(@RequestParam("repoId") UUID repoId) {
+        List<Commit> commits = commitRepository.findByRepoIdOrderByCommittedAtDesc(repoId);
+        int count = commits != null ? commits.size() : 0;
+        if (commits != null && !commits.isEmpty()) {
+            commitRepository.deleteAll(commits);
+        }
+        return ResponseEntity.ok(Map.of("message", "Commits cleared successfully", "cleared", count));
     }
 
     private void createNotification(UUID targetUserId, UUID actorId, String title, String desc) {
