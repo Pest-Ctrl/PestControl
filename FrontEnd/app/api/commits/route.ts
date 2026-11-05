@@ -30,13 +30,18 @@ export async function GET(request: Request) {
 
   const commits = await prisma.commit.findMany({
     where: { RepoID: { in: targetRepoIds } },
-      include: {
-        Issues: {
-          select: { IssueID: true, Title: true, Status: true, Severity: true, CreatedAt: true },
-        },
+    include: {
+      Issues: {
+        select: { IssueID: true, Title: true, Status: true, Severity: true, CreatedAt: true },
       },
-      orderBy: { CommittedAt: 'desc' },
-    });
+    },
+    orderBy: { CommittedAt: 'desc' },
+  });
 
-    return NextResponse.json(commits);
-  }
+  const safeCommits = (Array.isArray(commits) ? commits : []).map((c: any) => ({
+    ...c,
+    Issues: Array.isArray(c.Issues) ? c.Issues : (Array.isArray(c.issues) ? c.issues : [])
+  }));
+
+  return NextResponse.json(safeCommits);
+}

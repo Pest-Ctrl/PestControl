@@ -1,6 +1,10 @@
 import { toSchemaRole } from './roles';
 
-const JAVA_API = 'http://localhost:8080/api';
+const getJavaApiUrl = () => {
+  const envUrl = process.env.JAVA_API || process.env.BACKEND_URL || 'http://localhost:8080/api';
+  return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
+};
+const JAVA_API = getJavaApiUrl();
 
 const mapKeysToPascalCase = (obj: any): any => {
   if (Array.isArray(obj)) {
@@ -248,15 +252,40 @@ export const prisma = {
   commit: {
     findMany: async (args?: any) => {
       const commits = await fetchJava('/commits') || [];
-      const mapped = commits.map((c: any) => ({ ...c, SHA: c.CommitID || c.commitId }));
+      let allIssues: any[] = [];
+      if (args?.include?.Issues || args?.include?.issues) {
+        allIssues = await fetchJava('/issues') || [];
+      }
+      const mapped = commits.map((c: any) => {
+        const sha = c.CommitID || c.commitId || c.SHA || c.sha;
+        const linkedIssues = allIssues
+          .filter((i: any) => (i.CommitID && i.CommitID === sha) || (i.commitId && i.commitId === sha))
+          .map((i: any) => ({
+            IssueID: i.IssueID || i.issueId || i.id,
+            Title: i.Title || i.title || '',
+            Status: i.Status || i.status || 'Open',
+            Severity: i.Severity || i.severity || 'Medium',
+            CreatedAt: i.CreatedAt || i.createdAt || '',
+          }));
+
+        return {
+          ...c,
+          SHA: sha,
+          Issues: linkedIssues,
+          issues: linkedIssues,
+        };
+      });
+
+      let result = mapped;
       if (args?.where?.RepoID || args?.where?.repoId) {
         const rid = args.where.RepoID || args.where.repoId;
         if (typeof rid === 'object' && rid !== null && rid.in) {
-          return mapped.filter((c: any) => rid.in.includes(c.RepoID) || rid.in.includes(c.repoId));
+          result = result.filter((c: any) => rid.in.includes(c.RepoID) || rid.in.includes(c.repoId));
+        } else {
+          result = result.filter((c: any) => c.RepoID === rid || c.repoId === rid);
         }
-        return mapped.filter((c: any) => c.RepoID === rid || c.repoId === rid);
       }
-      return mapped;
+      return result;
     },
     createMany: async (args?: any) => {
       const { data } = args;

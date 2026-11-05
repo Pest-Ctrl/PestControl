@@ -42,11 +42,17 @@ export default function Gitline({ spaceId, repoId }: { spaceId?: string; repoId?
     fetch(url)
       .then((r) => r.json())
       .then((data) => {
-        setCommits(data);
+        const safeData = (Array.isArray(data) ? data : []).map((c: any) => ({
+          ...c,
+          CommitID: c.CommitID || c.commitId || c.SHA || c.sha || "",
+          SHA: c.SHA || c.sha || c.CommitID || c.commitId || "",
+          Issues: Array.isArray(c.Issues) ? c.Issues : (Array.isArray(c.issues) ? c.issues : [])
+        }));
+        setCommits(safeData);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [repoId, spaceId]);
 
   useEffect(() => {
     if (commits.length === 0 || !containerRef.current) return;
@@ -143,10 +149,11 @@ export default function Gitline({ spaceId, repoId }: { spaceId?: string; repoId?
 
       <div className="space-y-6">
         {commits.map((commit, index) => {
-          const hasIssues = commit.Issues.length > 0;
+          const issuesList = commit.Issues || [];
+          const hasIssues = issuesList.length > 0;
           const isNew = index === 0 && hasIssues;
           const highestSeverity = hasIssues
-            ? commit.Issues.sort(
+            ? [...issuesList].sort(
                 (a, b) =>
                   ["Critical", "High", "Medium", "Low"].indexOf(a.Severity) -
                   ["Critical", "High", "Medium", "Low"].indexOf(b.Severity)
@@ -189,13 +196,15 @@ export default function Gitline({ spaceId, repoId }: { spaceId?: string; repoId?
               >
                 <div className="flex items-center justify-between mb-1">
                   <code className="text-xs text-[#1ef2c1]/70 font-mono">
-                    {commit.SHA.slice(0, 7)}
+                    {(commit.SHA || commit.CommitID || "").slice(0, 7)}
                   </code>
                   <span className="text-[10px] text-zinc-600">
-                    {new Date(commit.CommittedAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {commit.CommittedAt
+                      ? new Date(commit.CommittedAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "Recent"}
                   </span>
                 </div>
                 <p className="text-xs text-zinc-300 leading-relaxed">
@@ -208,7 +217,7 @@ export default function Gitline({ spaceId, repoId }: { spaceId?: string; repoId?
                 {/* Linked issues */}
                 {hasIssues && (
                   <div className="mt-3 space-y-1">
-                    {commit.Issues.map((issue) => (
+                    {issuesList.map((issue) => (
                       <div
                         key={issue.IssueID}
                         className="flex items-center gap-2 px-2 py-1.5 rounded bg-zinc-900 border border-zinc-800"
