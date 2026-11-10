@@ -1,6 +1,7 @@
 import NextAuth, { type Session } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { prisma } from "@/lib/db";
 import { toSchemaRole } from "@/lib/roles";
@@ -35,14 +36,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         try {
           const dbUser = await prisma.users.findUnique({ where: { Email: email } });
-          if (!dbUser) return null;
+          if (!dbUser) {
+            console.warn("[auth] Credentials login failed: user not found for email:", email);
+            return null;
+          }
 
           const passHash = dbUser.PassHash || dbUser.passHash;
-          if (!passHash || typeof passHash !== "string") return null;
+          if (!passHash || typeof passHash !== "string") {
+            console.warn("[auth] Credentials login failed: no PassHash set for user:", email);
+            return null;
+          }
 
-          const bcrypt = await import("bcryptjs");
-          const isValid = await bcrypt.compare(password, passHash);
-          if (!isValid) return null;
+          const isValid = await bcrypt.compare(password, passHash.trim());
+          if (!isValid) {
+            console.warn("[auth] Credentials login failed: password mismatch for email:", email);
+            return null;
+          }
 
           return {
             id: dbUser.UserID || dbUser.UserId || dbUser.id,
@@ -51,7 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: toSchemaRole(dbUser.Role || dbUser.role),
           };
         } catch (err) {
-          console.error("Database authentication error:", err);
+          console.error("[auth] Database authentication error:", err);
           return null;
         }
       }

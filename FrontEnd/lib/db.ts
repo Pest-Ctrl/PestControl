@@ -4,7 +4,6 @@ const getJavaApiUrl = () => {
   const envUrl = process.env.JAVA_API || process.env.BACKEND_URL || 'http://localhost:8080/api';
   return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
 };
-const JAVA_API = getJavaApiUrl();
 
 const mapKeysToPascalCase = (obj: any): any => {
   if (Array.isArray(obj)) {
@@ -91,8 +90,10 @@ const mapKeysToCamelCase = (obj: any): any => {
 };
 
 const fetchJava = async (path: string, options: any = {}) => {
+  const apiBase = getJavaApiUrl();
   try {
-    const res = await fetch(`${JAVA_API}${path}`, {
+    const res = await fetch(`${apiBase}${path}`, {
+      cache: 'no-store',
       ...options,
       headers: { 'Content-Type': 'application/json', ...options.headers }
     });
@@ -122,8 +123,10 @@ export const prisma = {
       const users = await fetchJava('/users');
       if (!users || !Array.isArray(users)) return null;
       if (where.Email || where.email) {
-        const target = (where.Email || where.email).toLowerCase();
-        return users.find((u: any) => u.Email?.toLowerCase() === target || u.email?.toLowerCase() === target) || null;
+        const target = String(where.Email || where.email).trim().toLowerCase();
+        return users.find((u: any) =>
+          String(u.Email || u.email || '').trim().toLowerCase() === target
+        ) || null;
       }
       if (where.UserID || where.UserId || where.userId || where.id) {
         const target = where.UserID || where.UserId || where.userId || where.id;
