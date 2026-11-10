@@ -135,7 +135,7 @@ export const prisma = {
       const payload: any = {
         username: data.Username || data.username,
         email: data.Email || data.email,
-        passHash: data.PassHash || data.passHash || 'dummy',
+        passHash: data.PassHash ?? data.passHash ?? null,
         ghOAuth: data.GHOAuth || data.ghOAuth || null,
         role: toSchemaRole(data.Role || data.role)
       };

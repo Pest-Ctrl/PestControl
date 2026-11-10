@@ -385,30 +385,33 @@ public class ApiController {
         String username = body.get("username");
         String email = body.get("email");
         String password = body.containsKey("password") ? body.get("password") : body.get("passHash");
+        String ghOAuth = body.get("ghOAuth");
         String role = body.get("role");
 
-        if (username == null || email == null || password == null || role == null) {
+        boolean hasPassword = password != null && !password.isBlank();
+        boolean hasGhOAuth = ghOAuth != null && !ghOAuth.isBlank();
+
+        if (username == null || username.isBlank() || email == null || email.isBlank() || (!hasPassword && !hasGhOAuth)) {
             return ResponseEntity.badRequest().body("Missing required fields");
         }
+
+        String normalizedEmail = email.trim().toLowerCase();
         User.UserRole userRole;
-        try{
-            userRole = User.fromString(role);
-        }catch(IllegalArgumentException e){
+        try {
+            userRole = (role == null || role.isBlank()) ? User.UserRole.Developer : User.fromString(role);
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Invalid role");
         }
 
-        // Check if username or email already exists (case-insensitive for email)
-        if(userRepository.existsByUsername(username)){
-            return ResponseEntity.badRequest().body("Username already exists");
-        }
-        if(userRepository.existsByEmail(email)){
-            return ResponseEntity.badRequest().body("Email already exists");
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            return ResponseEntity.status(409).body("Email already exists");
         }
 
         User newUser = new User();
-        newUser.setUsername(username);
-        newUser.setEmail(email);
-        newUser.setPassHash(password);
+        newUser.setUsername(username.trim());
+        newUser.setEmail(normalizedEmail);
+        newUser.setPassHash(hasPassword ? password : null);
+        newUser.setGhOAuth(hasGhOAuth ? ghOAuth : null);
         newUser.setRole(userRole);
 
         User savedUser = userRepository.save(newUser);

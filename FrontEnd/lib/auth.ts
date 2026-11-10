@@ -1,17 +1,9 @@
-import NextAuth from "next-auth";
+import NextAuth, { type Session } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
-import { SignJWT, jwtVerify } from "jose";
+import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { prisma } from "@/lib/db";
-import { toSchemaRole, SchemaRole } from "@/lib/roles";
-
-// Universal schema roles: Developer, QAEngineer, RepoImporter, Admin
-const DUMMY_USERS: { email: string; password: string; name: string; role: SchemaRole }[] = [
-  { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer' },
-  { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QAEngineer' },
-  { email: 'admin@gmail.com',  password: 'admin@123',  name: 'Admin User',   role: 'Admin' },
-  { email: 'importer@gmail.com', password: 'password@3', name: 'Importer User', role: 'RepoImporter' }
-];
+import { toSchemaRole } from "@/lib/roles";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -23,7 +15,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: profile.id.toString(),
           name: profile.name || profile.login,
-          email: profile.email,
+          email: profile.email || (profile.login ? `${profile.login}@users.noreply.github.com` : null),
           image: profile.avatar_url,
           role: "Developer", // Default role, will be overridden by DB
         };
@@ -37,37 +29,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        
-        const dummyUser = DUMMY_USERS.find(
-          (u) => u.email === credentials.email && u.password === credentials.password
-        );
 
-        if (dummyUser) {
-          let dbUser: any = null;
-          try {
-            dbUser = await prisma.users.findUnique({ where: { Email: dummyUser.email } });
-            if (!dbUser) {
-              dbUser = await prisma.users.create({
-                data: {
-                  Email: dummyUser.email,
-                  Username: dummyUser.name,
-                  Role: toSchemaRole(dummyUser.role),
-                  PassHash: "dummy"
-                }
-              });
-            }
-          } catch (err) {
-            console.warn("Backend user lookup/creation error:", err);
-          }
+        const email = String(credentials.email).trim().toLowerCase();
+        const password = String(credentials.password);
 
-          const userId = dbUser?.UserID || dbUser?.UserId || dbUser?.id || dummyUser.email;
-          const userRole = toSchemaRole(dbUser?.Role || dummyUser.role);
-          const userName = dbUser?.Username || dummyUser.name;
-          const userEmail = dbUser?.Email || dummyUser.email;
+        try {
+          const dbUser = await prisma.users.findUnique({ where: { Email: email } });
+          if (!dbUser) return null;
 
-          return { id: userId, name: userName, email: userEmail, role: userRole };
+          const passHash = dbUser.PassHash || dbUser.passHash;
+          if (!passHash || typeof passHash !== "string") return null;
+
+          const bcrypt = await import("bcryptjs");
+          const isValid = await bcrypt.compare(password, passHash);
+          if (!isValid) return null;
+
+          return {
+            id: dbUser.UserID || dbUser.UserId || dbUser.id,
+            name: dbUser.Username || dbUser.username || email.split("@")[0],
+            email: dbUser.Email || dbUser.email || email,
+            role: toSchemaRole(dbUser.Role || dbUser.role),
+          };
+        } catch (err) {
+          console.error("Database authentication error:", err);
+          return null;
         }
-        return null;
       }
     })
   ],
@@ -78,7 +64,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   jwt: {
     async encode({ secret, token }) {
       if (!token) return "";
-      return await new SignJWT(token as any)
+      return await new SignJWT(token as JWTPayload)
         .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt()
         .setExpirationTime("30d")
@@ -88,51 +74,79 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!token) return null;
       try {
         const { payload } = await jwtVerify(token, new TextEncoder().encode(secret as string));
-        return payload as any;
-      } catch (e) {
+        return payload;
+      } catch {
         return null;
       }
     },
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === 'github') {
+        if (!user.email) {
+          console.error("GitHub sign-in failed: missing email address");
+          return false;
+        }
+
+        const email = user.email.trim().toLowerCase();
+        const username = (user.name || email.split('@')[0]).trim();
+
+        try {
+          let dbUser = await prisma.users.findUnique({ where: { Email: email } });
+          if (!dbUser) {
+            dbUser = await prisma.users.create({
+              data: {
+                Email: email,
+                Username: username,
+                Role: 'Developer',
+                GHOAuth: account.access_token || null,
+              }
+            });
+            if (!dbUser) {
+              dbUser = await prisma.users.findUnique({ where: { Email: email } });
+            }
+          } else if (account.access_token) {
+            // Always update GHOAuth to keep the access token fresh
+            const updated = await prisma.users.update({
+              where: { UserID: dbUser.UserID || dbUser.UserId || dbUser.id },
+              data: { GHOAuth: account.access_token }
+            });
+            if (updated) dbUser = updated;
+          }
+
+          if (!dbUser) {
+            console.error("Failed to create or sync GitHub user with DB:", email);
+            return false;
+          }
+
+          user.id = String(dbUser.UserID || dbUser.UserId || dbUser.id);
+          user.role = toSchemaRole(dbUser.Role || dbUser.role);
+          user.name = dbUser.Username || dbUser.username || username;
+        } catch (err) {
+          console.error("Could not sync OAuth user with DB:", err);
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, account }) {
       if (account && account.provider === 'github') {
         token.githubToken = account.access_token;
       }
-      
-      if (user && user.email) {
-        let dbUser: any = null;
-        try {
-          dbUser = await prisma.users.findUnique({ where: { Email: user.email } });
-          if (!dbUser) {
-            dbUser = await prisma.users.create({
-              data: {
-                Email: user.email,
-                Username: user.name || user.email.split('@')[0],
-                Role: toSchemaRole(account?.provider === 'github' ? 'Developer' : ((user as any).role || 'Developer')),
-                GHOAuth: account?.provider === 'github' ? account.access_token : null
-              }
-            });
-          } else if (account?.provider === 'github') {
-            // Always update GHOAuth to keep the access token fresh
-            dbUser = await prisma.users.update({
-              where: { UserID: dbUser.UserID || dbUser.UserId || dbUser.id },
-              data: { GHOAuth: account.access_token }
-            });
-          }
-        } catch (err) {
-          console.warn("Could not sync OAuth user with DB:", err);
-        }
 
-        token.sub = dbUser?.UserID || dbUser?.UserId || (user as any).id || user.email;
-        token.role = toSchemaRole(dbUser?.Role || (user as any).role || 'Developer');
+      if (user) {
+        token.sub = user.id || token.sub;
+        token.role = toSchemaRole(user.role || 'Developer');
+        if (user.name) {
+          token.name = user.name;
+        }
       } else if (token.sub) {
         try {
           const dbUser = await prisma.users.findUnique({ where: { UserID: token.sub } });
           if (dbUser?.Role) {
             token.role = toSchemaRole(dbUser.Role);
           }
-        } catch (err) {
+        } catch {
           // Keep existing token.role if lookup fails
         }
       }
@@ -145,8 +159,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token.role) {
         session.user.role = toSchemaRole(token.role as string);
       }
-      if (token.githubToken) {
-        (session as any).githubToken = token.githubToken;
+      if (typeof token.githubToken === 'string') {
+        (session as Session & { githubToken?: string }).githubToken = token.githubToken;
       }
       return session;
     },
