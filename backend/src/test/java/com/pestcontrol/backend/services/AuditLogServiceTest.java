@@ -69,5 +69,28 @@ class AuditLogServiceTest {
         assertEquals("Imported repository Pest-Ctrl/PestControl", log.getAuditDesc());
         assertNull(log.getIssueId());
     }
+
+    @Test
+    @DisplayName("Compliance: logIssueCreated, logStatusChanged, logIssueReassigned, and non-null due dates")
+    void testRemainingAuditLogMethods() {
+        when(auditLogRepository.save(any(AuditLog.class))).thenAnswer(i -> i.getArgument(0));
+
+        AuditLog created = auditLogService.logIssueCreated(userId, spaceId, issueId, "Crash on save");
+        assertEquals("Issue Filed", created.getAuditTitle());
+        assertEquals("Filed issue: Crash on save", created.getAuditDesc());
+
+        AuditLog statusChanged = auditLogService.logStatusChanged(userId, spaceId, issueId, "Open", "InProgress");
+        assertEquals("Status Transition", statusChanged.getAuditTitle());
+        assertEquals("Transitioned from Open to InProgress", statusChanged.getAuditDesc());
+
+        AuditLog reassigned = auditLogService.logIssueReassigned(userId, spaceId, issueId, "Issue unassigned");
+        assertEquals("Issue Reassigned", reassigned.getAuditTitle());
+        assertEquals("Issue unassigned", reassigned.getAuditDesc());
+
+        AuditLog dueDateChanged = auditLogService.logDueDateChanged(
+                userId, spaceId, issueId, "2026-11-15T10:00:00", "2026-11-20T10:00:00");
+        assertEquals("Due Date Changed", dueDateChanged.getAuditTitle());
+        assertEquals("Due date changed from 2026-11-15T10:00:00 to 2026-11-20T10:00:00", dueDateChanged.getAuditDesc());
+    }
 }
 

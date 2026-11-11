@@ -11,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -105,6 +106,27 @@ class GithubControllerTest
 		});
 		assertNotNull(ex.getMessage());
 
+		mockServer.verify();
+	}
+
+	@Test
+	void testAuthorizationHeaderForwardedToGitHub()
+	{
+		mockServer.expect(requestTo("https://api.github.com/repos/octocat/Hello-World/commits?sha=main"))
+				.andExpect(method(HttpMethod.GET))
+				.andExpect(header("Authorization", "Bearer ghu_secret123"))
+				.andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+
+		mockServer.expect(requestTo("https://api.github.com/repos/octocat/Hello-World/git/trees/main?recursive=1"))
+				.andExpect(method(HttpMethod.GET))
+				.andExpect(header("Authorization", "Bearer ghu_secret123"))
+				.andRespond(withSuccess("{\"tree\":[]}", MediaType.APPLICATION_JSON));
+
+		var commitsResponse = githubController.GetCommitHistory("Bearer ghu_secret123", "octocat", "Hello-World", "main");
+		var treeResponse = githubController.GetDirectoryTree("Bearer ghu_secret123", "octocat", "Hello-World", "main");
+
+		assertEquals(200, commitsResponse.getStatusCode().value());
+		assertEquals(200, treeResponse.getStatusCode().value());
 		mockServer.verify();
 	}
 }
