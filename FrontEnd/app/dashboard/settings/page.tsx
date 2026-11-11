@@ -451,13 +451,13 @@ export default function SettingsPage() {
         {/* Top Header */}
         <header className="sticky top-0 z-20 bg-[#050505]/95 backdrop-blur border-b border-zinc-900 px-8 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">
-              <span className="text-[#1ef2c1] font-mono">◎</span> Settings
+            <h1 className="text-lg font-bold text-white tracking-wide">
+              Settings
             </h1>
             <p className="text-xs text-zinc-500">Configure profile, integrations, workspace defaults, and maintenance</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400">
+            <span className="text-xs px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400">
               Role: <span className="text-[#1ef2c1]">{profile ? toDisplayRole(profile.role) : "Loading..."}</span>
             </span>
           </div>
@@ -473,12 +473,12 @@ export default function SettingsPage() {
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="font-mono">{banner.type === "success" ? "✓" : "!"}</span>
+              <span>{banner.type === "success" ? "✓" : "!"}</span>
               <span>{banner.message}</span>
             </div>
             <button
               onClick={() => setBanner(null)}
-              className="text-zinc-500 hover:text-zinc-300 font-mono text-sm px-1"
+              className="text-zinc-500 hover:text-zinc-300 text-sm px-1"
             >
               ×
             </button>
@@ -490,60 +490,56 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Navigation Tabs Column */}
             <div className="lg:col-span-1 space-y-1">
-              <div className="text-[10px] tracking-[0.2em] uppercase font-mono text-zinc-600 px-3 pb-2">
+              <div className="text-[10px] tracking-[0.2em] uppercase text-zinc-600 px-3 pb-2 font-medium">
                 Navigation
               </div>
 
               <button
                 onClick={() => setActiveTab("profile")}
-                className={`w-full text-left flex items-center gap-3 px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
+                className={`w-full text-left px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
                   activeTab === "profile"
                     ? "bg-[#1ef2c1]/10 text-[#1ef2c1] border-[#1ef2c1]"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-900/60 border-transparent"
                 }`}
               >
-                <span className="font-mono">◎</span>
-                <span>Profile & Account</span>
+                Profile & Account
               </button>
 
               <button
                 onClick={() => setActiveTab("github")}
-                className={`w-full text-left flex items-center gap-3 px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
+                className={`w-full text-left px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
                   activeTab === "github"
                     ? "bg-[#1ef2c1]/10 text-[#1ef2c1] border-[#1ef2c1]"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-900/60 border-transparent"
                 }`}
               >
-                <span className="font-mono">⬡</span>
-                <span>GitHub & Integrations</span>
+                GitHub & Integrations
               </button>
 
               <button
                 onClick={() => setActiveTab("workspace")}
-                className={`w-full text-left flex items-center gap-3 px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
+                className={`w-full text-left px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
                   activeTab === "workspace"
                     ? "bg-[#1ef2c1]/10 text-[#1ef2c1] border-[#1ef2c1]"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-900/60 border-transparent"
                 }`}
               >
-                <span className="font-mono">◇</span>
-                <span>Workspace & Workflow</span>
+                Workspace & Workflow
               </button>
 
               <div className="pt-4">
-                <div className="text-[10px] tracking-[0.2em] uppercase font-mono text-zinc-600 px-3 pb-2">
+                <div className="text-[10px] tracking-[0.2em] uppercase text-zinc-600 px-3 pb-2 font-medium">
                   System
                 </div>
                 <button
                   onClick={() => setActiveTab("danger")}
-                  className={`w-full text-left flex items-center gap-3 px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
+                  className={`w-full text-left px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
                     activeTab === "danger"
                       ? "bg-rose-950/20 text-rose-400 border-rose-500"
                       : "text-zinc-400 hover:text-rose-300 hover:bg-zinc-900/60 border-transparent"
                   }`}
                 >
-                  <span className="font-mono">▲</span>
-                  <span>Danger Zone & Maintenance</span>
+                  Danger Zone & Maintenance
                 </button>
               </div>
             </div>
@@ -561,17 +557,17 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="flex items-center gap-5">
-                      <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-lg font-mono text-[#1ef2c1]">
+                      <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-lg font-bold text-[#1ef2c1]">
                         {profile?.username?.charAt(0)?.toUpperCase() || session?.user?.name?.charAt(0)?.toUpperCase() || "U"}
                       </div>
                       <div className="space-y-1">
                         <div className="text-sm font-semibold text-white flex items-center gap-2">
                           {profile?.username || session?.user?.name || "User"}
-                          <span className="text-[10px] font-mono px-2 py-0.5 bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30">
+                          <span className="text-[10px] px-2 py-0.5 bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30 font-medium">
                             {profile ? toDisplayRole(profile.role) : "Developer"}
                           </span>
                         </div>
-                        <div className="text-xs text-zinc-500 font-mono">
+                        <div className="text-xs text-zinc-500">
                           {profile?.email || session?.user?.email || "No email available"}
                         </div>
                       </div>
@@ -579,7 +575,7 @@ export default function SettingsPage() {
 
                     <form onSubmit={handleUpdateUsername} className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                       <div>
-                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                        <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">
                           Display Name
                         </label>
                         <input
@@ -592,7 +588,7 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                        <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">
                           Email Address
                         </label>
                         <input
@@ -628,7 +624,7 @@ export default function SettingsPage() {
                     <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-md">
                       {profile?.hasPassword && (
                         <div>
-                          <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-1.5">
+                          <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-1.5 font-medium">
                             Current Password
                           </label>
                           <input
@@ -643,7 +639,7 @@ export default function SettingsPage() {
                       )}
 
                       <div>
-                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-1.5">
+                        <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-1.5 font-medium">
                           New Password
                         </label>
                         <input
@@ -657,7 +653,7 @@ export default function SettingsPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-1.5">
+                        <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-1.5 font-medium">
                           Confirm New Password
                         </label>
                         <input
@@ -692,20 +688,19 @@ export default function SettingsPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2 border-b border-zinc-900/60">
                       <div>
                         <div className="text-xs font-medium text-zinc-200">Session Status</div>
-                        <div className="text-[11px] text-zinc-500 font-mono">
+                        <div className="text-[11px] text-zinc-500">
                           Authenticated as {profile?.email || session?.user?.email}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="text-xs font-mono text-emerald-400 uppercase">Active</span>
+                      <div>
+                        <span className="text-xs text-zinc-400">Active</span>
                       </div>
                     </div>
 
                     <div className="pt-2 flex justify-start">
                       <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
-                        className="border border-zinc-800 hover:border-rose-900 hover:bg-rose-950/20 text-zinc-400 hover:text-rose-300 text-xs px-4 py-2 transition-colors uppercase tracking-wider font-mono"
+                        className="border border-zinc-800 hover:border-rose-900 hover:bg-rose-950/20 text-zinc-400 hover:text-rose-300 text-xs px-4 py-2 transition-colors uppercase tracking-wider"
                       >
                         Sign Out of PestControl
                       </button>
@@ -724,7 +719,7 @@ export default function SettingsPage() {
                         <h2 className="text-sm font-semibold text-white tracking-wide">GitHub Integration</h2>
                         <p className="text-xs text-zinc-500 mt-1">Manage GitHub OAuth connection for repository imports and commit tracking</p>
                       </div>
-                      <span className="font-mono text-xs text-[#1ef2c1] px-2.5 py-1 bg-[#1ef2c1]/10 border border-[#1ef2c1]/20">
+                      <span className="text-xs text-[#1ef2c1] px-2.5 py-1 bg-[#1ef2c1]/10 border border-[#1ef2c1]/20">
                         OAuth 2.0
                       </span>
                     </div>
@@ -732,7 +727,7 @@ export default function SettingsPage() {
                     {/* Status Badge */}
                     <div className="p-4 bg-[#050505] border border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 flex items-center justify-center font-mono text-base text-white">
+                        <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-base text-white">
                           <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
                           </svg>
@@ -740,19 +735,11 @@ export default function SettingsPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-white">GitHub Account</span>
-                            {profile?.hasGitHub ? (
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 bg-emerald-950/40 text-emerald-400 border border-emerald-800/60">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                CONNECTED
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 bg-zinc-900 text-zinc-500 border border-zinc-800">
-                                <span className="w-1.5 h-1.5 rounded-full bg-zinc-600"></span>
-                                NOT LINKED
-                              </span>
-                            )}
+                            <span className={`text-xs ${profile?.hasGitHub ? "text-emerald-400" : "text-zinc-500"}`}>
+                              ({profile?.hasGitHub ? "Connected" : "Not Linked"})
+                            </span>
                           </div>
-                          <div className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                          <div className="text-[11px] text-zinc-500 mt-0.5">
                             {profile?.hasGitHub
                               ? `Token synchronized with backend database · Access granted to repositories`
                               : `No OAuth token linked. Relink below to enable automatic commit syncing.`}
@@ -767,14 +754,14 @@ export default function SettingsPage() {
                         onClick={handleRelinkGithub}
                         className="bg-[#1ef2c1] text-black font-semibold text-xs px-4 py-2 hover:bg-[#16b892] transition-colors uppercase tracking-wider flex items-center gap-2"
                       >
-                        <span className="font-mono">↻</span> Relink / Refresh GitHub Token
+                        Relink / Refresh GitHub Token
                       </button>
 
                       {profile?.hasGitHub && (
                         <button
                           onClick={handleDisconnectGithub}
                           disabled={disconnectingGh}
-                          className="border border-rose-900/50 hover:bg-rose-950/20 text-rose-400 hover:text-rose-300 text-xs px-4 py-2 transition-colors uppercase tracking-wider font-mono disabled:opacity-50"
+                          className="border border-rose-900/50 hover:bg-rose-950/20 text-rose-400 hover:text-rose-300 text-xs px-4 py-2 transition-colors uppercase tracking-wider disabled:opacity-50"
                         >
                           {disconnectingGh ? "Disconnecting..." : "Disconnect GitHub"}
                         </button>
@@ -785,26 +772,26 @@ export default function SettingsPage() {
                   {/* Token Details & Scopes */}
                   <div className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-4">
                     <div className="border-b border-zinc-900 pb-3">
-                      <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider font-mono">
+                      <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
                         Granted Scopes & Token Health
                       </h3>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="p-3 bg-[#050505] border border-zinc-900">
-                        <div className="text-[10px] font-mono uppercase text-zinc-500">Scope: repo</div>
+                        <div className="text-[10px] uppercase text-zinc-500 font-medium">Scope: repo</div>
                         <div className="text-xs font-medium text-zinc-200 mt-1">Full Repository Access</div>
                         <div className="text-[10px] text-zinc-500 mt-0.5">Read commit history and tree structures</div>
                       </div>
 
                       <div className="p-3 bg-[#050505] border border-zinc-900">
-                        <div className="text-[10px] font-mono uppercase text-zinc-500">Scope: read:user</div>
+                        <div className="text-[10px] uppercase text-zinc-500 font-medium">Scope: read:user</div>
                         <div className="text-xs font-medium text-zinc-200 mt-1">User Profile Access</div>
                         <div className="text-[10px] text-zinc-500 mt-0.5">Match commit authors to PestControl users</div>
                       </div>
 
                       <div className="p-3 bg-[#050505] border border-zinc-900">
-                        <div className="text-[10px] font-mono uppercase text-zinc-500">Database Storage</div>
+                        <div className="text-[10px] uppercase text-zinc-500 font-medium">Database Storage</div>
                         <div className="text-xs font-medium text-zinc-200 mt-1">GHOAuth Field</div>
                         <div className="text-[10px] text-zinc-500 mt-0.5">Persisted in PostgreSQL database</div>
                       </div>
@@ -827,7 +814,7 @@ export default function SettingsPage() {
                       {/* Space Selector */}
                       {spaces.length > 0 && (
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-mono text-zinc-500 uppercase">Space:</span>
+                          <span className="text-[11px] text-zinc-500 uppercase font-medium">Space:</span>
                           <select
                             value={selectedSpaceId}
                             onChange={(e) => setSelectedSpaceId(e.target.value)}
@@ -852,7 +839,7 @@ export default function SettingsPage() {
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-1.5 font-medium">
                               Workspace ID
                             </label>
                             <div className="flex items-center gap-2">
@@ -860,12 +847,12 @@ export default function SettingsPage() {
                                 type="text"
                                 value={selectedSpaceId}
                                 disabled
-                                className="w-full bg-[#050505] border border-zinc-850 px-3 py-2 text-xs font-mono text-zinc-400 cursor-not-allowed"
+                                className="w-full bg-[#050505] border border-zinc-850 px-3 py-2 text-xs text-zinc-400 cursor-not-allowed"
                               />
                               <button
                                 type="button"
                                 onClick={handleCopySpaceId}
-                                className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs px-3 py-2 font-mono uppercase tracking-wider"
+                                className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs px-3 py-2 uppercase tracking-wider"
                               >
                                 {spaceCopied ? "Copied" : "Copy"}
                               </button>
@@ -873,7 +860,7 @@ export default function SettingsPage() {
                           </div>
 
                           <form onSubmit={handleUpdateSpaceName}>
-                            <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-1.5 font-medium">
                               Workspace Name
                             </label>
                             <div className="flex items-center gap-2">
@@ -888,7 +875,7 @@ export default function SettingsPage() {
                               <button
                                 type="submit"
                                 disabled={spaceSaving}
-                                className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white text-xs px-3 py-2 font-mono uppercase tracking-wider disabled:opacity-50"
+                                className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white text-xs px-3 py-2 uppercase tracking-wider disabled:opacity-50"
                               >
                                 {spaceSaving ? "Saving..." : "Rename"}
                               </button>
@@ -897,7 +884,7 @@ export default function SettingsPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-xs text-zinc-500 font-mono py-4">
+                      <div className="text-xs text-zinc-500 py-4">
                         No workspace found. You can create one from the Projects page.
                       </div>
                     )}
@@ -913,7 +900,7 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       {/* Default Repository */}
                       <div>
-                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                        <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">
                           Default Repository for Issues
                         </label>
                         <select
@@ -939,7 +926,7 @@ export default function SettingsPage() {
 
                       {/* Default Priority */}
                       <div>
-                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                        <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">
                           Default Priority
                         </label>
                         <select
@@ -959,7 +946,7 @@ export default function SettingsPage() {
 
                       {/* Default Status */}
                       <div>
-                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                        <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">
                           Default Status
                         </label>
                         <select
@@ -978,7 +965,7 @@ export default function SettingsPage() {
 
                       {/* Git Auto-Close Syntax Toggle */}
                       <div>
-                        <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                        <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">
                           Git Commit Auto-Close
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer pt-1">
@@ -989,7 +976,7 @@ export default function SettingsPage() {
                             className="w-4 h-4 rounded-none accent-[#1ef2c1] bg-[#050505] border-zinc-800"
                           />
                           <span className="text-xs text-zinc-200">
-                            Auto-close issues matching <code className="text-[#1ef2c1] font-mono">fixes #ID</code> or <code className="text-[#1ef2c1] font-mono">closes #ID</code>
+                            Auto-close issues matching <code className="text-[#1ef2c1]">fixes #ID</code> or <code className="text-[#1ef2c1]">closes #ID</code>
                           </span>
                         </label>
                         <p className="text-[11px] text-zinc-500 mt-1">
@@ -1016,7 +1003,6 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                   {/* Danger Zone Notice */}
                   <div className="border border-rose-900/40 bg-rose-950/10 p-4 text-xs text-rose-300 flex items-start gap-3">
-                    <span className="text-rose-400 font-mono text-sm leading-none mt-0.5">▲</span>
                     <div>
                       <div className="font-semibold text-rose-200 uppercase tracking-wide">Danger Zone Actions</div>
                       <div className="text-rose-300/80 mt-0.5">
@@ -1036,7 +1022,7 @@ export default function SettingsPage() {
 
                     {/* Repo Selector */}
                     <div>
-                      <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                      <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">
                         Target Repository
                       </label>
                       <select
@@ -1070,7 +1056,7 @@ export default function SettingsPage() {
                             type="button"
                             onClick={handleClearRepoCache}
                             disabled={cacheClearing || !targetRepoForCache}
-                            className="w-full border border-rose-900/60 hover:bg-rose-950/30 text-rose-400 hover:text-rose-200 text-xs px-4 py-2 font-mono uppercase tracking-wider disabled:opacity-50 transition-colors"
+                            className="w-full border border-rose-900/60 hover:bg-rose-950/30 text-rose-400 hover:text-rose-200 text-xs px-4 py-2 uppercase tracking-wider disabled:opacity-50 transition-colors"
                           >
                             {cacheClearing ? "Purging Commits..." : "Clear Commit Cache"}
                           </button>
@@ -1092,7 +1078,6 @@ export default function SettingsPage() {
                             disabled={syncingCommits || !targetRepoForCache}
                             className="w-full bg-[#1ef2c1] text-black hover:bg-[#16b892] text-xs px-4 py-2 font-semibold uppercase tracking-wider disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                           >
-                            <span className="font-mono">↻</span>
                             {syncingCommits ? "Syncing From GitHub..." : "Sync New Commits"}
                           </button>
                         </div>
@@ -1112,9 +1097,9 @@ export default function SettingsPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
                       <div>
                         <div className="text-xs font-medium text-white">
-                          Current Selection: <span className="font-mono text-[#1ef2c1]">{activeSpace?.SpaceName || activeSpace?.spaceName || "None"}</span>
+                          Current Selection: <span className="text-[#1ef2c1] font-semibold">{activeSpace?.SpaceName || activeSpace?.spaceName || "None"}</span>
                         </div>
-                        <div className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                        <div className="text-[11px] text-zinc-500 mt-0.5">
                           ID: {selectedSpaceId || "None"}
                         </div>
                       </div>
@@ -1123,7 +1108,7 @@ export default function SettingsPage() {
                         type="button"
                         onClick={() => setShowDeleteModal(true)}
                         disabled={!selectedSpaceId}
-                        className="bg-rose-950/40 border border-rose-800 text-rose-300 hover:bg-rose-900/50 hover:text-white text-xs px-4 py-2 font-mono uppercase tracking-wider transition-colors disabled:opacity-50"
+                        className="bg-rose-950/40 border border-rose-800 text-rose-300 hover:bg-rose-900/50 hover:text-white text-xs px-4 py-2 uppercase tracking-wider transition-colors disabled:opacity-50"
                       >
                         Delete Workspace
                       </button>
@@ -1140,12 +1125,12 @@ export default function SettingsPage() {
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-[#0a0a0a] border border-rose-900/60 w-full max-w-md p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
-                <div className="flex items-center gap-2 text-rose-400 font-semibold text-sm">
-                  <span className="font-mono">▲</span> Confirm Workspace Deletion
+                <div className="text-rose-400 font-semibold text-sm">
+                  Confirm Workspace Deletion
                 </div>
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="text-zinc-500 hover:text-zinc-300 font-mono text-base"
+                  className="text-zinc-500 hover:text-zinc-300 text-base"
                 >
                   ×
                 </button>
@@ -1153,11 +1138,11 @@ export default function SettingsPage() {
 
               <p className="text-xs text-zinc-400 leading-relaxed">
                 This action is <span className="text-rose-400 font-semibold">irreversible</span>. It will permanently destroy the workspace{" "}
-                <span className="font-mono text-white font-bold">{activeSpace?.SpaceName || activeSpace?.spaceName}</span> and all related repositories, issues, and audit records.
+                <span className="text-white font-bold">{activeSpace?.SpaceName || activeSpace?.spaceName}</span> and all related repositories, issues, and audit records.
               </p>
 
               <div>
-                <label className="block text-[11px] font-mono text-zinc-400 uppercase tracking-wider mb-2">
+                <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-2 font-medium">
                   Type <span className="text-white font-bold">{activeSpace?.SpaceName || activeSpace?.spaceName}</span> to confirm:
                 </label>
                 <input
@@ -1176,7 +1161,7 @@ export default function SettingsPage() {
                     setShowDeleteModal(false);
                     setDeleteSpaceConfirm("");
                   }}
-                  className="border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 text-xs px-4 py-2 font-mono uppercase tracking-wider"
+                  className="border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 text-xs px-4 py-2 uppercase tracking-wider"
                 >
                   Cancel
                 </button>

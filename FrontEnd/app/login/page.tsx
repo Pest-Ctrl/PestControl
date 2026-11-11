@@ -6,14 +6,6 @@ import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
-// Demo credentials matching universal schema (Developer, QAEngineer, Admin, RepoImporter)
-const DUMMY_USERS = [
-  { email: 'test01@gmail.com', password: 'password@1', name: 'Test User 01', role: 'Developer', label: 'Developer' },
-  { email: 'test02@gmail.com', password: 'password@2', name: 'Test User 02', role: 'QAEngineer', label: 'QA Engineer' },
-  { email: 'admin@gmail.com', password: 'admin@123', name: 'Admin User', role: 'Admin', label: 'Admin (Project Manager)' },
-  { email: 'importer@gmail.com', password: 'password@3', name: 'Importer User', role: 'RepoImporter', label: 'Repository Importer' },
-];
-
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -169,24 +161,6 @@ export default function LoginPage() {
             <a href="/forgot-password" className="text-zinc-500 hover:text-[#1ef2c1] transition-colors text-xs tracking-wider">
               Forgot password?
             </a>
-          </div>
-
-          {/* Test credentials hint */}
-          <div className="mt-10 border border-zinc-800/50 bg-[#000000]/40 p-4 rounded-lg">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-3 font-bold text-center">Demo Credentials</p>
-            <div className="space-y-1">
-              {DUMMY_USERS.map(u => (
-                <button
-                  key={u.email}
-                  type="button"
-                  onClick={() => { setEmail(u.email); setPassword(u.password); }}
-                  className="w-full text-left px-3 py-2 text-[11px] text-zinc-400 hover:bg-zinc-800/50 hover:text-[#1ef2c1] transition-colors flex justify-between rounded-md"
-                >
-                  <span className="font-mono">{u.email}</span>
-                  <span className="text-zinc-600">{u.label || u.role}</span>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </Scrollable>

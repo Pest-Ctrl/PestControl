@@ -18,6 +18,8 @@ bin/
 !**/src/test/**/bin/
 
 application.properties
+application.properties.example*
+application.properties.*
 *.properties
 ### IntelliJ IDEA ###
 .idea
