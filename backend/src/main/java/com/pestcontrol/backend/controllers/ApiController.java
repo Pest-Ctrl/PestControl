@@ -173,7 +173,7 @@ public class ApiController {
     @PutMapping("/users/{id}/role")
     public User updateUserRole(@PathVariable UUID id, @RequestBody Map<String, String> body) {
         User user = userRepository.findById(id).orElse(null);
-        if (user != null && body.containsKey("role")) {
+        if (user != null && body != null && body.get("role") != null && !body.get("role").isBlank()) {
             user.setRole(User.fromString(body.get("role")));
             return userRepository.save(user);
         }
@@ -339,13 +339,20 @@ public class ApiController {
 
     @PostMapping("/audit")
     public ResponseEntity<?> createAuditLog(@RequestBody Map<String, String> body) {
+        if (body == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "userId, spaceId, auditTitle, and auditDesc are required"));
+        }
         String userIdStr = body.get("userId");
         String spaceIdStr = body.get("spaceId");
         String issueIdStr = body.get("issueId");
         String auditTitle = body.get("auditTitle");
         String auditDesc = body.get("auditDesc");
 
-        if (userIdStr == null || spaceIdStr == null || auditTitle == null || auditDesc == null) {
+        if (userIdStr == null || userIdStr.isBlank()
+                || spaceIdStr == null || spaceIdStr.isBlank()
+                || auditTitle == null || auditTitle.isBlank()
+                || auditDesc == null || auditDesc.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "userId, spaceId, auditTitle, and auditDesc are required"));
         }
@@ -435,9 +442,15 @@ public class ApiController {
 
     @PostMapping("/users")
     public ResponseEntity<?> registerUser(@RequestBody Map<String, String> body) {
+        if (body == null) {
+            return ResponseEntity.badRequest().body("Missing required fields");
+        }
         String username = body.get("username");
         String email = body.get("email");
-        String password = body.containsKey("password") ? body.get("password") : body.get("passHash");
+        String password = body.get("password");
+        if (password == null || password.isBlank()) {
+            password = body.get("passHash");
+        }
         String ghOAuth = body.get("ghOAuth");
         String role = body.get("role");
 

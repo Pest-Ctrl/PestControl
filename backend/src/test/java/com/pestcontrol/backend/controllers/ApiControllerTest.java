@@ -220,6 +220,7 @@ class ApiControllerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Missing required fields", response.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, apiController.registerUser(null).getStatusCode());
         verify(userRepository, never()).save(any(User.class));
     }
 
