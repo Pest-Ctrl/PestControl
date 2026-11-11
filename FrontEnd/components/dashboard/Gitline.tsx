@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 
 interface CommitIssue {
   IssueID: string;
@@ -70,8 +70,47 @@ const STATUS_BADGES: Record<string, string> = {
 };
 
 const ROW_HEIGHT = 82;
-const LANE_START_X = 28;
-const LANE_SPACING = 28;
+const LANE_START_X = 24;
+const LANE_SPACING = 24;
+
+function GitMergeIcon({ className = "w-3 h-3" }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="18" cy="18" r="3" />
+      <circle cx="6" cy="6" r="3" />
+      <path d="M6 21V9a9 9 0 0 0 9 9" />
+    </svg>
+  );
+}
+
+function RefreshIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+      <path d="M16 16h5v5" />
+    </svg>
+  );
+}
 
 export default function Gitline({
   spaceId,
@@ -86,6 +125,8 @@ export default function Gitline({
 }) {
   const [rawCommits, setRawCommits] = useState<RawCommitNode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [internalSelectedSha, setInternalSelectedSha] = useState<string | null>(null);
@@ -100,7 +141,7 @@ export default function Gitline({
     }
   };
 
-  useEffect(() => {
+  const fetchCommits = useCallback(() => {
     setLoading(true);
     let url = "/api/commits?";
     if (repoId) url += `repoId=${repoId}&`;
@@ -121,16 +162,51 @@ export default function Gitline({
       .catch(() => setLoading(false));
   }, [repoId, spaceId]);
 
+  useEffect(() => {
+    fetchCommits();
+  }, [fetchCommits]);
+
+  const handleSyncCommits = async () => {
+    setSyncing(true);
+    setSyncStatus(null);
+    try {
+      const res = await fetch("/api/repos/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repoId: repoId || undefined, spaceId: spaceId || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSyncStatus(data.error || "Sync failed");
+      } else {
+        setSyncStatus(
+          data.newCommitsCount > 0
+            ? `Synced +${data.newCommitsCount} commits`
+            : "Up to date"
+        );
+        fetchCommits();
+      }
+    } catch {
+      setSyncStatus("Sync error");
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncStatus(null), 5000);
+    }
+  };
+
   // Transform and assign realistic branch lanes & topology
   const processedCommits = useMemo<ProcessedCommit[]>(() => {
     if (rawCommits.length === 0) return [];
 
-    return rawCommits.map((c, index) => {
+    return rawCommits.map((c) => {
       const msg = c.Message || "Updated code";
+      const firstLine = msg.split("\n")[0];
       const msgLower = msg.toLowerCase();
       const parentCount = (c.ParentSHAs || []).length;
       const issuesList = c.Issues || [];
-      const hasCriticalOrHigh = issuesList.some(i => i.Severity === "Critical" || i.Severity === "High");
+      const hasCriticalOrHigh = issuesList.some(
+        (i) => i.Severity === "Critical" || i.Severity === "High"
+      );
 
       const isMerge =
         parentCount > 1 ||
@@ -151,7 +227,6 @@ export default function Gitline({
         branchName = "main";
         branchColor = LANES[0].color;
 
-        // Extract merged source branch from message
         const prMatch = msg.match(/merge pull request #\d+ from (?:[\w-]+\/)?([^\s]+)/i);
         const branchMatch = msg.match(/merge branch ['"]([^'"]+)['"]/i);
 
@@ -165,11 +240,10 @@ export default function Gitline({
           mergedFromBranch = "bugfix/merge-conflict";
           mergedFromLane = 2;
         } else {
-          mergedFromBranch = "feature/enhancements";
+          mergedFromBranch = "feature/pr";
           mergedFromLane = 1;
         }
       } else {
-        // Classify non-merge commits
         const isFix =
           msgLower.startsWith("fix:") ||
           msgLower.startsWith("fix(") ||
@@ -187,17 +261,32 @@ export default function Gitline({
           msgLower.includes("implemented") ||
           msgLower.includes("authentication");
 
-        const isRelease = msgLower.startsWith("release:") || msgLower.startsWith("v1.") || msgLower.startsWith("v2.");
+        const isRelease =
+          msgLower.startsWith("release:") ||
+          msgLower.startsWith("v1.") ||
+          msgLower.startsWith("v2.");
 
         if (isFix) {
           lane = 2;
-          const clean = msg.replace(/^[a-zA-Z]+(\([^)]+\))?:\s*/, "").trim().slice(0, 18).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+          const clean = firstLine
+            .replace(/^[a-zA-Z]+(\([^)]+\))?:\s*/, "")
+            .trim()
+            .slice(0, 16)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
           branchName = `bugfix/${clean || "patch"}`;
           branchColor = LANES[2].color;
           forkedFromLane = 0;
         } else if (isFeat) {
           lane = 1;
-          const clean = msg.replace(/^[a-zA-Z]+(\([^)]+\))?:\s*/, "").trim().slice(0, 18).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+          const clean = firstLine
+            .replace(/^[a-zA-Z]+(\([^)]+\))?:\s*/, "")
+            .trim()
+            .slice(0, 16)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
           branchName = `feature/${clean || "module"}`;
           branchColor = LANES[1].color;
           forkedFromLane = 0;
@@ -213,7 +302,6 @@ export default function Gitline({
         }
       }
 
-      // Hash-based deterministic simulated diff stats for realistic preview
       const hashVal = c.SHA.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
       const additions = (hashVal % 65) + 4;
       const deletions = (hashVal % 28) + 1;
@@ -223,7 +311,7 @@ export default function Gitline({
         commitId: c.CommitID,
         sha: c.SHA,
         shortSha: (c.SHA || "").slice(0, 7),
-        message: msg,
+        message: firstLine,
         authorName: c.AuthorName || "developer",
         committedAt: c.CommittedAt,
         parentShas: c.ParentSHAs || [],
@@ -240,7 +328,6 @@ export default function Gitline({
     });
   }, [rawCommits]);
 
-  // Filtered commits based on active branch tab or search
   const filteredCommits = useMemo(() => {
     return processedCommits.filter((commit) => {
       if (activeFilter === "main" && commit.lane !== 0) return false;
@@ -253,7 +340,9 @@ export default function Gitline({
         const matchesMsg = commit.message.toLowerCase().includes(q);
         const matchesSha = commit.sha.toLowerCase().includes(q);
         const matchesAuthor = commit.authorName.toLowerCase().includes(q);
-        const matchesIssue = commit.issues.some((i) => i.Title.toLowerCase().includes(q) || i.IssueID.toLowerCase().includes(q));
+        const matchesIssue = commit.issues.some(
+          (i) => i.Title.toLowerCase().includes(q) || i.IssueID.toLowerCase().includes(q)
+        );
         if (!matchesMsg && !matchesSha && !matchesAuthor && !matchesIssue) return false;
       }
       return true;
@@ -269,7 +358,7 @@ export default function Gitline({
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
         <div className="w-6 h-6 border-2 border-zinc-700 border-t-[#1ef2c1] rounded-full animate-spin" />
-        <p className="text-xs text-zinc-500">Parsing Git tree topology and branches...</p>
+        <p className="text-xs text-zinc-500">Loading Git branch topology...</p>
       </div>
     );
   }
@@ -277,29 +366,34 @@ export default function Gitline({
   if (rawCommits.length === 0) {
     return (
       <div className="text-center py-16 px-4 border border-dashed border-zinc-800 rounded-xl bg-[#080808]">
-        <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500">
-          ⌥
+        <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+          <GitMergeIcon className="w-5 h-5" />
         </div>
         <h4 className="text-sm font-semibold text-zinc-300">No Commits Found</h4>
-        <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-          Import a repository or record commits in this workspace to visualize the interactive Git branch graph.
+        <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto mb-4">
+          Import a repository or sync commits from GitHub to visualize the branch and merge graph.
         </p>
+        <button
+          onClick={handleSyncCommits}
+          disabled={syncing}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/40 text-xs font-semibold hover:bg-[#1ef2c1]/20 transition-colors disabled:opacity-50"
+        >
+          <RefreshIcon className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+          <span>{syncing ? "Syncing..." : "Sync Commits from GitHub"}</span>
+        </button>
       </div>
     );
   }
 
-  // Calculate SVG dimensions
-  const svgHeight = Math.max(filteredCommits.length * ROW_HEIGHT, 240);
-  const svgWidth = LANE_START_X + LANES.length * LANE_SPACING + 16;
+  const svgHeight = Math.max(filteredCommits.length * ROW_HEIGHT, ROW_HEIGHT);
+  const svgWidth = LANE_START_X + (LANES.length - 1) * LANE_SPACING + 24;
 
-  // Build SVG paths for trunk rails, forks, and merges
   const renderSvgGraph = () => {
     const paths: React.ReactNode[] = [];
 
-    // Main continuous trunk rail line down lane 0
     if (filteredCommits.length > 1) {
-      const firstY = 40;
-      const lastY = (filteredCommits.length - 1) * ROW_HEIGHT + 40;
+      const firstY = ROW_HEIGHT / 2;
+      const lastY = (filteredCommits.length - 1) * ROW_HEIGHT + ROW_HEIGHT / 2;
       paths.push(
         <line
           key="main-trunk-rail"
@@ -308,39 +402,36 @@ export default function Gitline({
           x2={LANE_START_X}
           y2={lastY}
           stroke="#1ef2c1"
-          strokeWidth="2.5"
-          strokeOpacity="0.45"
-          strokeDasharray="none"
+          strokeWidth="2.2"
+          strokeOpacity="0.4"
         />
       );
     }
 
     filteredCommits.forEach((commit, i) => {
       const currentX = LANE_START_X + commit.lane * LANE_SPACING;
-      const currentY = i * ROW_HEIGHT + 40;
+      const currentY = i * ROW_HEIGHT + ROW_HEIGHT / 2;
 
-      // 1. Branch Fork Curve: branch starts from main
       if (commit.lane > 0 && commit.forkedFromLane !== undefined) {
         const forkStartX = LANE_START_X + commit.forkedFromLane * LANE_SPACING;
-        const forkStartY = Math.max(currentY - ROW_HEIGHT * 0.75, 40);
-        const curveFork = `M ${forkStartX} ${forkStartY} C ${forkStartX} ${currentY - 16}, ${currentX} ${currentY - 24}, ${currentX} ${currentY}`;
+        const forkStartY = Math.max(currentY - ROW_HEIGHT * 0.72, ROW_HEIGHT / 2);
+        const curveFork = `M ${forkStartX} ${forkStartY} C ${forkStartX} ${currentY - 14}, ${currentX} ${currentY - 22}, ${currentX} ${currentY}`;
         paths.push(
           <path
             key={`fork-${commit.sha}-${i}`}
             d={curveFork}
             fill="none"
             stroke={commit.branchColor}
-            strokeWidth="2.2"
+            strokeWidth="2"
             strokeOpacity="0.85"
             strokeLinecap="round"
           />
         );
       }
 
-      // 2. Branch Merge Curve: branch merges back into main
       if (commit.isMerge && commit.mergedFromLane !== undefined) {
         const mergeFromX = LANE_START_X + commit.mergedFromLane * LANE_SPACING;
-        const mergeFromY = Math.max(currentY - ROW_HEIGHT * 0.8, 40);
+        const mergeFromY = Math.max(currentY - ROW_HEIGHT * 0.75, ROW_HEIGHT / 2);
         const mergeColor = LANES[commit.mergedFromLane]?.color || "#a855f7";
         const curveMerge = `M ${mergeFromX} ${mergeFromY} C ${mergeFromX} ${currentY - 12}, ${currentX} ${currentY - 18}, ${currentX} ${currentY}`;
 
@@ -350,7 +441,7 @@ export default function Gitline({
             d={curveMerge}
             fill="none"
             stroke={mergeColor}
-            strokeWidth="2.4"
+            strokeWidth="2.2"
             strokeOpacity="0.9"
             strokeDasharray="4 2"
             strokeLinecap="round"
@@ -358,11 +449,13 @@ export default function Gitline({
         );
       }
 
-      // 3. Connect commits on the same branch lane
-      const prevSameLane = filteredCommits.slice(0, i).reverse().find((prev) => prev.lane === commit.lane);
+      const prevSameLane = filteredCommits
+        .slice(0, i)
+        .reverse()
+        .find((prev) => prev.lane === commit.lane);
       if (prevSameLane && commit.lane > 0) {
         const prevIndex = filteredCommits.indexOf(prevSameLane);
-        const prevY = prevIndex * ROW_HEIGHT + 40;
+        const prevY = prevIndex * ROW_HEIGHT + ROW_HEIGHT / 2;
         paths.push(
           <line
             key={`lane-conn-${commit.sha}-${prevSameLane.sha}`}
@@ -371,8 +464,8 @@ export default function Gitline({
             x2={currentX}
             y2={currentY}
             stroke={commit.branchColor}
-            strokeWidth="2"
-            strokeOpacity="0.6"
+            strokeWidth="1.8"
+            strokeOpacity="0.55"
           />
         );
       }
@@ -383,12 +476,6 @@ export default function Gitline({
         className="absolute left-0 top-0 pointer-events-none z-0"
         style={{ width: `${svgWidth}px`, height: `${svgHeight}px` }}
       >
-        <defs>
-          <radialGradient id="mergeGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#a855f7" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#1ef2c1" stopOpacity="0" />
-          </radialGradient>
-        </defs>
         {paths}
       </svg>
     );
@@ -397,10 +484,12 @@ export default function Gitline({
   return (
     <div className="flex flex-col h-full bg-[#080808] border border-zinc-800/80 rounded-xl overflow-hidden shadow-2xl">
       {/* Top Header & Toolbar */}
-      <div className="p-4 bg-[#0d1117] border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-4">
-        {/* Branch Filters & Legend */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mr-1">Branches:</span>
+      <div className="p-3.5 bg-[#0d1117] border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
+        {/* Branch Filters */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mr-1">
+            Branches:
+          </span>
           {[
             { id: "all", label: "All Commits" },
             { id: "main", label: "main" },
@@ -411,9 +500,9 @@ export default function Gitline({
             <button
               key={tab.id}
               onClick={() => setActiveFilter(tab.id)}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                 activeFilter === tab.id
-                  ? "bg-[#1ef2c1]/15 text-[#1ef2c1] border border-[#1ef2c1]/40 shadow-[0_0_12px_rgba(30,242,193,0.15)]"
+                  ? "bg-[#1ef2c1]/15 text-[#1ef2c1] border border-[#1ef2c1]/40 shadow-[0_0_10px_rgba(30,242,193,0.12)]"
                   : "bg-zinc-900/60 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800"
               }`}
             >
@@ -422,35 +511,64 @@ export default function Gitline({
           ))}
         </div>
 
-        {/* Search & Commit Counter */}
-        <div className="flex items-center gap-3">
+        {/* Search, Counter & Sync */}
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative">
             <input
               type="text"
-              placeholder="Search commits, SHAs, or issues..."
+              placeholder="Search commits or SHAs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-black/50 border border-zinc-800 text-zinc-200 text-xs rounded-lg px-3 py-1.5 pl-8 w-64 focus:outline-none focus:border-[#1ef2c1]/50 placeholder:text-zinc-600 transition-colors"
+              className="bg-black/50 border border-zinc-800 text-zinc-200 text-xs rounded-lg px-3 py-1.5 pl-7 w-48 xl:w-56 focus:outline-none focus:border-[#1ef2c1]/50 placeholder:text-zinc-600 transition-colors"
             />
-            <span className="absolute left-2.5 top-2 text-zinc-600 text-xs">⌕</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-3.5 h-3.5 absolute left-2.5 top-2 text-zinc-500"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1.5 text-zinc-500 hover:text-zinc-300 text-xs"
+                className="absolute right-2 top-1.5 text-zinc-500 hover:text-zinc-300 text-xs"
               >
                 ✕
               </button>
             )}
           </div>
-          <span className="text-xs text-zinc-500 bg-zinc-900/80 px-2.5 py-1 rounded-md border border-zinc-800">
+
+          <span className="text-xs text-zinc-400 bg-zinc-900/80 px-2.5 py-1.5 rounded-lg border border-zinc-800">
             {filteredCommits.length} commits
           </span>
+
+          <button
+            onClick={handleSyncCommits}
+            disabled={syncing}
+            title="Fetch all commits across all branches from GitHub"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30 hover:bg-[#1ef2c1]/20 transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshIcon className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+            <span>{syncing ? "Syncing..." : "Sync Commits"}</span>
+          </button>
+
+          {syncStatus && (
+            <span className="text-[11px] text-[#1ef2c1] font-medium px-2 py-1 rounded bg-[#1ef2c1]/10 border border-[#1ef2c1]/20">
+              {syncStatus}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Visual Branch Legend Bar */}
-      <div className="px-6 py-2 bg-black/40 border-b border-zinc-900/60 flex items-center justify-between text-[11px] text-zinc-400">
-        <div className="flex items-center gap-6">
+      <div className="px-5 py-2 bg-black/40 border-b border-zinc-900/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
+        <div className="flex flex-wrap items-center gap-5">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#1ef2c1] shadow-[0_0_8px_#1ef2c1]" />
             <span className="text-zinc-300 font-medium">main (trunk)</span>
@@ -463,9 +581,10 @@ export default function Gitline({
             <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b] shadow-[0_0_8px_#f59e0b]" />
             <span className="text-amber-300 font-medium">bugfix branches</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
-              🔀 MERGE
+          <div className="flex items-center gap-1.5">
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 inline-flex items-center gap-1">
+              <GitMergeIcon className="w-2.5 h-2.5" />
+              <span>MERGE</span>
             </span>
             <span className="text-zinc-400">PR & branch merges</span>
           </div>
@@ -474,17 +593,14 @@ export default function Gitline({
       </div>
 
       {/* Main Content Area: Graph + Inspector */}
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* Scrollable Git Tree Canvas */}
-        <div className="flex-1 overflow-y-auto overflow-x-auto p-4 custom-scrollbar relative">
-          <div className="relative min-w-[640px]" style={{ height: `${svgHeight}px` }}>
-            {/* SVG Rails and Curves */}
+      <div className="flex-1 flex overflow-hidden relative min-h-0">
+        {/* Vertically Scrollable Git Tree Canvas (No Horizontal Overflow!) */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 custom-scrollbar relative min-w-0">
+          <div className="relative w-full flex flex-col" style={{ minHeight: `${svgHeight}px` }}>
             {renderSvgGraph()}
 
-            {/* Commits List */}
-            {filteredCommits.map((commit, index) => {
+            {filteredCommits.map((commit) => {
               const nodeX = LANE_START_X + commit.lane * LANE_SPACING;
-              const nodeY = index * ROW_HEIGHT + 40;
               const isSelected = activeSelectedSha === commit.sha;
               const hasIssues = commit.issues.length > 0;
               const laneInfo = LANES[commit.lane] || LANES[0];
@@ -506,138 +622,130 @@ export default function Gitline({
               return (
                 <div
                   key={commit.commitId || commit.sha}
-                  style={{
-                    position: "absolute",
-                    top: `${index * ROW_HEIGHT}px`,
-                    left: 0,
-                    right: 0,
-                    height: `${ROW_HEIGHT}px`,
-                  }}
-                  className="flex items-center group cursor-pointer"
+                  style={{ height: `${ROW_HEIGHT}px` }}
+                  className="flex items-center group cursor-pointer w-full min-w-0"
                   onClick={() => handleSelect(commit)}
                 >
-                  {/* Node Dot on SVG Lane */}
+                  {/* Graph Lane Column */}
                   <div
-                    style={{ left: `${nodeX}px`, top: `40px`, transform: "translate(-50%, -50%)" }}
-                    className={`absolute z-10 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-125 ${
-                      isSelected ? "scale-125 ring-4 ring-[#1ef2c1]/40" : ""
-                    }`}
+                    style={{ width: `${svgWidth}px` }}
+                    className="relative h-full shrink-0"
                   >
-                    {commit.isMerge ? (
-                      <div
-                        className="w-5 h-5 rounded-full border-2 border-[#1ef2c1] bg-[#0d1117] flex items-center justify-center shadow-[0_0_12px_#a855f7]"
-                        style={{ borderColor: "#1ef2c1" }}
-                      >
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#a855f7]" />
-                      </div>
-                    ) : (
-                      <div
-                        className="w-3.5 h-3.5 rounded-full border-2 bg-[#080808]"
-                        style={{
-                          borderColor: nodeAccent,
-                          boxShadow: hasIssues || isSelected ? `0 0 10px ${nodeAccent}` : "none",
-                        }}
-                      >
+                    <div
+                      style={{ left: `${nodeX}px`, top: "50%", transform: "translate(-50%, -50%)" }}
+                      className={`absolute z-10 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-125 ${
+                        isSelected ? "scale-125 ring-4 ring-[#1ef2c1]/40" : ""
+                      }`}
+                    >
+                      {commit.isMerge ? (
+                        <div className="w-5 h-5 rounded-full border-2 border-[#1ef2c1] bg-[#0d1117] flex items-center justify-center shadow-[0_0_12px_#a855f7]">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#a855f7]" />
+                        </div>
+                      ) : (
                         <div
-                          className="w-1.5 h-1.5 rounded-full mx-auto mt-[2px]"
-                          style={{ backgroundColor: nodeAccent }}
-                        />
-                      </div>
-                    )}
+                          className="w-3.5 h-3.5 rounded-full border-2 bg-[#080808]"
+                          style={{
+                            borderColor: nodeAccent,
+                            boxShadow: hasIssues || isSelected ? `0 0 10px ${nodeAccent}` : "none",
+                          }}
+                        >
+                          <div
+                            className="w-1.5 h-1.5 rounded-full mx-auto mt-[2px]"
+                            style={{ backgroundColor: nodeAccent }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Commit Row Content Container */}
-                  <div
-                    style={{ marginLeft: `${svgWidth + 12}px` }}
-                    className={`flex-1 mr-4 py-2.5 px-4 rounded-xl border transition-all duration-150 flex items-center justify-between gap-4 ${
-                      isSelected
-                        ? "bg-[#1ef2c1]/[0.08] border-[#1ef2c1]/50 shadow-[0_0_20px_rgba(30,242,193,0.1)]"
-                        : "bg-[#0d1117]/80 hover:bg-[#12161f] border-zinc-800/80 hover:border-zinc-700"
-                    }`}
-                  >
-                    {/* Commit Primary Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        {/* Branch badge */}
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border ${laneInfo.bg} ${laneInfo.text} ${laneInfo.border}`}
-                        >
-                          {commit.branchName}
-                        </span>
-
-                        {/* Merge Pill if Merge Commit */}
-                        {commit.isMerge && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/50 flex items-center gap-1 shadow-[0_0_8px_rgba(168,85,247,0.3)]">
-                            <span>🔀</span> MERGED {commit.mergedFromBranch ? `from ${commit.mergedFromBranch}` : ""}
-                          </span>
-                        )}
-
-                        {/* Short SHA pill */}
-                        <span className="text-xs text-[#1ef2c1]/80 font-medium bg-black/40 px-2 py-0.5 rounded border border-zinc-800">
-                          {commit.shortSha}
-                        </span>
-
-                        {/* Relative / absolute date */}
-                        <span className="text-[11px] text-zinc-500">
-                          {commit.committedAt
-                            ? new Date(commit.committedAt).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "Recent"}
-                        </span>
-                      </div>
-
-                      {/* Commit Message */}
-                      <p className="text-sm text-zinc-200 font-medium truncate group-hover:text-white transition-colors">
-                        {commit.message}
-                      </p>
-
-                      {/* Author + Diff Stats */}
-                      <div className="flex items-center gap-3 mt-1 text-[11px] text-zinc-500">
-                        <span>by <strong className="text-zinc-400 font-medium">{commit.authorName}</strong></span>
-                        {commit.diffSummary && (
-                          <span className="flex items-center gap-1.5">
-                            <span className="text-[#1ef2c1]">+{commit.diffSummary.additions}</span>
-                            <span className="text-red-400">-{commit.diffSummary.deletions}</span>
-                            <span className="text-zinc-600">({commit.diffSummary.files} files)</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Linked Issues Chips & Severity */}
-                    <div className="flex items-center gap-2 shrink-0">
-                      {hasIssues ? (
-                        commit.issues.map((issue) => (
-                          <div
-                            key={issue.IssueID}
-                            className="flex items-center gap-2 bg-black/60 border border-zinc-800 rounded-lg px-2.5 py-1"
+                  {/* Commit Row Card (Strictly Bounded with min-w-0) */}
+                  <div className="flex-1 min-w-0 py-1.5 pr-1 h-full">
+                    <div
+                      className={`h-full px-4 rounded-xl border transition-all duration-150 flex items-center justify-between gap-3 min-w-0 overflow-hidden ${
+                        isSelected
+                          ? "bg-[#1ef2c1]/[0.08] border-[#1ef2c1]/50 shadow-[0_0_20px_rgba(30,242,193,0.1)]"
+                          : "bg-[#0d1117]/80 hover:bg-[#12161f] border-zinc-800/80 hover:border-zinc-700"
+                      }`}
+                    >
+                      {/* Commit Primary Info */}
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-center gap-2 mb-0.5 flex-nowrap overflow-hidden">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border shrink-0 ${laneInfo.bg} ${laneInfo.text} ${laneInfo.border}`}
                           >
-                            <span className="text-xs text-zinc-300 max-w-[120px] truncate" title={issue.Title}>
-                              {issue.Title}
+                            {commit.branchName}
+                          </span>
+
+                          {commit.isMerge && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/50 inline-flex items-center gap-1 shrink-0">
+                              <GitMergeIcon className="w-2.5 h-2.5" />
+                              <span>MERGED{commit.mergedFromBranch ? ` ${commit.mergedFromBranch}` : ""}</span>
                             </span>
-                            <span
-                              className={`w-20 text-center inline-block shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${
-                                SEVERITY_BADGES[issue.Severity] || SEVERITY_BADGES.Medium
-                              }`}
-                            >
-                              {issue.Severity}
+                          )}
+
+                          <span className="text-xs text-[#1ef2c1]/80 font-medium bg-black/40 px-2 py-0.5 rounded border border-zinc-800 shrink-0">
+                            {commit.shortSha}
+                          </span>
+
+                          <span className="text-[11px] text-zinc-500 truncate">
+                            {commit.committedAt
+                              ? new Date(commit.committedAt).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "Recent"}
+                          </span>
+                        </div>
+
+                        <p className="text-sm text-zinc-200 font-medium truncate group-hover:text-white transition-colors">
+                          {commit.message}
+                        </p>
+
+                        <div className="flex items-center gap-3 mt-0.5 text-[11px] text-zinc-500 truncate">
+                          <span className="truncate">
+                            by <strong className="text-zinc-400 font-medium">{commit.authorName}</strong>
+                          </span>
+                          {commit.diffSummary && (
+                            <span className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-[#1ef2c1]">+{commit.diffSummary.additions}</span>
+                              <span className="text-red-400">-{commit.diffSummary.deletions}</span>
+                              <span className="text-zinc-600">({commit.diffSummary.files} files)</span>
                             </span>
-                            <span
-                              className={`px-1.5 py-0.2 rounded text-[9px] font-medium border ${
-                                STATUS_BADGES[issue.Status] || STATUS_BADGES.Open
-                              }`}
-                            >
-                              {issue.Status}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-[10px] text-zinc-600">no linked bugs</span>
-                      )}
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Linked Issues Chips */}
+                      <div className="hidden sm:flex items-center gap-2 shrink-0">
+                        {hasIssues ? (
+                          <>
+                            <div className="flex items-center gap-2 bg-black/60 border border-zinc-800 rounded-lg px-2.5 py-1">
+                              <span
+                                className="text-xs text-zinc-300 max-w-[100px] truncate"
+                                title={commit.issues[0].Title}
+                              >
+                                {commit.issues[0].Title}
+                              </span>
+                              <span
+                                className={`w-20 text-center inline-block shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${
+                                  SEVERITY_BADGES[commit.issues[0].Severity] || SEVERITY_BADGES.Medium
+                                }`}
+                              >
+                                {commit.issues[0].Severity}
+                              </span>
+                            </div>
+                            {commit.issues.length > 1 && (
+                              <span className="text-[10px] text-zinc-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
+                                +{commit.issues.length - 1}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-[10px] text-zinc-600 whitespace-nowrap">no linked bugs</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -648,15 +756,14 @@ export default function Gitline({
 
         {/* Selected Commit Inspector Panel */}
         {selectedCommit && (
-          <aside className="w-80 xl:w-96 border-l border-zinc-800 bg-[#0d1117] p-5 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
+          <aside className="w-80 xl:w-96 border-l border-zinc-800 bg-[#0d1117] p-5 flex flex-col justify-between overflow-y-auto shrink-0">
             <div className="space-y-5">
-              {/* Header */}
               <div className="flex items-start justify-between border-b border-zinc-800/80 pb-4">
                 <div>
                   <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
                     Commit Inspection
                   </span>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className="text-xs text-[#1ef2c1] font-semibold bg-[#1ef2c1]/10 px-2.5 py-0.5 rounded border border-[#1ef2c1]/30">
                       {selectedCommit.shortSha}
                     </span>
@@ -677,29 +784,33 @@ export default function Gitline({
                 </button>
               </div>
 
-              {/* Commit Message */}
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Commit Message</p>
-                <div className="p-3 bg-black/60 rounded-lg border border-zinc-800/80 text-sm text-zinc-200 leading-relaxed font-medium">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">
+                  Commit Message
+                </p>
+                <div className="p-3 bg-black/60 rounded-lg border border-zinc-800/80 text-sm text-zinc-200 leading-relaxed font-medium break-words">
                   {selectedCommit.message}
                 </div>
               </div>
 
-              {/* Branch Flow Diagram */}
               <div>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">Branch Operations</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">
+                  Branch Operations
+                </p>
                 <div className="p-3 bg-zinc-950/80 rounded-lg border border-zinc-800 text-xs space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="text-zinc-400">Target Track</span>
-                    <span className="text-zinc-200 font-semibold">{selectedCommit.branchName}</span>
+                    <span className="text-zinc-200 font-semibold truncate">{selectedCommit.branchName}</span>
                   </div>
                   {selectedCommit.isMerge ? (
-                    <div className="flex items-center justify-between text-purple-300">
+                    <div className="flex items-center justify-between text-purple-300 gap-2">
                       <span>Merge Action</span>
-                      <span className="font-semibold">Merged {selectedCommit.mergedFromBranch} into main</span>
+                      <span className="font-semibold truncate">
+                        Merged {selectedCommit.mergedFromBranch} into main
+                      </span>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between text-[#1ef2c1]">
+                    <div className="flex items-center justify-between text-[#1ef2c1] gap-2">
                       <span>Branch State</span>
                       <span className="font-semibold">
                         {selectedCommit.lane === 0 ? "Direct trunk commit" : "Active feature branch"}
@@ -718,7 +829,6 @@ export default function Gitline({
                 </div>
               </div>
 
-              {/* Author & Timestamp */}
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="p-3 bg-black/40 rounded-lg border border-zinc-800/80">
                   <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Author</p>
@@ -734,7 +844,6 @@ export default function Gitline({
                 </div>
               </div>
 
-              {/* Linked Issues Section */}
               <div>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">
                   Linked Bug Tracker Issues ({selectedCommit.issues.length})
@@ -759,7 +868,13 @@ export default function Gitline({
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-[11px] text-zinc-500 mt-2 pt-2 border-t border-zinc-900">
-                          <span>Status: <strong className="text-zinc-300">{issue.Status}</strong></span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                              STATUS_BADGES[issue.Status] || STATUS_BADGES.Open
+                            }`}
+                          >
+                            {issue.Status}
+                          </span>
                           <span>ID: {issue.IssueID.slice(0, 8)}</span>
                         </div>
                       </div>

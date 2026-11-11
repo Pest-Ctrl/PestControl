@@ -41,11 +41,16 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #050505;
   border-left: 1px solid #121212;
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: #050505;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {

@@ -84,18 +84,13 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-white font-sans">
+    <div className="flex min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden">
       <Sidebar />
-      <Scrollable className="flex-1 flex flex-col h-screen">
+      <Scrollable className="flex-1 flex flex-col h-screen overflow-x-hidden min-w-0">
         {/* Sticky Top Header */}
         <header className="sticky top-0 z-20 bg-[#050505]/95 backdrop-blur border-b border-zinc-900 px-8 py-4 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-white tracking-wide">Git Tree & Analytics</h1>
-              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30">
-                Live Audit Trail
-              </span>
-            </div>
+            <h1 className="text-xl font-bold text-white tracking-wide">Git Tree & Analytics</h1>
             <p className="text-xs text-zinc-400 mt-0.5">
               Visualize branch changes, merging operations, and software defect metrics
             </p>
@@ -105,20 +100,50 @@ export default function AnalyticsPage() {
             {/* View Switcher Tabs */}
             <div className="bg-[#0a0a0a] p-1 rounded-lg border border-zinc-800 flex items-center gap-1">
               {[
-                { id: "git-tree", label: "Git Branch Tree", icon: "⌥" },
-                { id: "metrics", label: "Quality Metrics", icon: "📊" },
-                { id: "split", label: "Split View", icon: "◫" },
+                {
+                  id: "git-tree",
+                  label: "Git Branch Tree",
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                      <line x1="6" y1="3" x2="6" y2="15" />
+                      <circle cx="18" cy="6" r="3" />
+                      <circle cx="6" cy="18" r="3" />
+                      <path d="M18 9a9 9 0 0 1-9 9" />
+                    </svg>
+                  ),
+                },
+                {
+                  id: "metrics",
+                  label: "Quality Metrics",
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                      <line x1="18" y1="20" x2="18" y2="10" />
+                      <line x1="12" y1="20" x2="12" y2="4" />
+                      <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                  ),
+                },
+                {
+                  id: "split",
+                  label: "Split View",
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                      <rect width="18" height="18" x="3" y="3" rx="2" />
+                      <line x1="12" y1="3" x2="12" y2="21" />
+                    </svg>
+                  ),
+                },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveView(tab.id as any)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
                     activeView === tab.id
                       ? "bg-[#1ef2c1] text-black font-semibold shadow-[0_0_12px_rgba(30,242,193,0.3)]"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-900"
                   }`}
                 >
-                  <span>{tab.icon}</span>
+                  {tab.icon}
                   <span>{tab.label}</span>
                 </button>
               ))}
@@ -192,10 +217,10 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Dynamic Content Views */}
-        <div className="flex-1 p-8 pt-4">
+        <div className="flex-1 p-8 pt-4 min-w-0">
           {/* VIEW 1: DEDICATED GIT TREE & MERGE GRAPH */}
           {activeView === "git-tree" && (
-            <div className="h-[calc(100vh-230px)] flex flex-col">
+            <div className="h-[calc(100vh-230px)] flex flex-col min-w-0">
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-bold text-zinc-200">Interactive Git Tree & Merge Graph</h2>
@@ -204,7 +229,7 @@ export default function AnalyticsPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 min-w-0">
                 <Gitline
                   spaceId={selectedSpaceId}
                   repoId={selectedRepoId}
@@ -301,14 +326,14 @@ export default function AnalyticsPage() {
 
           {/* VIEW 3: UNIFIED SPLIT VIEW */}
           {activeView === "split" && (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-[calc(100vh-230px)]">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-[calc(100vh-230px)] min-w-0">
               {/* Left Column: Realistic Git Tree */}
-              <div className="xl:col-span-8 flex flex-col h-full min-h-0">
+              <div className="xl:col-span-8 flex flex-col h-full min-h-0 min-w-0">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-semibold text-zinc-300">Git Branch & Merge Graph</span>
-                  <span className="text-[11px] text-zinc-500">Live code commits</span>
+                  <span className="text-[11px] text-zinc-500">Synced repository commits</span>
                 </div>
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 min-w-0">
                   <Gitline
                     spaceId={selectedSpaceId}
                     repoId={selectedRepoId}

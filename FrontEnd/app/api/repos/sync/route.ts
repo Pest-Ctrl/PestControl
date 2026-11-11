@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { fetchAllRepoCommits } from '@/lib/github';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -9,98 +10,94 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { repoId } = await request.json();
-    if (!repoId) {
-      return NextResponse.json({ error: 'Repository ID is required' }, { status: 400 });
-    }
-
-    const repo = await prisma.repo.findUnique({
-      where: { RepoID: repoId },
-    });
-
-    if (!repo) {
-      return NextResponse.json({ error: 'Repository not found' }, { status: 404 });
-    }
+    const body = await request.json().catch(() => ({}));
+    const { repoId, spaceId } = body;
 
     const user = await prisma.users.findUnique({
       where: { Email: session.user.email! },
     });
-
-    // Obtain token from user's GHOAuth or session
     const token = user?.GHOAuth || (session as any).githubToken;
 
-    const ghHeaders: Record<string, string> = {
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    };
-
-    if (token) {
-      ghHeaders.Authorization = `Bearer ${token}`;
+    let targetRepos: any[] = [];
+    if (repoId) {
+      const repo = await prisma.repo.findUnique({ where: { RepoID: repoId } });
+      if (!repo) {
+        return NextResponse.json({ error: 'Repository not found' }, { status: 404 });
+      }
+      targetRepos = [repo];
+    } else if (spaceId) {
+      targetRepos = await prisma.repo.findMany({ where: { SpaceID: spaceId } });
+    } else {
+      targetRepos = await prisma.repo.findMany();
     }
 
-    const owner = repo.GHOwner || repo.ghOwner;
-    const name = repo.GHName || repo.ghName;
-
-    let ghCommits: any[] = [];
-    let page = 1;
-    while (page <= 5) {
-      const ghRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=100&page=${page}`, {
-        headers: ghHeaders,
+    if (targetRepos.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'No imported repositories found to sync.',
+        newCommitsCount: 0,
+        totalFetched: 0,
       });
+    }
 
-      if (!ghRes.ok) {
-        if (page === 1) {
-          const errData = await ghRes.json().catch(() => ({}));
-          return NextResponse.json(
-            { error: errData.message || `Failed to fetch commits from GitHub (${ghRes.status})` },
-            { status: ghRes.status }
-          );
-        }
-        break;
+    let totalNewSaved = 0;
+    let totalFetched = 0;
+    let totalExisting = 0;
+    const errors: string[] = [];
+
+    for (const repo of targetRepos) {
+      const rid = repo.RepoID || repo.RepoId || repo.repoId;
+      const owner = repo.GHOwner || repo.ghOwner;
+      const name = repo.GHName || repo.ghName;
+      const defaultBranch = repo.DefaultBranch || repo.defaultBranch || 'main';
+
+      const { commits: ghCommits, error } = await fetchAllRepoCommits(
+        owner,
+        name,
+        rid,
+        token,
+        defaultBranch
+      );
+
+      if (error && ghCommits.length === 0) {
+        errors.push(`${owner}/${name}: ${error}`);
+        continue;
       }
 
-      const batch: any[] = await ghRes.json();
-      if (!Array.isArray(batch) || batch.length === 0) break;
-      ghCommits.push(...batch);
-      if (batch.length < 100) break;
-      page++;
+      totalFetched += ghCommits.length;
+
+      const existingCommits = await prisma.commit.findMany({ where: { RepoID: rid } });
+      totalExisting += existingCommits.length;
+
+      const existingShaSet = new Set(
+        existingCommits.map((c: any) => c.CommitID || c.commitId || c.SHA || c.sha)
+      );
+
+      const newCommitsToSave = ghCommits.filter((c) => !existingShaSet.has(c.CommitID));
+
+      if (newCommitsToSave.length > 0) {
+        await prisma.commit.createMany({ data: newCommitsToSave });
+        totalNewSaved += newCommitsToSave.length;
+      }
     }
 
-    // Fetch existing commits from DB to avoid duplication
-    const existingCommits = await prisma.commit.findMany({
-      where: { RepoID: repoId },
-    });
-    const existingShaSet = new Set(
-      existingCommits.map((c: any) => c.CommitID || c.commitId || c.SHA || c.sha)
-    );
-
-    const newCommitsToSave = ghCommits.filter(
-      (c: any) => !existingShaSet.has(c.sha)
-    );
-
-    if (newCommitsToSave.length > 0) {
-      const mapped = newCommitsToSave.map((c: any) => ({
-        CommitID: c.sha,
-        RepoID: repoId,
-        Message: c.commit?.message || 'No commit message',
-        AuthorName: c.commit?.author?.name || c.author?.login || 'Unknown',
-        AuthorEmail: c.commit?.author?.email || 'noreply@github.com',
-        CommittedAt: c.commit?.author?.date || new Date().toISOString(),
-        URL: c.html_url || `https://github.com/${owner}/${name}/commit/${c.sha}`,
-      }));
-
-      await prisma.commit.createMany({ data: mapped });
+    if (errors.length > 0 && totalFetched === 0) {
+      return NextResponse.json({ error: errors.join('; ') }, { status: 502 });
     }
 
     return NextResponse.json({
       success: true,
-      message: `Sync complete: ${newCommitsToSave.length} new commit(s) indexed out of ${ghCommits.length} checked.`,
-      newCommitsCount: newCommitsToSave.length,
-      totalFetched: ghCommits.length,
-      existingCount: existingCommits.length,
+      message: `Sync complete: ${totalNewSaved} new commit(s) indexed across ${targetRepos.length} repo(s) (${totalFetched} total commits verified).`,
+      newCommitsCount: totalNewSaved,
+      totalFetched,
+      existingCount: totalExisting,
+      warnings: errors.length > 0 ? errors : undefined,
     });
   } catch (error: any) {
     console.error('Error syncing commits:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error while syncing commits' }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Internal server error while syncing commits' },
+      { status: 500 }
+    );
   }
 }

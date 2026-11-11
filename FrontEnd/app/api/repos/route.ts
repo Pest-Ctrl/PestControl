@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { fetchAllRepoCommits } from '@/lib/github';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
@@ -57,25 +58,6 @@ export async function POST(request: Request) {
       ghHeaders['Authorization'] = `Bearer ${pat}`;
     }
 
-    // Fetch commits from GitHub API
-    let githubCommits: any[] = [];
-    try {
-      let page = 1;
-      while (page <= 5) {
-        const ghRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=100&page=${page}`, {
-          headers: ghHeaders,
-        });
-        if (!ghRes.ok) break;
-        const batch: any[] = await ghRes.json();
-        if (!Array.isArray(batch) || batch.length === 0) break;
-        githubCommits.push(...batch);
-        if (batch.length < 100) break;
-        page++;
-      }
-    } catch (err) {
-      console.error('Failed to fetch commits from GitHub API:', err);
-    }
-
     // Fetch file tree
     let fileTree = null;
     try {
@@ -113,22 +95,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to import repository. It may already exist.' }, { status: 500 });
     }
 
-    // Save commits to the database
-    if (githubCommits.length > 0) {
-      try {
-        const mappedCommits = githubCommits.map((c: any) => ({
-          CommitID: c.sha,
-          RepoID: repo.RepoID || repo.RepoId || repo.repoId,
-          Message: c.commit.message,
-          AuthorName: c.commit.author.name,
-          AuthorEmail: c.commit.author.email,
-          CommittedAt: new Date(c.commit.author.date).toISOString(),
-          URL: c.html_url,
-        }));
+    // Fetch and save all commits across repository branches
+    try {
+      const repoId = repo.RepoID || repo.RepoId || repo.repoId;
+      const { commits: mappedCommits } = await fetchAllRepoCommits(
+        owner,
+        name,
+        repoId,
+        pat,
+        defaultBranch || 'main'
+      );
+      if (mappedCommits.length > 0) {
         await prisma.commit.createMany({ data: mappedCommits });
-      } catch (err) {
-        console.error('Failed to save commits to database:', err);
       }
+    } catch (err) {
+      console.error('Failed to save commits to database:', err);
     }
 
     // Create audit log (non-critical, ignore errors)

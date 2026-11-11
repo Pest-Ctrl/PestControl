@@ -15,6 +15,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyIterable;
+import static org.mockito.ArgumentMatchers.anyList;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
@@ -126,9 +128,11 @@ class ApiControllerTest {
         newCommitMap.put("commitId", newSha);
         newCommitMap.put("repoId", testRepoId.toString());
         newCommitMap.put("message", "New incoming commit");
+        newCommitMap.put("committedAt", "2026-11-11T20:06:52+05:30");
 
-        when(commitRepository.existsById(existingSha)).thenReturn(true);
-        when(commitRepository.existsById(newSha)).thenReturn(false);
+        Commit existingEntity = new Commit();
+        existingEntity.setCommitId(existingSha);
+        when(commitRepository.findAllById(anyIterable())).thenReturn(List.of(existingEntity));
 
         ResponseEntity<?> response = apiController.createCommitsBatch(List.of(existingCommitMap, newCommitMap));
 
@@ -139,7 +143,7 @@ class ApiControllerTest {
         assertEquals(1, responseBody.get("saved"));
         assertEquals(2, responseBody.get("total"));
 
-        verify(commitRepository, times(1)).save(any(Commit.class));
+        verify(commitRepository, times(1)).saveAll(anyList());
     }
 
     @Test

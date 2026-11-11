@@ -86,28 +86,81 @@ public class ApiController {
     @PostMapping("/commits/batch")
     @Transactional
     public ResponseEntity<?> createCommitsBatch(@RequestBody List<Map<String, Object>> commits) {
-        int saved = 0;
+        if (commits == null || commits.isEmpty()) {
+            return ResponseEntity.ok(Map.of("saved", 0, "total", 0));
+        }
+
+        List<Commit> candidates = new java.util.ArrayList<>();
+        java.util.Set<String> seenIds = new java.util.HashSet<>();
+
         for (Map<String, Object> item : commits) {
             try {
+                String commitId = item.get("commitId") != null ? item.get("commitId").toString().trim() : null;
+                if (commitId == null || commitId.isBlank() || item.get("repoId") == null || seenIds.contains(commitId)) {
+                    continue;
+                }
                 Commit commit = new Commit();
-                commit.setCommitId(item.get("commitId") != null ? item.get("commitId").toString() : null);
+                commit.setCommitId(commitId);
                 commit.setRepoId(UUID.fromString(item.get("repoId").toString()));
                 commit.setMessage(item.get("message") != null ? item.get("message").toString() : "No message");
-                commit.setAuthorName(item.get("authorName") != null ? item.get("authorName").toString() : "Unknown");
-                commit.setAuthorEmail(item.get("authorEmail") != null ? item.get("authorEmail").toString() : "noreply@github.com");
+
+                String authorName = item.get("authorName") != null ? item.get("authorName").toString() : "Unknown";
+                commit.setAuthorName(authorName.length() > 255 ? authorName.substring(0, 255) : authorName);
+
+                String authorEmail = item.get("authorEmail") != null ? item.get("authorEmail").toString() : "noreply@github.com";
+                commit.setAuthorEmail(authorEmail.length() > 255 ? authorEmail.substring(0, 255) : authorEmail);
+
                 String dateStr = item.get("committedAt") != null ? item.get("committedAt").toString() : null;
-                commit.setCommittedAt(dateStr != null ? java.time.LocalDateTime.parse(dateStr.replace("Z", "").replace("+00:00", "")) : java.time.LocalDateTime.now());
-                commit.setUrl(item.get("url") != null ? item.get("url").toString() : "");
-                // Skip if already exists
-                if (!commitRepository.existsById(commit.getCommitId())) {
-                    commitRepository.save(commit);
-                    saved++;
-                }
+                commit.setCommittedAt(parseFlexibleDateTime(dateStr));
+
+                String url = item.get("url") != null ? item.get("url").toString() : "";
+                commit.setUrl(url.length() > 255 ? url.substring(0, 255) : url);
+
+                seenIds.add(commitId);
+                candidates.add(commit);
             } catch (Exception e) {
                 // Skip invalid entries
             }
         }
-        return ResponseEntity.ok(Map.of("saved", saved, "total", commits.size()));
+
+        if (candidates.isEmpty()) {
+            return ResponseEntity.ok(Map.of("saved", 0, "total", commits.size()));
+        }
+
+        java.util.Set<String> existingIds = new java.util.HashSet<>();
+        for (Commit existing : commitRepository.findAllById(seenIds)) {
+            existingIds.add(existing.getCommitId());
+        }
+
+        List<Commit> toSave = new java.util.ArrayList<>();
+        for (Commit c : candidates) {
+            if (!existingIds.contains(c.getCommitId())) {
+                toSave.add(c);
+            }
+        }
+
+        if (!toSave.isEmpty()) {
+            commitRepository.saveAll(toSave);
+        }
+
+        return ResponseEntity.ok(Map.of("saved", toSave.size(), "total", commits.size()));
+    }
+
+    private LocalDateTime parseFlexibleDateTime(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) {
+            return LocalDateTime.now();
+        }
+        try {
+            return java.time.OffsetDateTime.parse(dateStr)
+                    .atZoneSameInstant(java.time.ZoneOffset.UTC)
+                    .toLocalDateTime();
+        } catch (Exception ignored) {
+        }
+        try {
+            return LocalDateTime.parse(dateStr);
+        } catch (Exception ignored) {
+        }
+        return LocalDateTime.now();
     }
 
     @GetMapping("/users")
