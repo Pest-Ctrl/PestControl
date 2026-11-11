@@ -41,21 +41,29 @@ export async function POST(request: Request) {
     const owner = repo.GHOwner || repo.ghOwner;
     const name = repo.GHName || repo.ghName;
 
-    const ghRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=30`, {
-      headers: ghHeaders,
-    });
+    let ghCommits: any[] = [];
+    let page = 1;
+    while (page <= 5) {
+      const ghRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=100&page=${page}`, {
+        headers: ghHeaders,
+      });
 
-    if (!ghRes.ok) {
-      const errData = await ghRes.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errData.message || `Failed to fetch commits from GitHub (${ghRes.status})` },
-        { status: ghRes.status }
-      );
-    }
+      if (!ghRes.ok) {
+        if (page === 1) {
+          const errData = await ghRes.json().catch(() => ({}));
+          return NextResponse.json(
+            { error: errData.message || `Failed to fetch commits from GitHub (${ghRes.status})` },
+            { status: ghRes.status }
+          );
+        }
+        break;
+      }
 
-    const ghCommits: any[] = await ghRes.json();
-    if (!Array.isArray(ghCommits)) {
-      return NextResponse.json({ error: 'Invalid response from GitHub commits API' }, { status: 502 });
+      const batch: any[] = await ghRes.json();
+      if (!Array.isArray(batch) || batch.length === 0) break;
+      ghCommits.push(...batch);
+      if (batch.length < 100) break;
+      page++;
     }
 
     // Fetch existing commits from DB to avoid duplication

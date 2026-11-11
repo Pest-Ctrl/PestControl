@@ -90,38 +90,33 @@ export default function CodeViewer({ content, selectedRange, onRangeSelect, lang
 
   return (
     <div 
-      className="w-full bg-[#050505] border border-zinc-800 rounded-lg overflow-hidden flex font-mono text-sm"
+      className="w-full bg-[#050505] border border-zinc-800 rounded-lg overflow-auto max-h-[500px] custom-scrollbar font-mono text-xs relative select-text"
       ref={containerRef}
       onMouseLeave={() => isDragging && handleMouseUp()}
     >
-      <div className="flex-none bg-[#0a0a0a] border-r border-zinc-800 text-right select-none py-4 w-12 custom-scrollbar overflow-y-hidden">
-        {lines.map((_, i) => {
-          const lineNum = i + 1;
-          const isSelected = lineNum >= actualStart && lineNum <= actualEnd;
-          return (
-            <div 
-              key={lineNum}
-              className={`px-2 cursor-ns-resize transition-colors ${isSelected ? 'text-[#1ef2c1] font-bold' : 'text-zinc-600 hover:text-zinc-400'}`}
-              onMouseDown={() => handleMouseDown(lineNum)}
-              onMouseEnter={() => handleMouseEnter(lineNum)}
-            >
-              {lineNum}
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex-1 overflow-x-auto overflow-y-auto py-4 custom-scrollbar max-h-[500px]">
+      <div className="min-w-full inline-block py-3">
         {lines.map((line, i) => {
           const lineNum = i + 1;
           const isSelected = lineNum >= actualStart && lineNum <= actualEnd;
           return (
-            <div 
+            <div
               key={lineNum}
-              className={`px-4 whitespace-pre transition-colors min-w-full ${isSelected ? 'bg-[#1ef2c1]/10 text-[#1ef2c1]' : 'text-zinc-300'}`}
+              className={`flex items-stretch min-w-full transition-colors cursor-pointer group ${
+                isSelected ? 'bg-[#1ef2c1]/15 text-[#1ef2c1]' : 'hover:bg-zinc-900/60 text-zinc-300'
+              }`}
               onMouseDown={() => handleMouseDown(lineNum)}
               onMouseEnter={() => handleMouseEnter(lineNum)}
             >
-              {line || ' '}
+              <div
+                className={`sticky left-0 flex-none w-12 px-3 text-right select-none bg-[#0a0a0a] border-r border-zinc-800 transition-colors z-10 ${
+                  isSelected ? 'text-[#1ef2c1] font-bold bg-[#0d1412]' : 'text-zinc-600 group-hover:text-zinc-400'
+                }`}
+              >
+                {lineNum}
+              </div>
+              <div className="flex-1 px-4 whitespace-pre font-mono leading-relaxed">
+                {line || ' '}
+              </div>
             </div>
           );
         })}

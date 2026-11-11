@@ -60,11 +60,17 @@ export async function POST(request: Request) {
     // Fetch commits from GitHub API
     let githubCommits: any[] = [];
     try {
-      const ghRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=15`, {
-        headers: ghHeaders,
-      });
-      if (ghRes.ok) {
-        githubCommits = await ghRes.json();
+      let page = 1;
+      while (page <= 5) {
+        const ghRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=100&page=${page}`, {
+          headers: ghHeaders,
+        });
+        if (!ghRes.ok) break;
+        const batch: any[] = await ghRes.json();
+        if (!Array.isArray(batch) || batch.length === 0) break;
+        githubCommits.push(...batch);
+        if (batch.length < 100) break;
+        page++;
       }
     } catch (err) {
       console.error('Failed to fetch commits from GitHub API:', err);

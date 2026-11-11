@@ -19,6 +19,8 @@ interface Commit {
   CommitID: string;
   SHA: string;
   Message: string;
+  RepoID?: string;
+  repoId?: string;
 }
 
 export default function CreateIssuePage() {
@@ -52,14 +54,14 @@ export default function CreateIssuePage() {
   }, []);
 
   useEffect(() => {
+    let url = "/api/commits";
     if (repoId) {
-      fetch(`/api/commits?repoId=${repoId}`)
-        .then((r) => r.json())
-        .then((data) => setCommits(Array.isArray(data) ? data : []))
-        .catch(() => {});
-    } else {
-      setCommits([]);
+      url += `?repoId=${repoId}`;
     }
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => setCommits(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, [repoId]);
 
   useEffect(() => {
@@ -229,14 +231,29 @@ export default function CreateIssuePage() {
                     <label className="text-[10px] text-zinc-500 block mb-1">Commit</label>
                     <select
                       value={commitId}
-                      onChange={(e) => setCommitId(e.target.value)}
-                      disabled={!repoId}
-                      className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 disabled:opacity-40"
+                      onChange={(e) => {
+                        const selectedVal = e.target.value;
+                        setCommitId(selectedVal);
+                        if (!repoId && selectedVal) {
+                          const selectedCommit = commits.find((c: any) => (c.CommitID || c.commitId) === selectedVal);
+                          if (selectedCommit && (selectedCommit.RepoID || selectedCommit.repoId)) {
+                            setRepoId(selectedCommit.RepoID || selectedCommit.repoId || "");
+                          }
+                        }
+                      }}
+                      className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50"
                     >
-                      <option value="">Select a commit</option>
-                      {commits.map((c) => (
-                        <option key={c.CommitID} value={c.CommitID}>{c.SHA.slice(0, 7)} — {c.Message.slice(0, 50)}</option>
-                      ))}
+                      <option value="">{commits.length === 0 ? "No commits available" : "Select a commit"}</option>
+                      {commits.map((c: any) => {
+                        const cid = c.CommitID || c.commitId || c.SHA || c.sha;
+                        const sha = (c.SHA || c.sha || cid || "").slice(0, 7);
+                        const msg = (c.Message || c.message || "").slice(0, 60);
+                        return (
+                          <option key={cid} value={cid}>
+                            {sha} — {msg}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>

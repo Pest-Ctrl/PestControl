@@ -19,13 +19,13 @@ export async function GET(request: Request) {
     targetRepoIds = [repoId];
   } else if (spaceId) {
     const repos = await prisma.repo.findMany({ where: { SpaceID: spaceId }, select: { RepoID: true } });
-    targetRepoIds = repos.map((r: any) => r.RepoID);
+    targetRepoIds = repos.map((r: any) => r.RepoID || r.RepoId || r.repoId).filter(Boolean);
     if (targetRepoIds.length === 0) return NextResponse.json([]);
   } else {
-    // Return commits from the first repo as fallback
-    const firstRepo = await prisma.repo.findFirst();
-    if (!firstRepo) return NextResponse.json([]);
-    targetRepoIds = [firstRepo.RepoID];
+    // Return commits from all repositories when no specific repo or space is filtered
+    const allRepos = await prisma.repo.findMany();
+    targetRepoIds = (allRepos || []).map((r: any) => r.RepoID || r.RepoId || r.repoId).filter(Boolean);
+    if (targetRepoIds.length === 0) return NextResponse.json([]);
   }
 
   const commits = await prisma.commit.findMany({

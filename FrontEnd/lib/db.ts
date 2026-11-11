@@ -303,6 +303,14 @@ export const prisma = {
           result = result.filter((c: any) => c.RepoID === rid || c.repoId === rid);
         }
       }
+
+      // Order commits by committedAt descending
+      result.sort((a: any, b: any) => {
+        const dateA = new Date(a.CommittedAt || a.committedAt || 0).getTime();
+        const dateB = new Date(b.CommittedAt || b.committedAt || 0).getTime();
+        return dateB - dateA;
+      });
+
       return result;
     },
     createMany: async (args?: any) => {

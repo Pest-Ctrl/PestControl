@@ -129,10 +129,6 @@ export default function WorkspacePage() {
                             <h2 className="text-sm font-bold text-zinc-100">{space.SpaceName}</h2>
                             <p className="text-[10px] text-zinc-500 mt-0.5 font-mono">ID: {space.SpaceID?.split('-')[0]}...</p>
                           </div>
-                          <span className="flex items-center gap-1.5 bg-[#050505] border border-zinc-800 px-2 py-1 rounded text-[10px] text-zinc-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#1ef2c1] animate-pulse" />
-                            Active
-                          </span>
                         </div>
                         <div className="border-t border-zinc-900 pt-3 flex items-center gap-4 text-[10px] text-zinc-500">
                           <span><span className="text-zinc-300 font-mono font-bold">{spaceRepos.length}</span> repos</span>
@@ -182,10 +178,6 @@ export default function WorkspacePage() {
                           <div>
                             <h2 className="text-base font-bold text-zinc-100 group-hover:text-white transition-colors">{repo.GHName}</h2>
                             <p className="text-xs text-zinc-500 mt-1 line-clamp-1">github.com/{repo.GHOwner}/{repo.GHName}</p>
-                          </div>
-                          <div className="flex items-center gap-2 bg-[#050505] border border-zinc-800 px-2 py-1 rounded">
-                            <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-[#1ef2c1]" />
-                            <span className="text-[10px] text-zinc-400 uppercase tracking-wide">Active</span>
                           </div>
                         </div>
                         <div className="mt-auto pt-4 border-t border-zinc-900/50 flex items-center justify-between">
