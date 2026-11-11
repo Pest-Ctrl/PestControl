@@ -160,9 +160,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const lastSynced = typeof token.roleSyncedAt === "number" ? token.roleSyncedAt : 0;
         if (Date.now() - lastSynced > 60_000) {
           try {
-            const dbUser = await prisma.users.findUnique({ where: { UserID: token.sub } });
-            if (dbUser?.Role) {
-              token.role = toSchemaRole(dbUser.Role);
+            const { reachable, user: dbUser } = await prisma.users.findByIdWithStatus(token.sub);
+            if (reachable) {
+              if (!dbUser) {
+                // User was removed from database -> invalidate session so they must re-authenticate
+                return null;
+              }
+              if (dbUser.Role) {
+                token.role = toSchemaRole(dbUser.Role);
+              }
               token.roleSyncedAt = Date.now();
             }
           } catch {

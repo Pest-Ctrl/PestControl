@@ -26,6 +26,15 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.pestcontrol.backend.entities.AuditLog;
 import com.pestcontrol.backend.entities.Commit;
@@ -474,6 +483,200 @@ class ApiControllerTest {
         assertEquals(HttpStatus.NOT_FOUND, apiController.updateSpace(UUID.randomUUID(), Map.of()).getStatusCode());
         assertEquals(HttpStatus.NOT_FOUND,
                 apiController.deleteSpace(UUID.fromString("00000000-0000-0000-0000-000000000000")).getStatusCode());
+    }
+
+    private JwtAuthenticationToken buildJwtAuth(UUID userId, String role) {
+        Jwt jwt = Jwt.withTokenValue("test-token")
+                .header("alg", "HS256")
+                .subject(userId != null ? userId.toString() : "")
+                .claim("role", role)
+                .build();
+        return new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/users/{id} rejects unauthenticated or non-Admin callers (RBAC)")
+    void testDeleteUserRejectsNonAdminAndUnauthenticated() {
+        UUID requesterId = UUID.randomUUID();
+        UUID targetId = UUID.randomUUID();
+
+        // Null & non-JWT authentication -> 401
+        ResponseEntity<?> nullAuth = apiController.deleteUser(targetId.toString(), null);
+        assertEquals(HttpStatus.UNAUTHORIZED, nullAuth.getStatusCode());
+
+        TestingAuthenticationToken unauthToken = new TestingAuthenticationToken("anon", "pass");
+        unauthToken.setAuthenticated(false);
+        assertEquals(HttpStatus.UNAUTHORIZED, apiController.deleteUser(targetId.toString(), unauthToken).getStatusCode());
+
+        // Invalid subject -> 401
+        Jwt badSubJwt = Jwt.withTokenValue("tok").header("alg", "HS256").subject("not-a-uuid").claim("role", "Admin").build();
+        assertEquals(HttpStatus.UNAUTHORIZED,
+                apiController.deleteUser(targetId.toString(), new JwtAuthenticationToken(badSubJwt, List.of())).getStatusCode());
+
+        // Non-Admin claim roles -> 403
+        for (String role : List.of("Developer", "QAEngineer", "RepoImporter")) {
+            ResponseEntity<?> res = apiController.deleteUser(targetId.toString(), buildJwtAuth(requesterId, role));
+            assertEquals(HttpStatus.FORBIDDEN, res.getStatusCode());
+        }
+
+        // Acting user deleted / missing from DB -> 401
+        when(userRepository.findById(requesterId)).thenReturn(Optional.empty());
+        assertEquals(HttpStatus.UNAUTHORIZED,
+                apiController.deleteUser(targetId.toString(), buildJwtAuth(requesterId, "Admin")).getStatusCode());
+
+        // Stale Admin JWT claim when DB user was demoted to Developer -> 403
+        User demotedUser = new User();
+        demotedUser.setUserId(requesterId);
+        demotedUser.setRole(User.UserRole.Developer);
+        when(userRepository.findById(requesterId)).thenReturn(Optional.of(demotedUser));
+        assertEquals(HttpStatus.FORBIDDEN,
+                apiController.deleteUser(targetId.toString(), buildJwtAuth(requesterId, "Admin")).getStatusCode());
+
+        verify(userRepository, never()).delete(any(User.class));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/users/{id} enforces boundary checks: invalid UUID, self-delete, 404, and last Admin")
+    void testDeleteUserBoundaryChecks() {
+        UUID adminId = UUID.randomUUID();
+        UUID missingId = UUID.randomUUID();
+        UUID onlyAdminTargetId = adminId;
+
+        User adminUser = new User();
+        adminUser.setUserId(adminId);
+        adminUser.setEmail("admin@gmail.com");
+        adminUser.setRole(User.UserRole.Admin);
+
+        when(userRepository.findById(adminId)).thenReturn(Optional.of(adminUser));
+        when(userRepository.findById(missingId)).thenReturn(Optional.empty());
+
+        // Invalid target UUID -> 400
+        assertEquals(HttpStatus.BAD_REQUEST,
+                apiController.deleteUser("invalid-uuid-value", buildJwtAuth(adminId, "Admin")).getStatusCode());
+
+        // Self deletion -> 403
+        assertEquals(HttpStatus.FORBIDDEN,
+                apiController.deleteUser(onlyAdminTargetId.toString(), buildJwtAuth(adminId, "Admin")).getStatusCode());
+
+        // Non-existent target user -> 404
+        assertEquals(HttpStatus.NOT_FOUND,
+                apiController.deleteUser(missingId.toString(), buildJwtAuth(adminId, "Admin")).getStatusCode());
+
+        // Attempt to remove another Admin when only 1 Admin exists in repository list -> 409 Conflict
+        UUID targetAdminId = UUID.randomUUID();
+        User targetAdmin = new User();
+        targetAdmin.setUserId(targetAdminId);
+        targetAdmin.setRole(User.UserRole.Admin);
+        when(userRepository.findById(targetAdminId)).thenReturn(Optional.of(targetAdmin));
+        when(userRepository.findAll()).thenReturn(List.of(targetAdmin));
+
+        assertEquals(HttpStatus.CONFLICT,
+                apiController.deleteUser(targetAdminId.toString(), buildJwtAuth(adminId, "Admin")).getStatusCode());
+
+        verify(userRepository, never()).delete(any(User.class));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/users/{id} clears GitHub OAuth credentials, cleans assignments/inbox, logs audit, and deletes user")
+    void testDeleteUserClearsGithubOAuthAndCascadesCleanly() {
+        UUID adminId = UUID.randomUUID();
+        UUID targetId = UUID.randomUUID();
+
+        User adminUser = new User();
+        adminUser.setUserId(adminId);
+        adminUser.setEmail("admin@gmail.com");
+        adminUser.setRole(User.UserRole.Admin);
+
+        User targetUser = new User();
+        targetUser.setUserId(targetId);
+        targetUser.setUsername("GHUser");
+        targetUser.setEmail("ghuser@gmail.com");
+        targetUser.setRole(User.UserRole.Developer);
+        targetUser.setGhOAuth("gho_secret_oauth_token");
+        targetUser.setPassHash("$2a$10$hashvalue");
+
+        Issue assignedIssue = new Issue();
+        assignedIssue.setIssueId(testIssueId);
+        assignedIssue.setAssigneeId(targetId);
+
+        Inbox notif = new Inbox();
+        notif.setNotifId(UUID.randomUUID());
+        notif.setUserId(targetId);
+
+        Space independentSpace = new Space();
+        independentSpace.setSpaceId(testSpaceId);
+        independentSpace.setOwnerId(adminId);
+
+        when(userRepository.findById(adminId)).thenReturn(Optional.of(adminUser));
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(targetUser));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+        when(issueRepository.findAll()).thenReturn(List.of(assignedIssue));
+        when(inboxRepository.findByUserIdOrderByCreatedAtDesc(targetId)).thenReturn(List.of(notif));
+        when(spaceRepository.findAll()).thenReturn(List.of(independentSpace));
+
+        ResponseEntity<?> res = apiController.deleteUser(targetId.toString(), buildJwtAuth(adminId, "Admin"));
+
+        assertEquals(HttpStatus.OK, res.getStatusCode());
+        assertNull(targetUser.getGhOAuth());
+        assertNull(targetUser.getPassHash());
+        assertNull(assignedIssue.getAssigneeId());
+
+        verify(userRepository, times(1)).save(targetUser);
+        verify(issueRepository, times(1)).save(assignedIssue);
+        verify(inboxRepository, times(1)).deleteAll(List.of(notif));
+        verify(userRepository, times(1)).delete(targetUser);
+        verify(auditLogService, times(1)).createEntry(
+                adminId, testSpaceId, null, "User Removed",
+                "Administrator removed user ghuser@gmail.com and cleared GitHub OAuth credentials");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) res.getBody();
+        assertNotNull(body);
+        assertEquals(true, body.get("githubCredentialsCleared"));
+        assertEquals(true, body.get("hadGithubOAuth"));
+        assertEquals(targetId.toString(), body.get("deletedUserId"));
+    }
+
+    @Test
+    @DisplayName("MockMvc routing: DELETE /api/users/{id} enforces 401/403 and returns JSON for Admin")
+    void testDeleteUserMvcDispatchAndRbac() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(apiController).build();
+        UUID adminId = UUID.randomUUID();
+        UUID devId = UUID.randomUUID();
+        UUID targetId = UUID.randomUUID();
+
+        User adminUser = new User();
+        adminUser.setUserId(adminId);
+        adminUser.setRole(User.UserRole.Admin);
+
+        User devUser = new User();
+        devUser.setUserId(devId);
+        devUser.setRole(User.UserRole.Developer);
+
+        User targetUser = new User();
+        targetUser.setUserId(targetId);
+        targetUser.setEmail("target@gmail.com");
+        targetUser.setRole(User.UserRole.Developer);
+        targetUser.setGhOAuth("gho_token_to_clear");
+
+        when(userRepository.findById(adminId)).thenReturn(Optional.of(adminUser));
+        when(userRepository.findById(targetId)).thenReturn(Optional.of(targetUser));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Unauthenticated
+        mockMvc.perform(delete("/api/users/{id}", targetId))
+                .andExpect(status().isUnauthorized());
+
+        // Non-admin user rejected with 403
+        mockMvc.perform(delete("/api/users/{id}", targetId).principal(buildJwtAuth(devId, "Developer")))
+                .andExpect(status().isForbidden());
+
+        // Admin removes target and clears GitHub OAuth credentials
+        mockMvc.perform(delete("/api/users/{id}", targetId).principal(buildJwtAuth(adminId, "Admin")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deletedUserId").value(targetId.toString()))
+                .andExpect(jsonPath("$.githubCredentialsCleared").value(true));
     }
 }
 

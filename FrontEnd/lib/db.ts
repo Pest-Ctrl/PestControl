@@ -89,7 +89,14 @@ const mapKeysToCamelCase = (obj: any): any => {
   return obj;
 };
 
-const fetchJava = async (path: string, options: any = {}) => {
+export interface JavaApiResponse<T = any> {
+  ok: boolean;
+  status: number;
+  data: T | null;
+  error?: string;
+}
+
+export const requestJavaDetailed = async <T = any>(path: string, options: any = {}): Promise<JavaApiResponse<T>> => {
   const apiBase = getJavaApiUrl();
   const method = (options.method || 'GET').toUpperCase();
   const maxAttempts = method === 'GET' ? 2 : 1;
@@ -101,6 +108,16 @@ const fetchJava = async (path: string, options: any = {}) => {
         ...options,
         headers: { 'Content-Type': 'application/json', ...options.headers }
       });
+      const text = await res.text();
+      let parsed: any = null;
+      if (text && text.trim() !== '') {
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          parsed = text;
+        }
+      }
+
       if (!res.ok) {
         const isTransient = (res.status === 502 || res.status === 503 || res.status === 504) && attempt < maxAttempts;
         if (isTransient) {
@@ -108,27 +125,32 @@ const fetchJava = async (path: string, options: any = {}) => {
           continue;
         }
         console.error(`Java API returned ${res.status} for ${method} ${apiBase}${path}`);
-        return null;
+        const errMsg =
+          (parsed && typeof parsed === 'object' && (parsed.error || parsed.message)) ||
+          (typeof parsed === 'string' && parsed) ||
+          `Backend request failed (${res.status})`;
+        return { ok: false, status: res.status, data: null, error: errMsg };
       }
-      // Handle responses with no body (204, or DELETE responses)
-      const text = await res.text();
-      if (!text || text.trim() === '') return { success: true };
-      try {
-        const data = JSON.parse(text);
-        return mapKeysToPascalCase(data);
-      } catch {
-        return { success: true };
+
+      if (!parsed || typeof parsed === 'string') {
+        return { ok: true, status: res.status, data: ({ success: true } as unknown as T) };
       }
+      return { ok: true, status: res.status, data: mapKeysToPascalCase(parsed) as T };
     } catch (err) {
       if (attempt < maxAttempts) {
         await new Promise((r) => setTimeout(r, 1500));
         continue;
       }
       console.error(`Error calling Java API ${method} ${apiBase}${path}:`, err);
-      return null;
+      return { ok: false, status: 503, data: null, error: 'Backend service unavailable' };
     }
   }
-  return null;
+  return { ok: false, status: 503, data: null, error: 'Backend service unavailable' };
+};
+
+const fetchJava = async (path: string, options: any = {}) => {
+  const res = await requestJavaDetailed(path, options);
+  return res.ok ? res.data : null;
 };
 
 // Universal DB proxy aligning Next.js / prisma interfaces with the universal DB schema and Java backend
@@ -190,7 +212,22 @@ export const prisma = {
     findMany: async (args?: any) => {
       const users = await fetchJava('/users') || [];
       return users;
-    }
+    },
+    findByIdWithStatus: async (id: string) => {
+      const res = await requestJavaDetailed('/users');
+      if (!res.ok || !Array.isArray(res.data)) {
+        return { reachable: false, user: null };
+      }
+      const match = res.data.find((u: any) => u.UserID === id || u.UserId === id || u.userId === id) || null;
+      return { reachable: true, user: match };
+    },
+    delete: async ({ where, bearerToken }: { where: any; bearerToken?: string }) => {
+      const userId = where?.UserID || where?.UserId || where?.userId || where?.id;
+      return await requestJavaDetailed(`/users/${encodeURIComponent(String(userId))}`, {
+        method: 'DELETE',
+        headers: bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {},
+      });
+    },
   },
   repo: {
     findFirst: async (args?: any) => {

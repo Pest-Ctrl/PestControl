@@ -1,7 +1,10 @@
 package com.pestcontrol.backend.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import com.pestcontrol.backend.entities.*;
@@ -204,6 +207,121 @@ public class ApiController {
             }
         }
         return ResponseEntity.ok(userRepository.save(user));
+    }
+
+    @DeleteMapping("/users/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteUser(@PathVariable("id") String id, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof Jwt jwt)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized: Authentication token required"));
+        }
+
+        UUID requesterId = parseUuid(jwt.getSubject());
+        if (requesterId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized: Invalid token subject"));
+        }
+
+        String claimRole = jwt.getClaimAsString("role");
+        if (claimRole != null && !claimRole.isBlank()
+                && !User.UserRole.Admin.name().equalsIgnoreCase(claimRole.trim())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Forbidden: Only Administrators can remove users"));
+        }
+
+        User actingUser = userRepository.findById(requesterId).orElse(null);
+        if (actingUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized: Authenticated user does not exist"));
+        }
+
+        if (!User.UserRole.Admin.equals(actingUser.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Forbidden: Only Administrators can remove users"));
+        }
+
+        UUID targetId = parseUuid(id);
+        if (targetId == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid user ID format"));
+        }
+
+        if (requesterId.equals(targetId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Administrators cannot remove their own account"));
+        }
+
+        User targetUser = userRepository.findById(targetId).orElse(null);
+        if (targetUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found"));
+        }
+
+        if (User.UserRole.Admin.equals(targetUser.getRole())) {
+            long adminCount = userRepository.findAll().stream()
+                    .filter(u -> User.UserRole.Admin.equals(u.getRole()))
+                    .count();
+            if (adminCount <= 1) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("error", "Cannot remove the last remaining Administrator"));
+            }
+        }
+
+        boolean hadGithubOAuth = targetUser.getGhOAuth() != null && !targetUser.getGhOAuth().isBlank();
+        String targetEmail = targetUser.getEmail();
+
+        // Wipe stored credentials (including GitHub OAuth token) prior to row removal
+        targetUser.setGhOAuth(null);
+        targetUser.setPassHash(null);
+        userRepository.save(targetUser);
+
+        // Unassign any issues assigned to the removed user
+        for (Issue issue : issueRepository.findAll()) {
+            if (targetId.equals(issue.getAssigneeId())) {
+                issue.setAssigneeId(null);
+                issueRepository.save(issue);
+            }
+        }
+
+        // Remove inbox notifications belonging to the user
+        List<Inbox> notifications = inboxRepository.findByUserIdOrderByCreatedAtDesc(targetId);
+        if (notifications != null && !notifications.isEmpty()) {
+            inboxRepository.deleteAll(notifications);
+        }
+
+        userRepository.delete(targetUser);
+
+        // Log user removal under an existing non-cascaded workspace if one exists
+        for (Space space : spaceRepository.findAll()) {
+            if (!targetId.equals(space.getOwnerId()) && space.getSpaceId() != null) {
+                auditLogService.createEntry(
+                        requesterId,
+                        space.getSpaceId(),
+                        null,
+                        "User Removed",
+                        "Administrator removed user " + targetEmail + " and cleared GitHub OAuth credentials");
+                break;
+            }
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "message", "User removed and GitHub OAuth credentials cleared",
+                "deletedUserId", targetId.toString(),
+                "githubCredentialsCleared", true,
+                "hadGithubOAuth", hadGithubOAuth));
+    }
+
+    private UUID parseUuid(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(raw.trim());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     @GetMapping("/issues")
