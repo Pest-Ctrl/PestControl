@@ -1,17 +1,17 @@
 package com.pestcontrol.backend.services;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.pestcontrol.backend.entities.AuditLog;
@@ -26,16 +26,9 @@ class AuditLogServiceTest {
     @InjectMocks
     private AuditLogService auditLogService;
 
-    private UUID userId;
-    private UUID spaceId;
-    private UUID issueId;
-
-    @BeforeEach
-    void setUp() {
-        userId = UUID.randomUUID();
-        spaceId = UUID.randomUUID();
-        issueId = UUID.randomUUID();
-    }
+    private final UUID userId = UUID.randomUUID();
+    private final UUID spaceId = UUID.randomUUID();
+    private final UUID issueId = UUID.randomUUID();
 
     @Test
     @DisplayName("Compliance: logSeverityChanged logs transition accurately")

@@ -1,24 +1,40 @@
 package com.pestcontrol.backend.controllers;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
-import java.time.LocalDateTime;
-import java.util.*;
-
-import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.pestcontrol.backend.entities.*;
-import com.pestcontrol.backend.repositories.*;
+import com.pestcontrol.backend.entities.AuditLog;
+import com.pestcontrol.backend.entities.Commit;
+import com.pestcontrol.backend.entities.Inbox;
+import com.pestcontrol.backend.entities.Issue;
+import com.pestcontrol.backend.entities.Repo;
+import com.pestcontrol.backend.entities.User;
+import com.pestcontrol.backend.repositories.AuditLogRepository;
+import com.pestcontrol.backend.repositories.CommitRepository;
+import com.pestcontrol.backend.repositories.InboxRepository;
+import com.pestcontrol.backend.repositories.IssueRepository;
+import com.pestcontrol.backend.repositories.RepoRepository;
+import com.pestcontrol.backend.repositories.SpaceRepository;
+import com.pestcontrol.backend.repositories.UserRepository;
 import com.pestcontrol.backend.services.AuditLogService;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,18 +67,9 @@ class ApiControllerTest {
     @InjectMocks
     private ApiController apiController;
 
-    private UUID testUserId;
-    private UUID testSpaceId;
-    private UUID testRepoId;
-    private UUID testIssueId;
-
-    @BeforeEach
-    void setUp() {
-        testUserId = UUID.randomUUID();
-        testSpaceId = UUID.randomUUID();
-        testRepoId = UUID.randomUUID();
-        testIssueId = UUID.randomUUID();
-    }
+    private final UUID testSpaceId = UUID.randomUUID();
+    private final UUID testRepoId = UUID.randomUUID();
+    private final UUID testIssueId = UUID.randomUUID();
 
     @Test
     @DisplayName("Compliance: GET /api/repos returns list of repositories")
