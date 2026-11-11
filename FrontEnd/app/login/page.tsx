@@ -33,7 +33,9 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!email.endsWith('@gmail.com')) {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail.endsWith('@gmail.com')) {
       setError('Only @gmail.com addresses are permitted.');
       return;
     }
@@ -46,7 +48,7 @@ export default function LoginPage() {
     try {
       const response = await signIn('credentials', {
         redirect: false,
-        email,
+        email: cleanEmail,
         password,
       });
       if (response?.error) {

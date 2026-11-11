@@ -73,20 +73,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   jwt: {
     async encode({ secret, token }) {
       if (!token) return "";
+      const resolvedSecret = Array.isArray(secret) ? secret[0] : secret;
       return await new SignJWT(token as JWTPayload)
         .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt()
         .setExpirationTime("30d")
-        .sign(new TextEncoder().encode(secret as string));
+        .sign(new TextEncoder().encode(String(resolvedSecret ?? "")));
     },
     async decode({ secret, token }) {
       if (!token) return null;
-      try {
-        const { payload } = await jwtVerify(token, new TextEncoder().encode(secret as string));
-        return payload;
-      } catch {
-        return null;
+      const secrets = Array.isArray(secret) ? secret : [secret];
+      for (const candidate of secrets) {
+        if (!candidate) continue;
+        try {
+          const { payload } = await jwtVerify(token, new TextEncoder().encode(String(candidate)));
+          return payload;
+        } catch {
+          // Try next secret if key rotation is configured
+        }
       }
+      return null;
     },
   },
   callbacks: {
@@ -149,14 +155,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (user.name) {
           token.name = user.name;
         }
+        token.roleSyncedAt = Date.now();
       } else if (token.sub) {
-        try {
-          const dbUser = await prisma.users.findUnique({ where: { UserID: token.sub } });
-          if (dbUser?.Role) {
-            token.role = toSchemaRole(dbUser.Role);
+        const lastSynced = typeof token.roleSyncedAt === "number" ? token.roleSyncedAt : 0;
+        if (Date.now() - lastSynced > 60_000) {
+          try {
+            const dbUser = await prisma.users.findUnique({ where: { UserID: token.sub } });
+            if (dbUser?.Role) {
+              token.role = toSchemaRole(dbUser.Role);
+              token.roleSyncedAt = Date.now();
+            }
+          } catch {
+            // Keep existing token.role if lookup fails
           }
-        } catch {
-          // Keep existing token.role if lookup fails
         }
       }
       return token;

@@ -1,18 +1,11 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { auth } from '@/lib/auth';
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token');
+  const session = await auth();
 
-  if (token) {
-    return NextResponse.json({ 
-      user: {
-        email: "developer@gmail.com",
-        name: "Developer",
-        provider: "github"
-      } 
-    });
+  if (session?.user) {
+    return NextResponse.json({ user: session.user });
   }
 
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

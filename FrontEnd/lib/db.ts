@@ -91,29 +91,44 @@ const mapKeysToCamelCase = (obj: any): any => {
 
 const fetchJava = async (path: string, options: any = {}) => {
   const apiBase = getJavaApiUrl();
-  try {
-    const res = await fetch(`${apiBase}${path}`, {
-      cache: 'no-store',
-      ...options,
-      headers: { 'Content-Type': 'application/json', ...options.headers }
-    });
-    if (!res.ok) {
-      console.error(`Java API returned ${res.status} for ${path}`);
+  const method = (options.method || 'GET').toUpperCase();
+  const maxAttempts = method === 'GET' ? 2 : 1;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch(`${apiBase}${path}`, {
+        cache: 'no-store',
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...options.headers }
+      });
+      if (!res.ok) {
+        const isTransient = (res.status === 502 || res.status === 503 || res.status === 504) && attempt < maxAttempts;
+        if (isTransient) {
+          await new Promise((r) => setTimeout(r, 1500));
+          continue;
+        }
+        console.error(`Java API returned ${res.status} for ${method} ${apiBase}${path}`);
+        return null;
+      }
+      // Handle responses with no body (204, or DELETE responses)
+      const text = await res.text();
+      if (!text || text.trim() === '') return { success: true };
+      try {
+        const data = JSON.parse(text);
+        return mapKeysToPascalCase(data);
+      } catch {
+        return { success: true };
+      }
+    } catch (err) {
+      if (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      console.error(`Error calling Java API ${method} ${apiBase}${path}:`, err);
       return null;
     }
-    // Handle responses with no body (204, or DELETE responses)
-    const text = await res.text();
-    if (!text || text.trim() === '') return { success: true };
-    try {
-      const data = JSON.parse(text);
-      return mapKeysToPascalCase(data);
-    } catch {
-      return { success: true };
-    }
-  } catch (err) {
-    console.error(`Error calling Java API ${path}:`, err);
-    return null;
   }
+  return null;
 };
 
 // Universal DB proxy aligning Next.js / prisma interfaces with the universal DB schema and Java backend
