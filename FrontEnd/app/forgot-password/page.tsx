@@ -7,8 +7,8 @@ export default function ForgotPassword() {
   const [submitted, setSubmitted] = useState(false);
   return (
     <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 font-sans text-white">
-      <div className="max-w-md w-full bg-[#0d1117] p-8 border border-zinc-800 rounded-lg shadow-2xl">
-        <h1 className="text-2xl font-bold text-[#1ef2c1] mb-6">Reset Password</h1>
+      <div className="max-w-md w-full bg-[#0d1117] p-6 sm:p-8 border border-zinc-800 rounded-lg shadow-2xl">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1ef2c1] mb-5 sm:mb-6">Reset Password</h1>
         
         {submitted ? (
           <div className="bg-green-900/50 border border-green-500 text-green-200 px-4 py-3 rounded-md text-sm mb-6">

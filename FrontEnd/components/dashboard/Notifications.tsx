@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 
 interface Notification {
@@ -11,11 +11,16 @@ interface Notification {
   CreatedAt: string;
 }
 
-export default function Notifications() {
+interface NotificationsProps {
+  placement?: 'sidebar' | 'topbar';
+}
+
+export default function Notifications({ placement = 'sidebar' }: NotificationsProps) {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
     try {
@@ -40,6 +45,24 @@ export default function Notifications() {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen]);
+
   const markAsRead = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -58,9 +81,17 @@ export default function Notifications() {
 
   const unreadCount = notifications.filter(n => !n.IsRead).length;
 
+  const popoverPositionClass =
+    placement === 'topbar'
+      ? 'fixed inset-x-3 top-16 sm:inset-x-auto sm:right-4 sm:w-80'
+      : 'absolute left-0 bottom-full mb-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)]';
+
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button 
+        type="button"
+        aria-label="Notifications"
+        aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-zinc-400 hover:text-white transition-colors focus:outline-none"
       >
@@ -74,14 +105,24 @@ export default function Notifications() {
       </button>
 
       {isOpen && (
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-80 bg-[#0a0a0a] border border-zinc-800 shadow-2xl rounded-lg overflow-hidden z-50">
+        <div className={`${popoverPositionClass} bg-[#0a0a0a] border border-zinc-800 shadow-2xl rounded-lg overflow-hidden z-50`}>
           <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-[#050505]">
-            <h3 className="text-sm font-medium text-white">Notifications</h3>
-            {unreadCount > 0 && (
-              <span className="text-xs bg-[#1ef2c1]/20 text-[#1ef2c1] px-2 py-0.5 rounded-full">
-                {unreadCount} new
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium text-white">Notifications</h3>
+              {unreadCount > 0 && (
+                <span className="text-xs bg-[#1ef2c1]/20 text-[#1ef2c1] px-2 py-0.5 rounded-full">
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              aria-label="Close notifications"
+              onClick={() => setIsOpen(false)}
+              className="text-zinc-500 hover:text-zinc-200 text-xs px-1.5 py-0.5 rounded hover:bg-zinc-900"
+            >
+              ✕
+            </button>
           </div>
           
           <div className="max-h-80 overflow-y-auto">

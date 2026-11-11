@@ -78,28 +78,28 @@ export default function WorkspacePage() {
   });
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-white font-sans">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#050505] text-white font-sans">
       <Sidebar />
 
-      <Scrollable className="flex-1 flex flex-col h-screen">
+      <Scrollable className="flex-1 flex flex-col min-w-0 md:h-screen">
         {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-white tracking-wide">Workspaces</h1>
+        <header className="md:sticky md:top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-4 sm:px-8 py-3.5 sm:py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-bold text-white tracking-wide">Workspaces</h1>
             <p className="text-xs text-zinc-600">Create a workspace, then import repositories into it</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
             <button
               onClick={() => setShowNewSpace(true)}
-              className="bg-[#1ef2c1] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#16b892] transition-colors tracking-wider uppercase rounded-md"
+              className="bg-[#1ef2c1] text-black text-xs font-bold px-3.5 sm:px-4 py-1.5 hover:bg-[#16b892] transition-colors tracking-wider uppercase rounded-md whitespace-nowrap"
             >
               + New Workspace
             </button>
           </div>
         </header>
 
-        <main className="flex-1 p-8">
-          <section className="max-w-7xl mx-auto space-y-10">
+        <main className="flex-1 p-4 sm:p-8 min-w-0">
+          <section className="max-w-7xl mx-auto space-y-8 sm:space-y-10">
 
             {/* Workspaces Section */}
             <div>
@@ -109,7 +109,7 @@ export default function WorkspacePage() {
                   <div className="w-5 h-5 border-2 border-zinc-700 border-t-[#1ef2c1] rounded-full animate-spin" />
                 </div>
               ) : spaces.length === 0 ? (
-                <div className="border border-dashed border-zinc-800 rounded-lg p-10 text-center">
+                <div className="border border-dashed border-zinc-800 rounded-lg p-6 sm:p-10 text-center">
                   <p className="text-zinc-500 text-sm mb-3">No workspaces yet.</p>
                   <button
                     onClick={() => setShowNewSpace(true)}
@@ -123,10 +123,10 @@ export default function WorkspacePage() {
                   {spaces.filter(Boolean).map(space => {
                     const spaceRepos = repos.filter(r => r.SpaceID === space.SpaceID);
                     return (
-                      <div key={space.SpaceID} className="bg-[#0d1117] border border-zinc-800 rounded-lg p-5 flex flex-col gap-3">
+                      <div key={space.SpaceID} className="bg-[#0d1117] border border-zinc-800 rounded-lg p-4 sm:p-5 flex flex-col gap-3 min-w-0">
                         <div className="flex items-start justify-between">
-                          <div>
-                            <h2 className="text-sm font-bold text-zinc-100">{space.SpaceName}</h2>
+                          <div className="min-w-0">
+                            <h2 className="text-sm font-bold text-zinc-100 truncate">{space.SpaceName}</h2>
                             <p className="text-[10px] text-zinc-500 mt-0.5">ID: {space.SpaceID?.split('-')[0]}...</p>
                           </div>
                         </div>
@@ -143,7 +143,7 @@ export default function WorkspacePage() {
 
             {/* Repositories Section */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">Imported Repositories</p>
                 <select
                   value={filter}
@@ -165,19 +165,19 @@ export default function WorkspacePage() {
                   No repositories found. Use the Importer Dashboard to import repos into a workspace.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                   {filteredRepos.map(repo => (
                     <Link
                       href="/dashboard/issues"
                       key={repo.RepoID}
-                      className="group block bg-[#0d1117] border border-zinc-800 hover:border-[#1ef2c1]/50 transition-all duration-200 relative overflow-hidden flex flex-col h-48 rounded-lg"
+                      className="group block bg-[#0d1117] border border-zinc-800 hover:border-[#1ef2c1]/50 transition-all duration-200 relative overflow-hidden flex flex-col min-h-[11rem] md:h-48 rounded-lg"
                     >
                       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#1ef2c1]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="p-6 flex-1 flex flex-col">
+                      <div className="p-5 sm:p-6 flex-1 flex flex-col min-w-0">
                         <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h2 className="text-base font-bold text-zinc-100 group-hover:text-white transition-colors">{repo.GHName}</h2>
-                            <p className="text-xs text-zinc-500 mt-1 line-clamp-1">github.com/{repo.GHOwner}/{repo.GHName}</p>
+                          <div className="min-w-0">
+                            <h2 className="text-base font-bold text-zinc-100 group-hover:text-white transition-colors break-words">{repo.GHName}</h2>
+                            <p className="text-xs text-zinc-500 mt-1 line-clamp-1 break-all">github.com/{repo.GHOwner}/{repo.GHName}</p>
                           </div>
                         </div>
                         <div className="mt-auto pt-4 border-t border-zinc-900/50 flex items-center justify-between">

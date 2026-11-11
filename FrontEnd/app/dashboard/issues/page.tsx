@@ -135,23 +135,23 @@ export default function IssuesPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-white font-sans">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#050505] text-white font-sans">
       <Sidebar />
-      <Scrollable className="flex-1 flex flex-col h-screen">
-        <header className="sticky top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-8 py-4 flex items-center justify-between">
+      <Scrollable className="flex-1 flex flex-col min-w-0 md:h-screen">
+        <header className="md:sticky md:top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-4 sm:px-8 py-3.5 sm:py-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold text-white tracking-wide">Issues</h1>
+            <h1 className="text-base sm:text-lg font-bold text-white tracking-wide">Issues</h1>
             <p className="text-xs text-zinc-400">{issues.length} total issues tracked</p>
           </div>
           <a
             href="/space"
-            className="bg-[#1ef2c1] text-black text-xs font-bold px-4 py-1.5 hover:bg-[#16b892] transition-colors tracking-wider uppercase"
+            className="bg-[#1ef2c1] text-black text-xs font-bold px-3.5 sm:px-4 py-1.5 hover:bg-[#16b892] transition-colors tracking-wider uppercase whitespace-nowrap"
           >
             + New Issue
           </a>
         </header>
 
-        <main className="flex-1 p-8 space-y-6">
+        <main className="flex-1 p-4 sm:p-8 space-y-5 sm:space-y-6 min-w-0">
           {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap">
             <input
@@ -159,12 +159,12 @@ export default function IssuesPage() {
               placeholder="Search issues..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-4 py-2.5 focus:outline-none focus:border-[#1ef2c1]/50 w-64 rounded-lg"
+              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-4 py-2.5 focus:outline-none focus:border-[#1ef2c1]/50 w-full sm:w-64 rounded-lg"
             />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-[#0d1117] border border-zinc-800 text-zinc-400 text-xs px-3 py-2.5 focus:outline-none focus:border-zinc-600 rounded-lg"
+              className="bg-[#0d1117] border border-zinc-800 text-zinc-400 text-xs px-3 py-2.5 focus:outline-none focus:border-zinc-600 rounded-lg flex-1 sm:flex-none"
             >
               <option value="">All Statuses</option>
               {STATUS_ORDER.map((s) => (
@@ -174,7 +174,7 @@ export default function IssuesPage() {
             <select
               value={filterSeverity}
               onChange={(e) => setFilterSeverity(e.target.value)}
-              className="bg-[#0d1117] border border-zinc-800 text-zinc-400 text-xs px-3 py-2.5 focus:outline-none focus:border-zinc-600 rounded-lg"
+              className="bg-[#0d1117] border border-zinc-800 text-zinc-400 text-xs px-3 py-2.5 focus:outline-none focus:border-zinc-600 rounded-lg flex-1 sm:flex-none"
             >
               <option value="">All Severities</option>
               <option value="Critical">Critical</option>
@@ -182,7 +182,7 @@ export default function IssuesPage() {
               <option value="Medium">Medium</option>
               <option value="Low">Low</option>
             </select>
-            <span className="text-xs text-zinc-600 ml-auto">
+            <span className="text-xs text-zinc-600 w-full sm:w-auto sm:ml-auto">
               Showing {filteredIssues.length} of {issues.length}
             </span>
           </div>
@@ -198,7 +198,7 @@ export default function IssuesPage() {
                   {/* Group Header */}
                   <button
                     onClick={() => toggleGroup(status)}
-                    className="w-full flex items-center justify-between px-5 py-3 hover:bg-zinc-900/50 transition-colors"
+                    className="w-full flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-zinc-900/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <span
@@ -220,74 +220,81 @@ export default function IssuesPage() {
                     <div className="border-t border-zinc-900">
                       {items.map((issue) => (
                         <div key={issue.IssueID}>
-                          {/* Compact row */}
+                          {/* Compact row (stacks cleanly on mobile, inline on md+) */}
                           <div
                             role="button"
                             tabIndex={0}
                             onClick={() => setExpandedId(expandedId === issue.IssueID ? null : issue.IssueID)}
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpandedId(expandedId === issue.IssueID ? null : issue.IssueID); }}
-                            className="w-full text-left px-5 py-3 hover:bg-[#1ef2c1]/[0.03] transition-colors border-b border-zinc-900/50 last:border-0 flex items-center gap-4 cursor-pointer select-none"
+                            className="w-full text-left px-4 sm:px-5 py-3 hover:bg-[#1ef2c1]/[0.03] transition-colors border-b border-zinc-900/50 last:border-0 flex flex-col md:flex-row md:items-center gap-2.5 md:gap-4 cursor-pointer select-none"
                           >
-                            <span className="text-[#1ef2c1]/70 text-xs w-20 shrink-0 font-medium">
-                              {issue.IssueID.slice(0, 10)}
-                            </span>
-                            <span className="text-sm text-zinc-200 flex-1 truncate">{issue.Title}</span>
-
-                            {/* Status change dropdown on the row */}
-                            <div onClick={(e) => e.stopPropagation()} className="shrink-0">
-                              <select
-                                value={issue.Status}
-                                onChange={(e) => handleStatusChange(issue.IssueID, e.target.value)}
-                                className="bg-[#050505] border border-zinc-800 text-[11px] font-semibold tracking-wider py-1 px-2.5 rounded focus:outline-none focus:border-[#1ef2c1]/60 transition-colors cursor-pointer"
-                                style={{ color: STATUS_COLORS[issue.Status] || "#1ef2c1" }}
-                                title="Change bug status"
-                              >
-                                {STATUS_ORDER.map((st) => (
-                                  <option key={st} value={st} className="bg-[#0d1117] text-zinc-200">
-                                    {STATUS_LABELS[st]}
-                                  </option>
-                                ))}
-                              </select>
+                            <div className="flex items-center gap-2.5 md:gap-4 flex-1 min-w-0">
+                              <span className="text-[#1ef2c1]/70 text-xs md:w-20 shrink-0 font-medium">
+                                {issue.IssueID.slice(0, 10)}
+                              </span>
+                              <span className="text-sm text-zinc-200 flex-1 truncate">{issue.Title}</span>
+                              <span className="text-xs text-zinc-500 md:hidden shrink-0">
+                                {expandedId === issue.IssueID ? "▾" : "▸"}
+                              </span>
                             </div>
 
-                            <span className={`w-20 text-center inline-block shrink-0 text-[10px] font-bold uppercase tracking-wider py-1 border rounded ${SEVERITY_COLORS[issue.Severity] || ""}`}>
-                              {issue.Severity}
-                            </span>
-                            <span className="text-xs text-zinc-500 w-20 text-right">{issue.BugType}</span>
-                            <span className="text-xs text-zinc-400 w-24 text-right truncate">
-                              {issue.Assignee?.Username || "—"}
-                            </span>
-                            <span className="text-xs text-zinc-700 w-6 text-right">
-                              {expandedId === issue.IssueID ? "▾" : "▸"}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
+                              {/* Status change dropdown on the row */}
+                              <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                                <select
+                                  value={issue.Status}
+                                  onChange={(e) => handleStatusChange(issue.IssueID, e.target.value)}
+                                  className="bg-[#050505] border border-zinc-800 text-[11px] font-semibold tracking-wider py-1 px-2.5 rounded focus:outline-none focus:border-[#1ef2c1]/60 transition-colors cursor-pointer"
+                                  style={{ color: STATUS_COLORS[issue.Status] || "#1ef2c1" }}
+                                  title="Change bug status"
+                                >
+                                  {STATUS_ORDER.map((st) => (
+                                    <option key={st} value={st} className="bg-[#0d1117] text-zinc-200">
+                                      {STATUS_LABELS[st]}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <span className={`w-20 text-center inline-block shrink-0 text-[10px] font-bold uppercase tracking-wider py-1 border rounded ${SEVERITY_COLORS[issue.Severity] || ""}`}>
+                                {issue.Severity}
+                              </span>
+                              <span className="text-xs text-zinc-500 md:w-20 md:text-right">{issue.BugType}</span>
+                              <span className="text-xs text-zinc-400 md:w-24 md:text-right truncate max-w-[120px] md:max-w-none">
+                                {issue.Assignee?.Username || "—"}
+                              </span>
+                              <span className="hidden md:inline text-xs text-zinc-700 w-6 text-right">
+                                {expandedId === issue.IssueID ? "▾" : "▸"}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Expanded detail */}
                           {expandedId === issue.IssueID && (
-                            <div className="px-5 py-4 bg-zinc-950/50 border-b border-zinc-900/50">
-                              <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-3">
+                            <div className="px-4 sm:px-5 py-4 bg-zinc-950/50 border-b border-zinc-900/50">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                                <div className="space-y-3 min-w-0">
                                   <div>
                                     <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Description</p>
-                                    <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                                    <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-wrap break-words">
                                       {issue.Description}
                                     </p>
                                   </div>
                                   {issue.Repo && (
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Repository</p>
-                                      <p className="text-xs text-zinc-300">{issue.Repo.GHOwner}/{issue.Repo.GHName}</p>
+                                      <p className="text-xs text-zinc-300 break-all">{issue.Repo.GHOwner}/{issue.Repo.GHName}</p>
                                     </div>
                                   )}
                                   {issue.Commit && (
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Linked Commit</p>
-                                      <p className="text-xs text-[#1ef2c1]/80">{issue.Commit.SHA} — {issue.Commit.Message}</p>
+                                      <p className="text-xs text-[#1ef2c1]/80 break-words">{issue.Commit.SHA} — {issue.Commit.Message}</p>
                                     </div>
                                   )}
                                 </div>
-                                <div className="space-y-3">
-                                  <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-3 min-w-0">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Status</p>
                                       <select 

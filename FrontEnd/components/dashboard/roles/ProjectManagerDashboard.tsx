@@ -109,11 +109,11 @@ export default function ProjectManagerDashboard() {
   }));
 
   return (
-    <main className="flex-1 p-8 space-y-8">
+    <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 min-w-0">
       {/* KPI Row */}
       <section>
         <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-4 font-bold">Key Metrics</p>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
           <KpiCard title="Open Issues" value={loading ? "—" : openIssues} subtitle={`${total} total tracked`} trend={{ value: `${openIssues} need attention`, positive: openIssues === 0 }} accent />
           <KpiCard title="MTTR" value={loading ? "—" : mttrValue} unit="hrs" subtitle="Mean time to resolution" trend={{ value: mttrValue !== "—" ? 'Current Average' : 'No data', positive: true }} accent />
           <KpiCard title="Bug Closure Rate" value={loading ? "—" : closureRate} unit="%" subtitle={`${closedCount}/${total} closed`} trend={{ value: closureRate >= 70 ? 'Healthy' : '⚠ Below 70%', positive: closureRate >= 70 }} accent />
@@ -122,8 +122,8 @@ export default function ProjectManagerDashboard() {
       </section>
 
       {/* Status Breakdown */}
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 bg-[#0d1117] border border-zinc-900 p-6">
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+        <div className="xl:col-span-2 bg-[#0d1117] border border-zinc-900 p-4 sm:p-6 min-w-0">
           <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-6">Issues by Status</p>
           <div className="space-y-3">
             {statusBreakdown.map((s) => (
@@ -148,7 +148,7 @@ export default function ProjectManagerDashboard() {
         </div>
 
         {/* Severity Summary */}
-        <div className="bg-[#0d1117] border border-zinc-900 p-6">
+        <div className="bg-[#0d1117] border border-zinc-900 p-4 sm:p-6 min-w-0">
           <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-6">By Severity</p>
           <div className="space-y-4">
             {[
@@ -170,8 +170,8 @@ export default function ProjectManagerDashboard() {
       </section>
 
       {/* Issue Table */}
-      <section className="bg-[#0d1117] border border-zinc-900">
-        <div className="px-6 py-4 border-b border-zinc-900 flex items-center justify-between">
+      <section className="bg-[#0d1117] border border-zinc-900 min-w-0">
+        <div className="px-4 sm:px-6 py-4 border-b border-zinc-900 flex items-center justify-between">
           <div>
             <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">Recent Issues</p>
             <p className="text-xs text-zinc-500 mt-0.5">Sorted by latest activity</p>
@@ -187,7 +187,7 @@ export default function ProjectManagerDashboard() {
       </section>
 
       {/* Audit Log */}
-      <section className="bg-[#0d1117] border border-zinc-900 p-6">
+      <section className="bg-[#0d1117] border border-zinc-900 p-4 sm:p-6 min-w-0">
         <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-4">Recent Audit Log</p>
         <div className="space-y-2 text-xs">
           {loading ? (
@@ -198,12 +198,14 @@ export default function ProjectManagerDashboard() {
             <p className="text-zinc-600 italic">No audit entries yet.</p>
           ) : (
             auditLogs.slice(0, 10).map((entry) => (
-              <div key={entry.AuditID} className="flex items-center gap-4 py-1.5 border-b border-zinc-900/50 last:border-0">
-                <span className="text-zinc-500 w-16 shrink-0">
-                  {new Date(entry.AuditTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                <span className="text-[#1ef2c1]/60 w-16 shrink-0">{entry.User.Username}</span>
-                <span className="text-zinc-400 flex-1">{entry.AuditDesc}</span>
+              <div key={entry.AuditID} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 py-2 sm:py-1.5 border-b border-zinc-900/50 last:border-0">
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-zinc-500 sm:w-16 shrink-0">
+                    {new Date(entry.AuditTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className="text-[#1ef2c1]/60 sm:w-16 shrink-0 truncate">{entry.User.Username}</span>
+                </div>
+                <span className="text-zinc-400 flex-1 break-words">{entry.AuditDesc}</span>
               </div>
             ))
           )}

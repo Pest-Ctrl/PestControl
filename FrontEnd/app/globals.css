@@ -21,6 +21,12 @@
   --foreground: #a3ffa3;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);

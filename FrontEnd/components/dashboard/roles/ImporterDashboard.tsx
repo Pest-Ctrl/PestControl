@@ -112,15 +112,15 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
   }));
 
   return (
-    <main className="flex-1 p-8 space-y-8">
-      <section className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">Bug Reporting Center</h2>
+    <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 min-w-0">
+      <section className="mb-4 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Bug Reporting Center</h2>
         <p className="text-zinc-400 text-sm">Welcome back. You have reported {issues.length} issues in total.</p>
       </section>
 
       {/* Action Center */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#0d1117] border border-zinc-900 p-8 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(30,242,193,0.05)]">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-[#0d1117] border border-zinc-900 p-5 sm:p-8 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(30,242,193,0.05)] min-w-0">
           <div className="w-16 h-16 bg-[#1ef2c1]/10 rounded-full flex items-center justify-center mb-4">
             <span className="text-[#1ef2c1] text-2xl">🐞</span>
           </div>
@@ -131,8 +131,8 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
           </Link>
         </div>
 
-        <div className="bg-[#0d1117] border border-zinc-900 p-6">
-          <div className="flex justify-between items-center mb-6">
+        <div className="bg-[#0d1117] border border-zinc-900 p-4 sm:p-6 min-w-0">
+          <div className="flex justify-between items-center mb-5 sm:mb-6">
             <h3 className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">Imported Repositories</h3>
           </div>
           <div className="space-y-3">
@@ -144,15 +144,15 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
               <p className="text-sm text-zinc-600 italic text-center py-4">No repos imported yet.</p>
             ) : (
               repos.map((repo) => (
-                <div key={repo.RepoID} className="border border-zinc-800 p-4 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <span className="text-zinc-500">github.com/</span>
-                    <span className="text-white font-medium">{repo.GHOwner}/{repo.GHName}</span>
+                <div key={repo.RepoID} className="border border-zinc-800 p-3.5 sm:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5">
+                  <div className="flex items-center flex-wrap gap-x-1.5 gap-y-1 min-w-0">
+                    <span className="text-zinc-500 text-xs sm:text-sm">github.com/</span>
+                    <span className="text-white font-medium text-xs sm:text-sm break-all">{repo.GHOwner}/{repo.GHName}</span>
                     {(repo as any).IsPrivate && (
                       <span className="px-1.5 py-0.5 rounded text-[9px] bg-zinc-800 text-zinc-400 uppercase tracking-wider font-bold">Private</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
                     <span className="text-[10px] text-zinc-500">{repo._count?.Issues || 0} issues · {repo._count?.Commits || 0} commits</span>
                     <span className="text-xs bg-[#1ef2c1]/20 text-[#1ef2c1] px-2 py-1 rounded">Synced</span>
                   </div>
@@ -171,7 +171,7 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
 
       {/* Issues I've Reported */}
       <section className="bg-[#0d1117] border border-zinc-900">
-        <div className="px-6 py-4 border-b border-zinc-900">
+        <div className="px-4 sm:px-6 py-4 border-b border-zinc-900">
           <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">Issues I've Reported</p>
         </div>
         {loadingIssues ? (
@@ -186,7 +186,7 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
       {/* Import Modal */}
       {importModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0d1117] border border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-[0_0_40px_rgba(0,0,0,0.8)]">
+          <div className="bg-[#0d1117] border border-zinc-800 rounded-xl p-5 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-[0_0_40px_rgba(0,0,0,0.8)]">
             <h3 className="text-lg font-bold text-white mb-4">Import GitHub Repository</h3>
             {importError && (
               <div className="bg-red-900/40 border border-red-500/60 text-red-300 px-3 py-2 text-sm rounded-lg mb-4">
@@ -280,7 +280,7 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] text-zinc-500 block mb-1">Repository Owner (Manual)</label>
                   <input

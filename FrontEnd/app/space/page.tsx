@@ -121,24 +121,24 @@ export default function CreateIssuePage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-white font-sans">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#050505] text-white font-sans">
       <Sidebar />
-      <Scrollable className="flex-1 flex flex-col h-screen">
-        <header className="sticky top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-8 py-4">
-          <h1 className="text-lg font-bold text-white tracking-wide">Create Issue</h1>
+      <Scrollable className="flex-1 flex flex-col min-w-0 md:h-screen">
+        <header className="md:sticky md:top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-4 sm:px-8 py-3.5 sm:py-4">
+          <h1 className="text-base sm:text-lg font-bold text-white tracking-wide">Create Issue</h1>
           <p className="text-xs text-zinc-400">File a new defect report</p>
         </header>
 
-        <main className="flex-1 p-8 max-w-4xl">
+        <main className="flex-1 p-4 sm:p-8 max-w-4xl w-full min-w-0">
           {success ? (
             <div id="issue-success-banner" className="bg-[#1ef2c1]/10 border border-[#1ef2c1]/30 p-6 rounded-lg text-center">
               <p className="text-[#1ef2c1] font-bold text-lg mb-2">Issue Created Successfully</p>
               <p className="text-zinc-400 text-sm">Redirecting to issues board...</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
               {error && (
-                <div id="issue-error-banner" className="bg-red-900/40 border border-red-500/60 text-red-300 px-4 py-3 text-sm rounded-lg">
+                <div id="issue-error-banner" className="bg-red-900/40 border border-red-500/60 text-red-300 px-4 py-3 text-sm rounded-lg break-words">
                   ⚠ {error}
                 </div>
               )}
@@ -177,8 +177,8 @@ export default function CreateIssuePage() {
               </div>
 
               {/* Severity & Bug Type */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="min-w-0">
                   <label htmlFor="issue-severity-select" className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
                     Severity
                   </label>
@@ -194,7 +194,7 @@ export default function CreateIssuePage() {
                     <option value="Low">Low</option>
                   </select>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label htmlFor="issue-bug-type-select" className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-2">
                     Bug Type
                   </label>
@@ -215,10 +215,10 @@ export default function CreateIssuePage() {
               </div>
 
               {/* Repo & Commit Reference */}
-              <div className="border border-zinc-800 p-5 rounded-lg space-y-4">
+              <div className="border border-zinc-800 p-3.5 sm:p-5 rounded-lg space-y-4 min-w-0">
                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Repository Reference</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="min-w-0">
                     <label htmlFor="issue-repo-select" className="text-[10px] text-zinc-500 block mb-1">Repository</label>
                     <select
                       id="issue-repo-select"
@@ -232,7 +232,7 @@ export default function CreateIssuePage() {
                       ))}
                     </select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label htmlFor="issue-commit-select" className="text-[10px] text-zinc-500 block mb-1">Commit</label>
                     <select
                       id="issue-commit-select"
@@ -263,18 +263,16 @@ export default function CreateIssuePage() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <label className="text-[10px] text-zinc-500 block mb-2">Repository File Directory (Visual)</label>
-                    <FileTreeVisualizer 
-                      files={repos.find(r => r.RepoID === repoId)?.FileTree || []}
-                      selectedFile={filePath}
-                      onFileSelect={setFilePath}
-                    />
-                  </div>
+                <div className="min-w-0">
+                  <label className="text-[10px] text-zinc-500 block mb-2">Repository File Directory (Visual)</label>
+                  <FileTreeVisualizer 
+                    files={repos.find(r => r.RepoID === repoId)?.FileTree || []}
+                    selectedFile={filePath}
+                    onFileSelect={setFilePath}
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="min-w-0">
                     <label htmlFor="issue-file-path-input" className="text-[10px] text-zinc-500 block mb-1">File Path</label>
                     <input
                       id="issue-file-path-input"
@@ -285,7 +283,7 @@ export default function CreateIssuePage() {
                       className="w-full bg-[#050505] border border-zinc-800 py-2.5 px-3 text-zinc-300 text-xs rounded-lg focus:outline-none focus:border-[#1ef2c1]/50 placeholder-zinc-700"
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label htmlFor="issue-line-range-input" className="text-[10px] text-zinc-500 block mb-1">Line Range</label>
                     <input
                       id="issue-line-range-input"
@@ -299,16 +297,14 @@ export default function CreateIssuePage() {
                 </div>
 
                 {filePath && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                      <label className="text-[10px] text-zinc-500 block mb-2">File Viewer</label>
-                      <CodeViewer 
-                        content={fileContent}
-                        loading={loadingFile}
-                        selectedRange={lineRange}
-                        onRangeSelect={setLineRange}
-                      />
-                    </div>
+                  <div className="min-w-0">
+                    <label className="text-[10px] text-zinc-500 block mb-2">File Viewer</label>
+                    <CodeViewer 
+                      content={fileContent}
+                      loading={loadingFile}
+                      selectedRange={lineRange}
+                      onRangeSelect={setLineRange}
+                    />
                   </div>
                 )}
               </div>

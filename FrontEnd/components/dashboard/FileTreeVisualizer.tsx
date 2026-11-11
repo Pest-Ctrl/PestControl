@@ -84,11 +84,11 @@ export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }
     if (children.length === 0) return null;
 
     return (
-      <div className={`relative ${isRoot ? 'p-4' : 'pl-8'}`}>
+      <div className={`relative ${isRoot ? 'p-2 sm:p-4' : 'pl-4 sm:pl-8'}`}>
         {!isRoot && (
-          <div className="absolute left-0 top-0 bottom-0 w-px bg-zinc-800 ml-3.5 -z-10" />
+          <div className="absolute left-0 top-0 bottom-0 w-px bg-zinc-800 ml-2 sm:ml-3.5 -z-10" />
         )}
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           {children.map((child, index) => {
             const isExpanded = expandedNodes.has(child.fullPath);
             const isSelected = selectedFile === child.fullPath;
@@ -97,11 +97,11 @@ export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }
             return (
               <div key={child.fullPath} className="relative">
                 {!isRoot && (
-                  <div className="absolute left-[-20px] top-4 w-[20px] h-px bg-zinc-800 -z-10" />
+                  <div className="absolute left-[-8px] sm:left-[-20px] top-4 w-[8px] sm:w-[20px] h-px bg-zinc-800 -z-10" />
                 )}
                 <div 
                   className={`
-                    flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-300
+                    flex items-center gap-2.5 sm:gap-3 p-2 rounded-lg cursor-pointer transition-all duration-300 min-w-0
                     ${isSelected ? 'bg-[#1ef2c1]/10 border border-[#1ef2c1]/50 shadow-[0_0_10px_rgba(30,242,193,0.2)]' : 'bg-[#0d1117] border border-zinc-900 hover:border-zinc-700 hover:bg-zinc-900'}
                   `}
                   onClick={() => {
@@ -113,18 +113,18 @@ export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }
                   }}
                 >
                   <div className={`
-                    w-6 h-6 rounded flex items-center justify-center text-xs
+                    w-6 h-6 rounded flex items-center justify-center text-xs shrink-0
                     ${child.type === 'tree' ? 'bg-zinc-800 text-zinc-300' : isSelected ? 'bg-[#1ef2c1] text-black' : 'bg-zinc-900 text-zinc-500'}
                   `}>
                     {child.type === 'tree' ? (isExpanded ? '📂' : '📁') : '📄'}
                   </div>
-                  <span className={`text-sm ${isSelected ? 'text-[#1ef2c1] font-bold' : 'text-zinc-300 font-medium'}`}>
+                  <span className={`text-xs sm:text-sm truncate ${isSelected ? 'text-[#1ef2c1] font-bold' : 'text-zinc-300 font-medium'}`}>
                     {child.name}
                   </span>
                 </div>
                 
                 {child.type === 'tree' && isExpanded && (
-                  <div className="mt-2">
+                  <div className="mt-1.5 sm:mt-2">
                     {renderTree(child, depth + 1)}
                   </div>
                 )}
@@ -138,14 +138,14 @@ export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }
 
   if (!parsedFiles || parsedFiles.length === 0) {
     return (
-      <div className="w-full h-40 flex items-center justify-center border border-dashed border-zinc-800 rounded-lg">
-        <p className="text-zinc-500 text-sm italic">No files found in this repository.</p>
+      <div className="w-full h-32 sm:h-40 flex items-center justify-center border border-dashed border-zinc-800 rounded-lg px-4 text-center">
+        <p className="text-zinc-500 text-xs sm:text-sm italic">No files found in this repository.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full bg-[#050505] border border-zinc-800 rounded-lg overflow-x-auto p-4 custom-scrollbar">
+    <div className="w-full bg-[#050505] border border-zinc-800 rounded-lg overflow-x-auto max-h-72 overflow-y-auto p-2 sm:p-4 custom-scrollbar">
       {renderTree(root)}
     </div>
   );

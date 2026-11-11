@@ -23,19 +23,19 @@ function AuthErrorContent() {
   };
 
   return (
-    <div className="relative z-10 flex flex-col items-center max-w-4xl w-full px-6 text-center">
-      <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#1ef2c1] via-[#1ef2c1]/80 to-[#1ef2c1] mb-2 uppercase tracking-widest">
+    <div className="relative z-10 flex flex-col items-center max-w-4xl w-full px-4 sm:px-6 text-center">
+      <h1 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#1ef2c1] via-[#1ef2c1]/80 to-[#1ef2c1] mb-2 uppercase tracking-widest">
         Authentication Error
       </h1>
-      <h2 className="text-xl font-bold tracking-[0.2em] text-zinc-400 mb-8">
+      <h2 className="text-base sm:text-xl font-bold tracking-[0.2em] text-zinc-400 mb-6 sm:mb-8 break-words max-w-full">
         Code: {error}
       </h2>
       
-      <p className="text-zinc-300 mb-12 max-w-lg mx-auto text-sm leading-relaxed border border-red-500/30 bg-red-500/10 p-4 rounded-lg">
+      <p className="text-zinc-300 mb-8 sm:mb-12 max-w-lg mx-auto text-sm leading-relaxed border border-red-500/30 bg-red-500/10 p-4 rounded-lg">
         {getErrorMessage(error)}
       </p>
 
-      <p className="text-zinc-500 mb-12 text-xs uppercase tracking-widest">
+      <p className="text-zinc-500 mb-8 sm:mb-12 text-xs uppercase tracking-widest">
         While we fix this, enjoy some cellular automata
       </p>
 

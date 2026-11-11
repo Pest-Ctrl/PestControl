@@ -117,37 +117,53 @@ export default function UserManagementPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen bg-[#050505] text-white">
+      <div className="flex flex-col md:flex-row min-h-screen md:h-screen bg-[#050505] text-white">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1ef2c1]"></div>
         </div>
       </div>
     );
   }
 
+  const renderRoleSelect = (user: User, fullWidth = false) => (
+    <select
+      value={toSchemaRole(user.Role)}
+      disabled={updatingId === user.UserID || session?.user?.id === user.UserID}
+      onChange={(e) => handleRoleChange(user.UserID, e.target.value)}
+      className={`${fullWidth ? 'w-full' : ''} bg-[#050505] border py-1.5 px-3 text-xs rounded-lg focus:outline-none transition-colors ${
+        updatingId === user.UserID ? 'border-zinc-800 text-zinc-600' : 'border-zinc-800 text-zinc-300 focus:border-[#1ef2c1]/50 cursor-pointer hover:border-zinc-700'
+      }`}
+    >
+      <option value="Developer">Developer</option>
+      <option value="QAEngineer">QA Engineer</option>
+      <option value="RepoImporter">Repository Importer</option>
+      <option value="Admin">Admin (Project Manager)</option>
+    </select>
+  );
+
   return (
-    <div className="flex h-screen bg-[#050505] text-white overflow-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen md:h-screen bg-[#050505] text-white md:overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col h-full bg-[#050505] relative overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 md:h-full bg-[#050505] relative md:overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 border-b border-zinc-900 px-8 flex items-center justify-between shrink-0 bg-[#050505]/80 backdrop-blur z-10">
-          <div>
-            <h1 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <header className="min-h-16 py-3 md:py-0 md:h-16 border-b border-zinc-900 px-4 sm:px-8 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-[#050505]/80 backdrop-blur z-10">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-semibold text-zinc-100 flex items-center gap-2">
               <span className="text-[#1ef2c1]">⚙</span> Admin & User Management
             </h1>
             <p className="text-xs text-zinc-500">Universal schema access control and roles</p>
           </div>
           <button
             onClick={() => setIsAddUserModalOpen(true)}
-            className="flex items-center gap-2 bg-[#1ef2c1] hover:bg-[#1ef2c1]/80 text-black px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shadow-[0_0_15px_rgba(30,242,193,0.2)]"
+            className="flex items-center gap-2 bg-[#1ef2c1] hover:bg-[#1ef2c1]/80 text-black px-3.5 sm:px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shadow-[0_0_15px_rgba(30,242,193,0.2)] whitespace-nowrap"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Add New User
           </button>
         </header>
 
-        <Scrollable className="flex-1 p-8">
+        <Scrollable className="flex-1 p-4 sm:p-8 min-w-0">
           <div className="max-w-5xl mx-auto space-y-6">
 
             {message && (
@@ -157,18 +173,50 @@ export default function UserManagementPage() {
                   : 'bg-red-500/10 border-red-500/20 text-red-400'
               }`}>
                 <span>{message.type === 'success' ? '✓' : '⚠'}</span>
-                {message.text}
+                <span className="break-words">{message.text}</span>
               </div>
             )}
 
             {/* Table Area */}
             <div className="bg-[#0a0a0a] border border-zinc-800/80 rounded-xl overflow-hidden shadow-sm">
-              <div className="p-4 border-b border-zinc-900 bg-zinc-900/20 flex justify-between items-center">
+              <div className="p-4 border-b border-zinc-900 bg-zinc-900/20 flex flex-wrap justify-between items-center gap-2">
                 <span className="text-xs font-medium text-zinc-400">Total Registered: {users.length}</span>
                 <span className="text-xs text-zinc-600">Schema: Universal Roles</span>
               </div>
-              
-              <div className="overflow-x-auto">
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-zinc-900/60">
+                {users.map((user) => (
+                  <div key={user.UserID} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-zinc-400 shrink-0">
+                          {user.Username.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-zinc-200 truncate">{user.Username}</p>
+                          <p className="text-xs text-zinc-400 truncate">{user.Email}</p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-zinc-500 shrink-0">
+                        {new Date(user.CreatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Universal Role</label>
+                      {renderRoleSelect(user, true)}
+                    </div>
+                  </div>
+                ))}
+                {users.length === 0 && (
+                  <div className="px-6 py-8 text-center text-zinc-500 text-sm">
+                    No users found.
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-zinc-800 text-[10px] uppercase tracking-wider text-zinc-500 font-semibold bg-zinc-900/40">
@@ -196,19 +244,7 @@ export default function UserManagementPage() {
                           {new Date(user.CreatedAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <select
-                            value={toSchemaRole(user.Role)}
-                            disabled={updatingId === user.UserID || session?.user?.id === user.UserID}
-                            onChange={(e) => handleRoleChange(user.UserID, e.target.value)}
-                            className={`bg-[#050505] border py-1.5 px-3 text-xs rounded-lg focus:outline-none transition-colors ${
-                              updatingId === user.UserID ? 'border-zinc-800 text-zinc-600' : 'border-zinc-800 text-zinc-300 focus:border-[#1ef2c1]/50 cursor-pointer hover:border-zinc-700'
-                            }`}
-                          >
-                            <option value="Developer">Developer</option>
-                            <option value="QAEngineer">QA Engineer</option>
-                            <option value="RepoImporter">Repository Importer</option>
-                            <option value="Admin">Admin (Project Manager)</option>
-                          </select>
+                          {renderRoleSelect(user)}
                         </td>
                       </tr>
                     ))}
@@ -229,8 +265,8 @@ export default function UserManagementPage() {
 
         {/* Add User Modal */}
         {isAddUserModalOpen && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div className="bg-[#0a0a0a] border border-zinc-800 rounded-xl w-full max-w-md p-6 shadow-2xl animate-fade-in-up">
+          <div className="fixed inset-0 z-50 p-4 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-[#0a0a0a] border border-zinc-800 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl animate-fade-in-up">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-medium text-zinc-100">Add New User</h3>
                 <button onClick={() => setIsAddUserModalOpen(false)} className="text-zinc-500 hover:text-zinc-300">

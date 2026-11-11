@@ -512,14 +512,14 @@ export default function Gitline({
         </div>
 
         {/* Search, Counter & Sync */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none min-w-[160px]">
             <input
               type="text"
               placeholder="Search commits or SHAs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-black/50 border border-zinc-800 text-zinc-200 text-xs rounded-lg px-3 py-1.5 pl-7 w-48 xl:w-56 focus:outline-none focus:border-[#1ef2c1]/50 placeholder:text-zinc-600 transition-colors"
+              className="bg-black/50 border border-zinc-800 text-zinc-200 text-xs rounded-lg px-3 py-1.5 pl-7 w-full sm:w-48 xl:w-56 focus:outline-none focus:border-[#1ef2c1]/50 placeholder:text-zinc-600 transition-colors"
             />
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -544,7 +544,7 @@ export default function Gitline({
             )}
           </div>
 
-          <span className="text-xs text-zinc-400 bg-zinc-900/80 px-2.5 py-1.5 rounded-lg border border-zinc-800">
+          <span className="text-xs text-zinc-400 bg-zinc-900/80 px-2.5 py-1.5 rounded-lg border border-zinc-800 whitespace-nowrap">
             {filteredCommits.length} commits
           </span>
 
@@ -552,7 +552,7 @@ export default function Gitline({
             onClick={handleSyncCommits}
             disabled={syncing}
             title="Fetch all commits across all branches from GitHub"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30 hover:bg-[#1ef2c1]/20 transition-colors disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30 hover:bg-[#1ef2c1]/20 transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
           >
             <RefreshIcon className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
             <span>{syncing ? "Syncing..." : "Sync Commits"}</span>
@@ -567,8 +567,8 @@ export default function Gitline({
       </div>
 
       {/* Visual Branch Legend Bar */}
-      <div className="px-5 py-2 bg-black/40 border-b border-zinc-900/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
-        <div className="flex flex-wrap items-center gap-5">
+      <div className="px-3.5 sm:px-5 py-2 bg-black/40 border-b border-zinc-900/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:gap-5">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#1ef2c1] shadow-[0_0_8px_#1ef2c1]" />
             <span className="text-zinc-300 font-medium">main (trunk)</span>
@@ -595,7 +595,7 @@ export default function Gitline({
       {/* Main Content Area: Graph + Inspector */}
       <div className="flex-1 flex overflow-hidden relative min-h-0">
         {/* Vertically Scrollable Git Tree Canvas (No Horizontal Overflow!) */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 custom-scrollbar relative min-w-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-4 custom-scrollbar relative min-w-0">
           <div className="relative w-full flex flex-col" style={{ minHeight: `${svgHeight}px` }}>
             {renderSvgGraph()}
 
@@ -661,7 +661,7 @@ export default function Gitline({
                   {/* Commit Row Card (Strictly Bounded with min-w-0) */}
                   <div className="flex-1 min-w-0 py-1.5 pr-1 h-full">
                     <div
-                      className={`h-full px-4 rounded-xl border transition-all duration-150 flex items-center justify-between gap-3 min-w-0 overflow-hidden ${
+                      className={`h-full px-2.5 sm:px-4 rounded-xl border transition-all duration-150 flex items-center justify-between gap-2 sm:gap-3 min-w-0 overflow-hidden ${
                         isSelected
                           ? "bg-[#1ef2c1]/[0.08] border-[#1ef2c1]/50 shadow-[0_0_20px_rgba(30,242,193,0.1)]"
                           : "bg-[#0d1117]/80 hover:bg-[#12161f] border-zinc-800/80 hover:border-zinc-700"
@@ -669,25 +669,26 @@ export default function Gitline({
                     >
                       {/* Commit Primary Info */}
                       <div className="flex-1 min-w-0 overflow-hidden">
-                        <div className="flex items-center gap-2 mb-0.5 flex-nowrap overflow-hidden">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 flex-nowrap overflow-hidden">
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border shrink-0 ${laneInfo.bg} ${laneInfo.text} ${laneInfo.border}`}
+                            className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border shrink-0 max-w-[110px] sm:max-w-none truncate ${laneInfo.bg} ${laneInfo.text} ${laneInfo.border}`}
                           >
                             {commit.branchName}
                           </span>
 
                           {commit.isMerge && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/50 inline-flex items-center gap-1 shrink-0">
+                            <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/50 inline-flex items-center gap-1 shrink-0">
                               <GitMergeIcon className="w-2.5 h-2.5" />
-                              <span>MERGED{commit.mergedFromBranch ? ` ${commit.mergedFromBranch}` : ""}</span>
+                              <span className="hidden sm:inline">MERGED{commit.mergedFromBranch ? ` ${commit.mergedFromBranch}` : ""}</span>
+                              <span className="sm:hidden">MERGE</span>
                             </span>
                           )}
 
-                          <span className="text-xs text-[#1ef2c1]/80 font-medium bg-black/40 px-2 py-0.5 rounded border border-zinc-800 shrink-0">
+                          <span className="text-[11px] sm:text-xs text-[#1ef2c1]/80 font-medium bg-black/40 px-1.5 sm:px-2 py-0.5 rounded border border-zinc-800 shrink-0">
                             {commit.shortSha}
                           </span>
 
-                          <span className="text-[11px] text-zinc-500 truncate">
+                          <span className="hidden sm:inline text-[11px] text-zinc-500 truncate">
                             {commit.committedAt
                               ? new Date(commit.committedAt).toLocaleDateString("en-US", {
                                   month: "short",
@@ -697,6 +698,12 @@ export default function Gitline({
                                 })
                               : "Recent"}
                           </span>
+
+                          {hasIssues && (
+                            <span className="sm:hidden ml-auto px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-500/15 text-red-400 border border-red-500/30 shrink-0">
+                              {commit.issues.length} {commit.issues.length === 1 ? "bug" : "bugs"}
+                            </span>
+                          )}
                         </div>
 
                         <p className="text-sm text-zinc-200 font-medium truncate group-hover:text-white transition-colors">
@@ -754,35 +761,47 @@ export default function Gitline({
           </div>
         </div>
 
-        {/* Selected Commit Inspector Panel */}
+        {/* Selected Commit Inspector Panel (Overlay drawer on < lg, side column on lg+) */}
         {selectedCommit && (
-          <aside className="w-80 xl:w-96 border-l border-zinc-800 bg-[#0d1117] p-5 flex flex-col justify-between overflow-y-auto shrink-0">
-            <div className="space-y-5">
-              <div className="flex items-start justify-between border-b border-zinc-800/80 pb-4">
-                <div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
-                    Commit Inspection
-                  </span>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-xs text-[#1ef2c1] font-semibold bg-[#1ef2c1]/10 px-2.5 py-0.5 rounded border border-[#1ef2c1]/30">
-                      {selectedCommit.shortSha}
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex justify-end lg:static lg:inset-auto lg:z-auto lg:bg-transparent lg:backdrop-blur-none">
+            <div
+              className="flex-1 lg:hidden"
+              onClick={() => {
+                setInternalSelectedSha(null);
+                if (onSelectCommit) onSelectCommit(null);
+              }}
+              aria-hidden="true"
+            />
+            <aside className="w-full max-w-md lg:w-80 xl:w-96 h-full border-l border-zinc-800 bg-[#0d1117] p-4 sm:p-5 flex flex-col justify-between overflow-y-auto shrink-0 shadow-2xl lg:shadow-none">
+              <div className="space-y-5">
+                <div className="flex items-start justify-between border-b border-zinc-800/80 pb-4">
+                  <div>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                      Commit Inspection
                     </span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded font-medium border ${
-                        LANES[selectedCommit.lane]?.bg
-                      } ${LANES[selectedCommit.lane]?.text} ${LANES[selectedCommit.lane]?.border}`}
-                    >
-                      {selectedCommit.branchName}
-                    </span>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-xs text-[#1ef2c1] font-semibold bg-[#1ef2c1]/10 px-2.5 py-0.5 rounded border border-[#1ef2c1]/30">
+                        {selectedCommit.shortSha}
+                      </span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded font-medium border ${
+                          LANES[selectedCommit.lane]?.bg
+                        } ${LANES[selectedCommit.lane]?.text} ${LANES[selectedCommit.lane]?.border}`}
+                      >
+                        {selectedCommit.branchName}
+                      </span>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => {
+                      setInternalSelectedSha(null);
+                      if (onSelectCommit) onSelectCommit(null);
+                    }}
+                    className="text-zinc-500 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button
-                  onClick={() => setInternalSelectedSha(null)}
-                  className="text-zinc-500 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
 
               <div>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">
@@ -884,13 +903,17 @@ export default function Gitline({
               </div>
             </div>
 
-            <button
-              onClick={() => setInternalSelectedSha(null)}
-              className="w-full mt-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors uppercase tracking-wider"
-            >
-              Close Inspector
-            </button>
-          </aside>
+              <button
+                onClick={() => {
+                  setInternalSelectedSha(null);
+                  if (onSelectCommit) onSelectCommit(null);
+                }}
+                className="w-full mt-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium rounded-lg transition-colors uppercase tracking-wider"
+              >
+                Close Inspector
+              </button>
+            </aside>
+          </div>
         )}
       </div>
     </div>

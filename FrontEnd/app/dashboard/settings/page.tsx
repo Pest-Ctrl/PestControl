@@ -444,19 +444,19 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-zinc-100 font-sans">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#050505] text-zinc-100 font-sans">
       <Sidebar />
 
-      <Scrollable className="flex-1 flex flex-col h-screen">
+      <Scrollable className="flex-1 flex flex-col min-w-0 md:h-screen">
         {/* Top Header */}
-        <header className="sticky top-0 z-20 bg-[#050505]/95 backdrop-blur border-b border-zinc-900 px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-white tracking-wide">
+        <header className="md:sticky md:top-0 z-20 bg-[#050505]/95 backdrop-blur border-b border-zinc-900 px-4 sm:px-8 py-3.5 sm:py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-bold text-white tracking-wide">
               Settings
             </h1>
             <p className="text-xs text-zinc-500">Configure profile, integrations, workspace defaults, and maintenance</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <span className="text-xs px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-400">
               Role: <span className="text-[#1ef2c1]">{profile ? toDisplayRole(profile.role) : "Loading..."}</span>
             </span>
@@ -466,19 +466,19 @@ export default function SettingsPage() {
         {/* Feedback Banner */}
         {banner && (
           <div
-            className={`mx-8 mt-4 px-4 py-3 text-xs flex items-center justify-between border ${
+            className={`mx-4 sm:mx-8 mt-4 px-4 py-3 text-xs flex items-center justify-between gap-2 border ${
               banner.type === "success"
                 ? "bg-emerald-950/20 border-emerald-800/40 text-emerald-300"
                 : "bg-rose-950/20 border-rose-800/40 text-rose-300"
             }`}
           >
-            <div className="flex items-center gap-2">
-              <span>{banner.type === "success" ? "✓" : "!"}</span>
-              <span>{banner.message}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="shrink-0">{banner.type === "success" ? "✓" : "!"}</span>
+              <span className="break-words">{banner.message}</span>
             </div>
             <button
               onClick={() => setBanner(null)}
-              className="text-zinc-500 hover:text-zinc-300 text-sm px-1"
+              className="text-zinc-500 hover:text-zinc-300 text-sm px-1 shrink-0"
             >
               ×
             </button>
@@ -486,17 +486,17 @@ export default function SettingsPage() {
         )}
 
         {/* Content Layout */}
-        <div className="flex-1 px-8 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Navigation Tabs Column */}
-            <div className="lg:col-span-1 space-y-1">
-              <div className="text-[10px] tracking-[0.2em] uppercase text-zinc-600 px-3 pb-2 font-medium">
+        <div className="flex-1 px-4 sm:px-8 py-4 sm:py-6 min-w-0">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+            {/* Navigation Tabs Column (Clean wrapped pills on mobile, vertical menu on lg+) */}
+            <div className="lg:col-span-1 flex flex-wrap lg:flex-col gap-1.5 lg:gap-1 pb-3 lg:pb-0 border-b border-zinc-900 lg:border-b-0">
+              <div className="hidden lg:block text-[10px] tracking-[0.2em] uppercase text-zinc-600 px-3 pb-2 font-medium">
                 Navigation
               </div>
 
               <button
                 onClick={() => setActiveTab("profile")}
-                className={`w-full text-left px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
+                className={`shrink-0 lg:w-full text-left px-3 py-2 lg:py-2.5 text-xs font-medium border-b-2 lg:border-b-0 lg:border-l-2 whitespace-nowrap transition-all ${
                   activeTab === "profile"
                     ? "bg-[#1ef2c1]/10 text-[#1ef2c1] border-[#1ef2c1]"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-900/60 border-transparent"
@@ -507,7 +507,7 @@ export default function SettingsPage() {
 
               <button
                 onClick={() => setActiveTab("github")}
-                className={`w-full text-left px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
+                className={`shrink-0 lg:w-full text-left px-3 py-2 lg:py-2.5 text-xs font-medium border-b-2 lg:border-b-0 lg:border-l-2 whitespace-nowrap transition-all ${
                   activeTab === "github"
                     ? "bg-[#1ef2c1]/10 text-[#1ef2c1] border-[#1ef2c1]"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-900/60 border-transparent"
@@ -518,7 +518,7 @@ export default function SettingsPage() {
 
               <button
                 onClick={() => setActiveTab("workspace")}
-                className={`w-full text-left px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
+                className={`shrink-0 lg:w-full text-left px-3 py-2 lg:py-2.5 text-xs font-medium border-b-2 lg:border-b-0 lg:border-l-2 whitespace-nowrap transition-all ${
                   activeTab === "workspace"
                     ? "bg-[#1ef2c1]/10 text-[#1ef2c1] border-[#1ef2c1]"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-900/60 border-transparent"
@@ -527,13 +527,13 @@ export default function SettingsPage() {
                 Workspace & Workflow
               </button>
 
-              <div className="pt-4">
-                <div className="text-[10px] tracking-[0.2em] uppercase text-zinc-600 px-3 pb-2 font-medium">
+              <div className="lg:pt-4 shrink-0 lg:w-full">
+                <div className="hidden lg:block text-[10px] tracking-[0.2em] uppercase text-zinc-600 px-3 pb-2 font-medium">
                   System
                 </div>
                 <button
                   onClick={() => setActiveTab("danger")}
-                  className={`w-full text-left px-3 py-2.5 text-xs font-medium border-l-2 transition-all ${
+                  className={`lg:w-full text-left px-3 py-2 lg:py-2.5 text-xs font-medium border-b-2 lg:border-b-0 lg:border-l-2 whitespace-nowrap transition-all ${
                     activeTab === "danger"
                       ? "bg-rose-950/20 text-rose-400 border-rose-500"
                       : "text-zinc-400 hover:text-rose-300 hover:bg-zinc-900/60 border-transparent"
@@ -545,29 +545,29 @@ export default function SettingsPage() {
             </div>
 
             {/* Active Tab Panel Column */}
-            <div className="lg:col-span-3 space-y-6">
+            <div className="lg:col-span-3 space-y-6 min-w-0">
               {/* TAB 1: PROFILE & ACCOUNT */}
               {activeTab === "profile" && (
                 <div className="space-y-6">
                   {/* Account Information Card */}
-                  <div className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-6">
+                  <div className="bg-[#0a0a0a] border border-zinc-900 p-4 sm:p-6 space-y-6">
                     <div className="border-b border-zinc-900 pb-4">
                       <h2 className="text-sm font-semibold text-white tracking-wide">Account Details</h2>
                       <p className="text-xs text-zinc-500 mt-1">Manage personal identity details and system credentials</p>
                     </div>
 
-                    <div className="flex items-center gap-5">
-                      <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-lg font-bold text-[#1ef2c1]">
+                    <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 bg-zinc-900 border border-zinc-800 flex items-center justify-center text-lg font-bold text-[#1ef2c1]">
                         {profile?.username?.charAt(0)?.toUpperCase() || session?.user?.name?.charAt(0)?.toUpperCase() || "U"}
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-sm font-semibold text-white flex items-center gap-2">
-                          {profile?.username || session?.user?.name || "User"}
-                          <span className="text-[10px] px-2 py-0.5 bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30 font-medium">
+                      <div className="space-y-1 min-w-0">
+                        <div className="text-sm font-semibold text-white flex flex-wrap items-center gap-2">
+                          <span className="truncate">{profile?.username || session?.user?.name || "User"}</span>
+                          <span className="text-[10px] px-2 py-0.5 bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30 font-medium shrink-0">
                             {profile ? toDisplayRole(profile.role) : "Developer"}
                           </span>
                         </div>
-                        <div className="text-xs text-zinc-500">
+                        <div className="text-xs text-zinc-500 truncate">
                           {profile?.email || session?.user?.email || "No email available"}
                         </div>
                       </div>
@@ -611,7 +611,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Password & Credentials */}
-                  <div className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-6">
+                  <div className="bg-[#0a0a0a] border border-zinc-900 p-4 sm:p-6 space-y-6">
                     <div className="border-b border-zinc-900 pb-4">
                       <h2 className="text-sm font-semibold text-white tracking-wide">Security & Password</h2>
                       <p className="text-xs text-zinc-500 mt-1">
@@ -679,7 +679,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Active Session */}
-                  <div className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-4">
+                  <div className="bg-[#0a0a0a] border border-zinc-900 p-4 sm:p-6 space-y-4">
                     <div className="border-b border-zinc-900 pb-4">
                       <h2 className="text-sm font-semibold text-white tracking-wide">Active Session</h2>
                       <p className="text-xs text-zinc-500 mt-1">Details regarding current authentication and active tokens</p>
@@ -713,8 +713,8 @@ export default function SettingsPage() {
               {activeTab === "github" && (
                 <div className="space-y-6">
                   {/* Connected Account Badge Card */}
-                  <div className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-6">
-                    <div className="border-b border-zinc-900 pb-4 flex items-center justify-between">
+                  <div className="bg-[#0a0a0a] border border-zinc-900 p-4 sm:p-6 space-y-6">
+                    <div className="border-b border-zinc-900 pb-4 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <h2 className="text-sm font-semibold text-white tracking-wide">GitHub Integration</h2>
                         <p className="text-xs text-zinc-500 mt-1">Manage GitHub OAuth connection for repository imports and commit tracking</p>
@@ -770,7 +770,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Token Details & Scopes */}
-                  <div className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-4">
+                  <div className="bg-[#0a0a0a] border border-zinc-900 p-4 sm:p-6 space-y-4">
                     <div className="border-b border-zinc-900 pb-3">
                       <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
                         Granted Scopes & Token Health
@@ -804,7 +804,7 @@ export default function SettingsPage() {
               {activeTab === "workspace" && (
                 <div className="space-y-6">
                   {/* Space Details Card */}
-                  <div className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-6">
+                  <div className="bg-[#0a0a0a] border border-zinc-900 p-4 sm:p-6 space-y-6">
                     <div className="border-b border-zinc-900 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
                         <h2 className="text-sm font-semibold text-white tracking-wide">Workspace Preferences</h2>
@@ -838,7 +838,7 @@ export default function SettingsPage() {
                     {activeSpace ? (
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
+                          <div className="min-w-0">
                             <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-1.5 font-medium">
                               Workspace ID
                             </label>
@@ -847,19 +847,19 @@ export default function SettingsPage() {
                                 type="text"
                                 value={selectedSpaceId}
                                 disabled
-                                className="w-full bg-[#050505] border border-zinc-850 px-3 py-2 text-xs text-zinc-400 cursor-not-allowed"
+                                className="flex-1 min-w-0 bg-[#050505] border border-zinc-850 px-3 py-2 text-xs text-zinc-400 cursor-not-allowed"
                               />
                               <button
                                 type="button"
                                 onClick={handleCopySpaceId}
-                                className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs px-3 py-2 uppercase tracking-wider"
+                                className="shrink-0 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs px-3 py-2 uppercase tracking-wider"
                               >
                                 {spaceCopied ? "Copied" : "Copy"}
                               </button>
                             </div>
                           </div>
 
-                          <form onSubmit={handleUpdateSpaceName}>
+                          <form onSubmit={handleUpdateSpaceName} className="min-w-0">
                             <label className="block text-[11px] text-zinc-400 uppercase tracking-wider mb-1.5 font-medium">
                               Workspace Name
                             </label>
@@ -868,14 +868,14 @@ export default function SettingsPage() {
                                 type="text"
                                 value={editSpaceName}
                                 onChange={(e) => setEditSpaceName(e.target.value)}
-                                className="w-full bg-[#050505] border border-zinc-800 px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1ef2c1]"
+                                className="flex-1 min-w-0 bg-[#050505] border border-zinc-800 px-3 py-2 text-xs text-white focus:outline-none focus:border-[#1ef2c1]"
                                 placeholder="Workspace name"
                                 required
                               />
                               <button
                                 type="submit"
                                 disabled={spaceSaving}
-                                className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white text-xs px-3 py-2 uppercase tracking-wider disabled:opacity-50"
+                                className="shrink-0 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white text-xs px-3 py-2 uppercase tracking-wider disabled:opacity-50"
                               >
                                 {spaceSaving ? "Saving..." : "Rename"}
                               </button>
@@ -891,7 +891,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Workflow Defaults Form */}
-                  <form onSubmit={handleSaveDefaults} className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-6">
+                  <form onSubmit={handleSaveDefaults} className="bg-[#0a0a0a] border border-zinc-900 p-4 sm:p-6 space-y-6">
                     <div className="border-b border-zinc-900 pb-4">
                       <h2 className="text-sm font-semibold text-white tracking-wide">Workflow & Issue Defaults</h2>
                       <p className="text-xs text-zinc-500 mt-1">Pre-selected values when reporting new issues and commit tracking rules</p>
@@ -1012,7 +1012,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* 1. Repository Commit Operations: Clear Cache & Resync */}
-                  <div className="bg-[#0a0a0a] border border-zinc-900 p-6 space-y-6">
+                  <div className="bg-[#0a0a0a] border border-zinc-900 p-4 sm:p-6 space-y-6">
                     <div className="border-b border-zinc-900 pb-4">
                       <h2 className="text-sm font-semibold text-white tracking-wide">Repository Maintenance</h2>
                       <p className="text-xs text-zinc-500 mt-1">
@@ -1086,7 +1086,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* 2. Delete Space Card */}
-                  <div className="bg-[#0a0a0a] border border-rose-950/50 p-6 space-y-4">
+                  <div className="bg-[#0a0a0a] border border-rose-950/50 p-4 sm:p-6 space-y-4">
                     <div className="border-b border-rose-950/40 pb-4">
                       <h2 className="text-sm font-semibold text-rose-300 tracking-wide">Delete Workspace</h2>
                       <p className="text-xs text-zinc-500 mt-1">

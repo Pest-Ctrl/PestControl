@@ -9,15 +9,15 @@ export default function NotFound() {
     <div className="min-h-screen bg-[#050505] relative font-sans overflow-hidden flex flex-col items-center justify-center text-white">
       <GameOfLife />
       
-      <div className="relative z-10 flex flex-col items-center max-w-4xl w-full px-6 text-center">
-        <h1 className="text-7xl font-black text-zinc-400 mb-2">
+      <div className="relative z-10 flex flex-col items-center max-w-4xl w-full px-4 sm:px-6 text-center">
+        <h1 className="text-6xl sm:text-7xl font-black text-zinc-400 mb-2">
           404
         </h1>
-        <h2 className="text-2xl font-bold tracking-[0.2em] uppercase text-[#1ef2c1] mb-8 shadow-sm">
+        <h2 className="text-lg sm:text-2xl font-bold tracking-[0.2em] uppercase text-[#1ef2c1] mb-6 sm:mb-8 shadow-sm">
           Page Not Found
         </h2>
         
-        <p className="text-zinc-400 mb-12 max-w-lg mx-auto text-sm leading-relaxed">
+        <p className="text-zinc-400 mb-8 sm:mb-12 max-w-lg mx-auto text-sm leading-relaxed">
           The coordinates you entered seem to be outside the known bounds. 
           While you're lost in the void, watch life evolve from chaos.
         </p>

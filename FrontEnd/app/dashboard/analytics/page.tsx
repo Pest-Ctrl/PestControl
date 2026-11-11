@@ -84,21 +84,21 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#050505] text-white font-sans overflow-x-hidden">
+    <div className="flex flex-col md:flex-row min-h-screen md:h-screen bg-[#050505] text-white font-sans overflow-x-hidden">
       <Sidebar />
-      <Scrollable className="flex-1 flex flex-col h-screen overflow-x-hidden min-w-0">
+      <Scrollable className="flex-1 flex flex-col md:h-screen overflow-x-hidden min-w-0">
         {/* Sticky Top Header */}
-        <header className="sticky top-0 z-20 bg-[#050505]/95 backdrop-blur border-b border-zinc-900 px-8 py-4 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-wide">Git Tree & Analytics</h1>
+        <header className="md:sticky md:top-0 z-20 bg-[#050505]/95 backdrop-blur border-b border-zinc-900 px-4 sm:px-8 py-3.5 sm:py-4 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-wide">Git Tree & Analytics</h1>
             <p className="text-xs text-zinc-400 mt-0.5">
               Visualize branch changes, merging operations, and software defect metrics
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
             {/* View Switcher Tabs */}
-            <div className="bg-[#0a0a0a] p-1 rounded-lg border border-zinc-800 flex items-center gap-1">
+            <div className="bg-[#0a0a0a] p-1 rounded-lg border border-zinc-800 flex items-center gap-1 w-full sm:w-auto">
               {[
                 {
                   id: "git-tree",
@@ -137,7 +137,7 @@ export default function AnalyticsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveView(tab.id as any)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`flex-1 sm:flex-none justify-center px-2 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-xs font-medium flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
                     activeView === tab.id
                       ? "bg-[#1ef2c1] text-black font-semibold shadow-[0_0_12px_rgba(30,242,193,0.3)]"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-900"
@@ -150,41 +150,43 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Filter Selectors */}
-            <select
-              value={selectedSpaceId}
-              onChange={(e) => {
-                setSelectedSpaceId(e.target.value);
-                setSelectedRepoId("");
-              }}
-              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-3 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg cursor-pointer"
-            >
-              <option value="">All Workspaces</option>
-              {spaces.map((s) => (
-                <option key={s.SpaceID} value={s.SpaceID}>
-                  {s.SpaceName}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedRepoId}
-              onChange={(e) => setSelectedRepoId(e.target.value)}
-              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-3 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg cursor-pointer"
-            >
-              <option value="">All Repositories</option>
-              {repos
-                .filter((r) => !selectedSpaceId || r.SpaceID === selectedSpaceId)
-                .map((r) => (
-                  <option key={r.RepoID} value={r.RepoID}>
-                    {r.GHOwner}/{r.GHName}
+            <div className="flex flex-1 sm:flex-none items-center gap-2 w-full sm:w-auto">
+              <select
+                value={selectedSpaceId}
+                onChange={(e) => {
+                  setSelectedSpaceId(e.target.value);
+                  setSelectedRepoId("");
+                }}
+                className="flex-1 sm:flex-none min-w-0 bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-3 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg cursor-pointer"
+              >
+                <option value="">All Workspaces</option>
+                {spaces.map((s) => (
+                  <option key={s.SpaceID} value={s.SpaceID}>
+                    {s.SpaceName}
                   </option>
                 ))}
-            </select>
+              </select>
+              <select
+                value={selectedRepoId}
+                onChange={(e) => setSelectedRepoId(e.target.value)}
+                className="flex-1 sm:flex-none min-w-0 bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-3 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg cursor-pointer"
+              >
+                <option value="">All Repositories</option>
+                {repos
+                  .filter((r) => !selectedSpaceId || r.SpaceID === selectedSpaceId)
+                  .map((r) => (
+                    <option key={r.RepoID} value={r.RepoID}>
+                      {r.GHOwner}/{r.GHName}
+                    </option>
+                  ))}
+              </select>
+            </div>
           </div>
         </header>
 
         {/* Top KPI Cards (Compact & Clean) */}
-        <div className="px-8 pt-6 pb-2">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[
               { title: "Total Issues", value: total, accent: true, subtitle: "Tracked in workspace" },
               { title: "Open Issues", value: openCount, accent: false, subtitle: "Awaiting resolution" },
@@ -193,20 +195,20 @@ export default function AnalyticsPage() {
             ].map((kpi) => (
               <div
                 key={kpi.title}
-                className={`bg-[#0d1117] border p-4 rounded-xl flex flex-col justify-between transition-all ${
+                className={`bg-[#0d1117] border p-3.5 sm:p-4 rounded-xl flex flex-col justify-between transition-all min-w-0 ${
                   kpi.accent
                     ? "border-[#1ef2c1]/30 shadow-[0_0_15px_rgba(30,242,193,0.05)]"
                     : "border-zinc-900"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold truncate">
                     {kpi.title}
                   </span>
-                  {kpi.accent && <span className="w-2 h-2 rounded-full bg-[#1ef2c1] shadow-[0_0_6px_#1ef2c1]" />}
+                  {kpi.accent && <span className="w-2 h-2 rounded-full shrink-0 bg-[#1ef2c1] shadow-[0_0_6px_#1ef2c1]" />}
                 </div>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className={`text-3xl font-bold tracking-tight ${kpi.accent ? "text-[#1ef2c1]" : "text-white"}`}>
+                <div className="flex items-baseline gap-2 mt-1 sm:mt-2">
+                  <span className={`text-2xl sm:text-3xl font-bold tracking-tight ${kpi.accent ? "text-[#1ef2c1]" : "text-white"}`}>
                     {loading ? "—" : kpi.value}
                   </span>
                 </div>
@@ -217,10 +219,10 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Dynamic Content Views */}
-        <div className="flex-1 p-8 pt-4 min-w-0">
+        <div className="flex-1 p-4 sm:p-8 pt-3 sm:pt-4 min-w-0">
           {/* VIEW 1: DEDICATED GIT TREE & MERGE GRAPH */}
           {activeView === "git-tree" && (
-            <div className="h-[calc(100vh-230px)] flex flex-col min-w-0">
+            <div className="min-h-[520px] md:h-[calc(100vh-230px)] flex flex-col min-w-0">
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-bold text-zinc-200">Interactive Git Tree & Merge Graph</h2>
@@ -242,9 +244,9 @@ export default function AnalyticsPage() {
           {/* VIEW 2: DEFECT METRICS & HEALTH */}
           {activeView === "metrics" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                 {/* Status Breakdown */}
-                <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-6 shadow-sm">
+                <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-4 sm:p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">
@@ -282,7 +284,7 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Severity Breakdown with Uniform Badges */}
-                <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-6 shadow-sm">
+                <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-4 sm:p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">
@@ -294,7 +296,7 @@ export default function AnalyticsPage() {
 
                   <div className="space-y-4">
                     {severityBreakdown.map((s) => (
-                      <div key={s.label} className="flex items-center gap-4 bg-black/40 p-3 rounded-lg border border-zinc-900">
+                      <div key={s.label} className="flex items-center gap-3 sm:gap-4 bg-black/40 p-3 rounded-lg border border-zinc-900">
                         <span
                           className={`w-20 text-center inline-block shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${
                             SEVERITY_STYLES[s.label] || SEVERITY_STYLES.Medium
@@ -302,7 +304,7 @@ export default function AnalyticsPage() {
                         >
                           {s.label}
                         </span>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="h-2 bg-zinc-900 rounded-full overflow-hidden w-full">
                             <div
                               className="h-full rounded-full transition-all duration-300"
@@ -313,7 +315,7 @@ export default function AnalyticsPage() {
                             />
                           </div>
                         </div>
-                        <span className="text-sm font-bold w-12 text-right" style={{ color: s.color }}>
+                        <span className="text-sm font-bold w-10 sm:w-12 text-right shrink-0" style={{ color: s.color }}>
                           {s.count}
                         </span>
                       </div>
@@ -326,10 +328,10 @@ export default function AnalyticsPage() {
 
           {/* VIEW 3: UNIFIED SPLIT VIEW */}
           {activeView === "split" && (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-[calc(100vh-230px)] min-w-0">
+            <div className="flex flex-col xl:grid xl:grid-cols-12 gap-6 xl:h-[calc(100vh-230px)] min-w-0">
               {/* Left Column: Realistic Git Tree */}
-              <div className="xl:col-span-8 flex flex-col h-full min-h-0 min-w-0">
-                <div className="mb-2 flex items-center justify-between">
+              <div className="xl:col-span-8 flex flex-col min-h-[460px] xl:h-full min-w-0">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-zinc-300">Git Branch & Merge Graph</span>
                   <span className="text-[11px] text-zinc-500">Synced repository commits</span>
                 </div>
@@ -343,7 +345,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Right Column: Defect Distribution Metrics */}
-              <div className="xl:col-span-4 flex flex-col gap-5 overflow-y-auto pr-1">
+              <div className="xl:col-span-4 flex flex-col gap-5 xl:overflow-y-auto xl:pr-1 min-w-0">
                 {/* Status Card */}
                 <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-5 shadow-sm">
                   <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-4">

@@ -73,15 +73,15 @@ export default function LoginPage() {
 
       {/* Foreground Login Box */}
       <Scrollable className="relative z-10 flex flex-col justify-center items-center min-h-screen p-4 sm:p-8">
-        <div className="max-w-md w-full bg-[#050505]/60 backdrop-blur-xl border border-zinc-800/50 shadow-[0_0_50px_rgba(0,0,0,0.8)] rounded-2xl p-8 sm:p-12 relative overflow-hidden">
+        <div className="max-w-md w-full bg-[#050505]/60 backdrop-blur-xl border border-zinc-800/50 shadow-[0_0_50px_rgba(0,0,0,0.8)] rounded-2xl p-6 sm:p-12 relative overflow-hidden">
           {/* Subtle top glow line for the card */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#1ef2c1] to-transparent opacity-50" />
 
-          <div className="mb-10 text-center">
-            <h1 className="text-3xl font-bold text-white uppercase tracking-[0.15em]">
+          <div className="mb-7 sm:mb-10 text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white uppercase tracking-[0.15em]">
               Sign <span className="text-[#1ef2c1]">In</span>
             </h1>
-            <p className="text-zinc-400 text-xs mt-3 tracking-widest uppercase">Bug Tracking System</p>
+            <p className="text-zinc-400 text-xs mt-2.5 sm:mt-3 tracking-widest uppercase">Bug Tracking System</p>
           </div>
 
           {/* GitHub OAuth Button */}
