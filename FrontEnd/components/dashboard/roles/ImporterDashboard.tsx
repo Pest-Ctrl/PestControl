@@ -147,13 +147,13 @@ export default function ImporterDashboard({ userName }: { userName: string }) {
                 <div key={repo.RepoID} className="border border-zinc-800 p-4 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <span className="text-zinc-500">github.com/</span>
-                    <span className="text-white font-mono">{repo.GHOwner}/{repo.GHName}</span>
+                    <span className="text-white font-medium">{repo.GHOwner}/{repo.GHName}</span>
                     {(repo as any).IsPrivate && (
                       <span className="px-1.5 py-0.5 rounded text-[9px] bg-zinc-800 text-zinc-400 uppercase tracking-wider font-bold">Private</span>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] text-zinc-500 font-mono">{repo._count?.Issues || 0} issues · {repo._count?.Commits || 0} commits</span>
+                    <span className="text-[10px] text-zinc-500">{repo._count?.Issues || 0} issues · {repo._count?.Commits || 0} commits</span>
                     <span className="text-xs bg-[#1ef2c1]/20 text-[#1ef2c1] px-2 py-1 rounded">Synced</span>
                   </div>
                 </div>

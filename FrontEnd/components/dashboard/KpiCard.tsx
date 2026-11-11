@@ -15,13 +15,13 @@ export default function KpiCard({ title, value, unit, subtitle, trend, accent }:
       )}
       <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">{title}</p>
       <div className="flex items-end gap-1.5">
-        <span className={`text-4xl font-bold font-mono ${accent ? 'text-[#1ef2c1]' : 'text-white'}`}>{value}</span>
+        <span className={`text-4xl font-bold ${accent ? 'text-[#1ef2c1]' : 'text-white'}`}>{value}</span>
         {unit && <span className="text-zinc-500 text-sm mb-1">{unit}</span>}
       </div>
       <div className="flex items-center justify-between">
         {subtitle && <p className="text-zinc-600 text-xs">{subtitle}</p>}
         {trend && (
-          <span className={`text-xs font-mono ${trend.positive ? 'text-[#1ef2c1]' : 'text-red-400'}`}>
+          <span className={`text-xs font-semibold ${trend.positive ? 'text-[#1ef2c1]' : 'text-red-400'}`}>
             {trend.positive ? '↑' : '↓'} {trend.value}
           </span>
         )}

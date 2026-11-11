@@ -65,7 +65,7 @@ export default function IssueTable({ issues, onStatusChange }: IssueTableProps) 
               key={issue.id}
               className={`border-b border-zinc-900/50 hover:bg-[#1ef2c1]/[0.03] transition-colors cursor-pointer group ${i % 2 === 0 ? '' : 'bg-zinc-950/30'}`}
             >
-              <td className="px-4 py-3 font-mono text-[#1ef2c1]/60 text-xs group-hover:text-[#1ef2c1] transition-colors">
+              <td className="px-4 py-3 text-[#1ef2c1]/70 text-xs font-medium group-hover:text-[#1ef2c1] transition-colors">
                 {issue.id}
               </td>
               <td className="px-4 py-3 text-zinc-200 max-w-[220px]">
@@ -95,14 +95,14 @@ export default function IssueTable({ issues, onStatusChange }: IssueTableProps) 
                 )}
               </td>
               <td className="px-4 py-3">
-                <span className={`inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${SEVERITY_STYLES[issue.severity]}`}>
+                <span className={`w-20 text-center inline-block shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${SEVERITY_STYLES[issue.severity]}`}>
                   {issue.severity}
                 </span>
               </td>
               <td className="px-4 py-3 text-zinc-500 text-xs">{issue.type}</td>
-              <td className="px-4 py-3 text-zinc-400 text-xs font-mono">{issue.assignee}</td>
-              <td className="px-4 py-3 text-zinc-500 text-xs font-mono">{issue.reporter}</td>
-              <td className="px-4 py-3 text-zinc-600 text-xs font-mono">{issue.createdAt}</td>
+              <td className="px-4 py-3 text-zinc-400 text-xs">{issue.assignee}</td>
+              <td className="px-4 py-3 text-zinc-500 text-xs">{issue.reporter}</td>
+              <td className="px-4 py-3 text-zinc-600 text-xs">{issue.createdAt}</td>
             </tr>
           ))}
         </tbody>

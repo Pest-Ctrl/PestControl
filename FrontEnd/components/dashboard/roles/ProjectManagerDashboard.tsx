@@ -132,7 +132,7 @@ export default function ProjectManagerDashboard() {
                 <div className="flex-1">
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-zinc-400">{s.label}</span>
-                    <span className="font-mono text-zinc-300">{s.count}</span>
+                    <span className="text-zinc-300 font-semibold">{s.count}</span>
                   </div>
                   <div className="h-1 bg-zinc-900 w-full">
                     <div className="h-1 transition-all" style={{ width: total > 0 ? `${(s.count / total) * 100}%` : '0%', backgroundColor: s.color }} />
@@ -143,7 +143,7 @@ export default function ProjectManagerDashboard() {
           </div>
           <div className="mt-6 pt-4 border-t border-zinc-900 flex justify-between text-xs">
             <span className="text-zinc-400">Total</span>
-            <span className="font-mono text-zinc-300">{total}</span>
+            <span className="text-zinc-300 font-semibold">{total}</span>
           </div>
         </div>
 
@@ -189,7 +189,7 @@ export default function ProjectManagerDashboard() {
       {/* Audit Log */}
       <section className="bg-[#0d1117] border border-zinc-900 p-6">
         <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-4">Recent Audit Log</p>
-        <div className="space-y-2 font-mono text-xs">
+        <div className="space-y-2 text-xs">
           {loading ? (
             <div className="flex items-center justify-center py-6">
               <div className="w-4 h-4 border-2 border-zinc-700 border-t-[#1ef2c1] rounded-full animate-spin" />

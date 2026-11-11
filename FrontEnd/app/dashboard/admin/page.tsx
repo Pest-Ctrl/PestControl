@@ -165,7 +165,7 @@ export default function UserManagementPage() {
             <div className="bg-[#0a0a0a] border border-zinc-800/80 rounded-xl overflow-hidden shadow-sm">
               <div className="p-4 border-b border-zinc-900 bg-zinc-900/20 flex justify-between items-center">
                 <span className="text-xs font-medium text-zinc-400">Total Registered: {users.length}</span>
-                <span className="text-xs text-zinc-600 font-mono">Schema: Universal Roles</span>
+                <span className="text-xs text-zinc-600">Schema: Universal Roles</span>
               </div>
               
               <div className="overflow-x-auto">

@@ -114,7 +114,7 @@ export default function AuditLogPage() {
                           <div className="flex items-center gap-1.5 bg-zinc-900/40 px-2 py-1 rounded text-zinc-500">
                             Space: <span className="text-zinc-300 font-medium">{log.SpaceID}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 bg-zinc-900/40 px-2 py-1 rounded text-zinc-600 ml-auto font-mono text-[10px]">
+                          <div className="flex items-center gap-1.5 bg-zinc-900/40 px-2 py-1 rounded text-zinc-600 ml-auto text-[10px]">
                             ID: {log.AuditID.split('-')[0]}
                           </div>
                         </div>

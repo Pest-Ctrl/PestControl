@@ -118,7 +118,7 @@ export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }
                   `}>
                     {child.type === 'tree' ? (isExpanded ? '📂' : '📁') : '📄'}
                   </div>
-                  <span className={`text-sm font-mono ${isSelected ? 'text-[#1ef2c1] font-bold' : 'text-zinc-300'}`}>
+                  <span className={`text-sm ${isSelected ? 'text-[#1ef2c1] font-bold' : 'text-zinc-300 font-medium'}`}>
                     {child.name}
                   </span>
                 </div>
@@ -139,7 +139,7 @@ export default function FileTreeVisualizer({ files, onFileSelect, selectedFile }
   if (!parsedFiles || parsedFiles.length === 0) {
     return (
       <div className="w-full h-40 flex items-center justify-center border border-dashed border-zinc-800 rounded-lg">
-        <p className="text-zinc-500 text-sm italic font-mono">No files found in this repository.</p>
+        <p className="text-zinc-500 text-sm italic">No files found in this repository.</p>
       </div>
     );
   }
