@@ -143,10 +143,10 @@ PestControl/
 
 ## License
 
-This project is licensed under the **MIT License** (license file to be added).
+This project is licensed under the **MIT License** (LICENSE).
 
 ---
 
-## 👥 Attribution
+## Attribution
 
 Developed by the **Pest-Ctrl** team.
