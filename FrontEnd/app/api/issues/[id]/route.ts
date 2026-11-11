@@ -71,6 +71,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     auditDesc = auditDesc ? `${auditDesc}; Severity changed to ${severity}` : `Severity changed to ${severity}`;
   }
 
+  updateData.userId = user.UserID;
+
   const updated = await prisma.issues.update({
     where: { IssueID: id },
     data: updateData,

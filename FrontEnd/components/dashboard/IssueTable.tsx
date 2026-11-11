@@ -3,6 +3,7 @@ type IssueSeverity = 'Critical' | 'High' | 'Medium' | 'Low';
 
 export interface Issue {
   id: string;
+  fullId?: string;
   title: string;
   status: IssueStatus;
   severity: IssueSeverity;
@@ -39,9 +40,10 @@ const SEVERITY_STYLES: Record<IssueSeverity, string> = {
 
 interface IssueTableProps {
   issues: Issue[];
+  onStatusChange?: (issueId: string, newStatus: IssueStatus) => void;
 }
 
-export default function IssueTable({ issues }: IssueTableProps) {
+export default function IssueTable({ issues, onStatusChange }: IssueTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -70,9 +72,27 @@ export default function IssueTable({ issues }: IssueTableProps) {
                 <span className="truncate block" title={issue.title}>{issue.title}</span>
               </td>
               <td className="px-4 py-3">
-                <span className={`inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLES[issue.status]}`}>
-                  {STATUS_LABELS[issue.status]}
-                </span>
+                {onStatusChange ? (
+                  <select
+                    value={issue.status}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      onStatusChange(issue.fullId || issue.id, e.target.value as IssueStatus);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded cursor-pointer bg-black/60 border focus:outline-none focus:border-[#1ef2c1]/50 ${STATUS_STYLES[issue.status]}`}
+                  >
+                    {(Object.keys(STATUS_LABELS) as IssueStatus[]).map((st) => (
+                      <option key={st} value={st} className="bg-[#0d1117] text-zinc-200 normal-case">
+                        {STATUS_LABELS[st]}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className={`inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLES[issue.status]}`}>
+                    {STATUS_LABELS[issue.status]}
+                  </span>
+                )}
               </td>
               <td className="px-4 py-3">
                 <span className={`inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${SEVERITY_STYLES[issue.severity]}`}>

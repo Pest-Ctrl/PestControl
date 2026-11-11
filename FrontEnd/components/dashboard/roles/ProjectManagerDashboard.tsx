@@ -67,6 +67,26 @@ export default function ProjectManagerDashboard() {
     }
   }
 
+  const handleStatusChange = async (issueId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/issues/${issueId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setIssues(prev => prev.map(issue => {
+          if (issue.IssueID === issueId || issue.IssueID.slice(0, 10) === issueId) {
+            return { ...issue, Status: newStatus };
+          }
+          return issue;
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+  };
+
   const statusBreakdown = [
     { label: 'Open', count: issues.filter(i => i.Status === 'Open').length, color: '#eab308' },
     { label: 'In Progress', count: issues.filter(i => i.Status === 'InProgress').length, color: '#3b82f6' },
@@ -78,6 +98,7 @@ export default function ProjectManagerDashboard() {
 
   const issueTableData = issues.map((i) => ({
     id: i.IssueID.slice(0, 10),
+    fullId: i.IssueID,
     title: i.Title,
     status: i.Status as any,
     severity: i.Severity as any,
@@ -161,7 +182,7 @@ export default function ProjectManagerDashboard() {
             <div className="w-5 h-5 border-2 border-zinc-700 border-t-[#1ef2c1] rounded-full animate-spin" />
           </div>
         ) : (
-          <IssueTable issues={issueTableData} />
+          <IssueTable issues={issueTableData} onStatusChange={handleStatusChange} />
         )}
       </section>
 

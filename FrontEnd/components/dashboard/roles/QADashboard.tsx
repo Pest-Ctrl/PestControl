@@ -25,12 +25,33 @@ export default function QADashboard({ userName }: { userName: string }) {
       .catch(() => setLoading(false));
   }, []);
 
+  const handleStatusChange = async (issueId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/issues/${issueId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setIssues(prev => prev.map(issue => {
+          if (issue.IssueID === issueId || issue.IssueID.slice(0, 10) === issueId) {
+            return { ...issue, Status: newStatus };
+          }
+          return issue;
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+  };
+
   const resolvedIssues = issues.filter(i => i.Status === 'Resolved');
   const reopenedIssues = issues.filter(i => i.Status === 'Reopened');
   const qaIssues = issues.filter(i => ['Resolved', 'Reopened', 'Closed'].includes(i.Status));
 
   const issueTableData = qaIssues.map((i) => ({
     id: i.IssueID.slice(0, 10),
+    fullId: i.IssueID,
     title: i.Title,
     status: i.Status as any,
     severity: i.Severity as any,
@@ -74,8 +95,18 @@ export default function QADashboard({ userName }: { userName: string }) {
                   </div>
                   <p className="text-sm text-zinc-300 font-medium mb-4">{issue.Title}</p>
                   <div className="flex gap-2">
-                    <button className="flex-1 text-xs bg-zinc-800 text-white px-3 py-2 hover:bg-zinc-700 transition-colors">Verify & Close</button>
-                    <button className="flex-1 text-xs bg-red-900/30 text-red-400 border border-red-900/50 px-3 py-2 hover:bg-red-900/50 transition-colors">Reject (Reopen)</button>
+                    <button 
+                      onClick={() => handleStatusChange(issue.IssueID, 'Closed')}
+                      className="flex-1 text-xs bg-zinc-800 text-white px-3 py-2 hover:bg-zinc-700 transition-colors"
+                    >
+                      Verify & Close
+                    </button>
+                    <button 
+                      onClick={() => handleStatusChange(issue.IssueID, 'Reopened')}
+                      className="flex-1 text-xs bg-red-900/30 text-red-400 border border-red-900/50 px-3 py-2 hover:bg-red-900/50 transition-colors"
+                    >
+                      Reject (Reopen)
+                    </button>
                   </div>
                 </div>
               ))
@@ -119,7 +150,7 @@ export default function QADashboard({ userName }: { userName: string }) {
             <div className="w-5 h-5 border-2 border-zinc-700 border-t-[#1ef2c1] rounded-full animate-spin" />
           </div>
         ) : (
-          <IssueTable issues={issueTableData} />
+          <IssueTable issues={issueTableData} onStatusChange={handleStatusChange} />
         )}
       </section>
     </main>

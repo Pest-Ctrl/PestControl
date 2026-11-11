@@ -1,0 +1,253 @@
+/* ==========================================================================
+   PestControl Project Documentation — Markdown-to-PDF Print Stylesheet
+   Designed for: VS Code Markdown PDF, Pandoc, Typora, Chrome Print to PDF
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+@page {
+  size: A4 portrait;
+  margin: 20mm 15mm 20mm 15mm;
+  @top-right {
+    content: "PestControl — Comprehensive Documentation";
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    color: #64748b;
+  }
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    color: #64748b;
+  }
+}
+
+:root {
+  --primary: #0f766e;
+  --primary-light: #14b8a6;
+  --primary-dark: #115e59;
+  --accent: #0284c7;
+  --text-main: #1e293b;
+  --text-muted: #475569;
+  --bg-code: #0f172a;
+  --border-light: #e2e8f0;
+  --border-dark: #cbd5e1;
+  --bg-table-zebra: #f8fafc;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: var(--text-main);
+  background-color: #ffffff;
+  line-height: 1.65;
+  font-size: 10.5pt;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  padding: 0;
+  margin: 0;
+}
+
+/* ================= Headings ================= */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  color: #0f172a;
+  font-weight: 700;
+  margin-top: 1.8em;
+  margin-bottom: 0.6em;
+  page-break-after: avoid;
+  page-break-inside: avoid;
+}
+
+h1 {
+  font-size: 24pt;
+  line-height: 1.25;
+  color: #042f2e;
+  border-bottom: 2.5px solid var(--primary);
+  padding-bottom: 8px;
+  margin-top: 0;
+}
+
+h1.doc-title {
+  font-size: 28pt;
+  text-align: center;
+  border-bottom: none;
+  margin-top: 40px;
+  margin-bottom: 15px;
+  color: #0f766e;
+}
+
+h2 {
+  font-size: 16pt;
+  line-height: 1.3;
+  color: #0f766e;
+  border-bottom: 1.5px solid #ccfbf1;
+  padding-bottom: 6px;
+  margin-top: 2.2em;
+}
+
+h3 {
+  font-size: 12.5pt;
+  color: #0369a1;
+  margin-top: 1.4em;
+}
+
+h4 {
+  font-size: 11pt;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ================= Document Sections & Breaks ================= */
+.page-break {
+  page-break-before: always;
+}
+
+.section-cover {
+  page-break-after: always;
+  text-align: center;
+  padding-top: 80px;
+}
+
+p {
+  margin: 0.8em 0;
+  text-align: justify;
+}
+
+/* ================= Tables ================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.4em 0;
+  font-size: 9.5pt;
+  page-break-inside: avoid;
+  border: 1px solid var(--border-dark);
+}
+
+table thead th {
+  background-color: #0f766e;
+  color: #ffffff;
+  text-align: left;
+  font-weight: 600;
+  padding: 8px 10px;
+  border: 1px solid #0d9488;
+}
+
+table tbody td {
+  padding: 7px 10px;
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  vertical-align: top;
+}
+
+table tbody tr:nth-child(even) {
+  background-color: var(--bg-table-zebra);
+}
+
+table tbody tr:hover {
+  background-color: #f0fdfa;
+}
+
+/* ================= Code Blocks & Inlines ================= */
+code {
+  font-family: 'Fira Code', Consolas, Monaco, monospace;
+  font-size: 8.8pt;
+  background-color: #f1f5f9;
+  color: #0f766e;
+  padding: 2px 5px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+pre {
+  background-color: var(--bg-code);
+  color: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 8.5pt;
+  line-height: 1.45;
+  border: 1px solid #1e293b;
+  page-break-inside: avoid;
+  margin: 1em 0;
+}
+
+pre code {
+  background-color: transparent;
+  color: inherit;
+  border: none;
+  padding: 0;
+}
+
+/* ================= Quotes & Callouts ================= */
+blockquote {
+  margin: 1.2em 0;
+  padding: 10px 16px;
+  background-color: #f0fdfa;
+  border-left: 4px solid var(--primary-light);
+  color: #134e4a;
+  font-style: normal;
+  border-radius: 0 6px 6px 0;
+  page-break-inside: avoid;
+}
+
+blockquote p {
+  margin: 0.3em 0;
+  text-align: left;
+}
+
+/* ================= Lists ================= */
+ul, ol {
+  margin: 0.6em 0 1em 1.5em;
+  padding: 0;
+}
+
+li {
+  margin-bottom: 0.35em;
+}
+
+/* ================= Badges & Highlights ================= */
+.badge {
+  display: inline-block;
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+}
+
+.badge-primary { background-color: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
+.badge-success { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.badge-warning { background-color: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+.badge-danger  { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* ================= Mermaid Diagrams ================= */
+.mermaid {
+  background-color: #ffffff;
+  padding: 12px;
+  margin: 1.5em 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: center;
+  page-break-inside: avoid;
+}
+
+/* ================= Print Specific Cleanups ================= */
+@media print {
+  body {
+    font-size: 10pt;
+    color: #000000;
+  }
+  a {
+    color: #0f766e;
+    text-decoration: underline;
+  }
+  .no-print {
+    display: none !important;
+  }
+  table, pre, blockquote, .mermaid {
+    page-break-inside: avoid;
+  }
+}
+

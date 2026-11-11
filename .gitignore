@@ -2,3 +2,6 @@ node_modules/
 node_moddules/
 scratch/
 FrontEnd/scratch/
+test-results/
+playwright-report/
+

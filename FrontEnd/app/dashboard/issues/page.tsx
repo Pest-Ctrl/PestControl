@@ -88,6 +88,27 @@ export default function IssuesPage() {
     }
   };
 
+  const handleStatusChange = async (issueId: string, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/issues/${issueId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        // Update local state instantly
+        setIssues(prev => prev.map(issue => {
+          if (issue.IssueID === issueId) {
+            return { ...issue, Status: newStatus };
+          }
+          return issue;
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+  };
+
   const filteredIssues = issues.filter((issue) => {
     if (filterStatus && issue.Status !== filterStatus) return false;
     if (filterSeverity && issue.Severity !== filterSeverity) return false;
@@ -200,14 +221,35 @@ export default function IssuesPage() {
                       {items.map((issue) => (
                         <div key={issue.IssueID}>
                           {/* Compact row */}
-                          <button
+                          <div
+                            role="button"
+                            tabIndex={0}
                             onClick={() => setExpandedId(expandedId === issue.IssueID ? null : issue.IssueID)}
-                            className="w-full text-left px-5 py-3 hover:bg-[#1ef2c1]/[0.03] transition-colors border-b border-zinc-900/50 last:border-0 flex items-center gap-4"
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpandedId(expandedId === issue.IssueID ? null : issue.IssueID); }}
+                            className="w-full text-left px-5 py-3 hover:bg-[#1ef2c1]/[0.03] transition-colors border-b border-zinc-900/50 last:border-0 flex items-center gap-4 cursor-pointer select-none"
                           >
                             <span className="text-[#1ef2c1]/50 font-mono text-xs w-20 shrink-0">
                               {issue.IssueID.slice(0, 10)}
                             </span>
                             <span className="text-sm text-zinc-200 flex-1 truncate">{issue.Title}</span>
+
+                            {/* Status change dropdown on the row */}
+                            <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                              <select
+                                value={issue.Status}
+                                onChange={(e) => handleStatusChange(issue.IssueID, e.target.value)}
+                                className="bg-[#050505] border border-zinc-800 text-[11px] font-semibold tracking-wider py-1 px-2.5 rounded focus:outline-none focus:border-[#1ef2c1]/60 transition-colors cursor-pointer"
+                                style={{ color: STATUS_COLORS[issue.Status] || "#1ef2c1" }}
+                                title="Change bug status"
+                              >
+                                {STATUS_ORDER.map((st) => (
+                                  <option key={st} value={st} className="bg-[#0d1117] text-zinc-200">
+                                    {STATUS_LABELS[st]}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
                             <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded ${SEVERITY_COLORS[issue.Severity] || ""}`}>
                               {issue.Severity}
                             </span>
@@ -218,7 +260,7 @@ export default function IssuesPage() {
                             <span className="text-xs text-zinc-700 w-6 text-right">
                               {expandedId === issue.IssueID ? "▾" : "▸"}
                             </span>
-                          </button>
+                          </div>
 
                           {/* Expanded detail */}
                           {expandedId === issue.IssueID && (
@@ -247,8 +289,20 @@ export default function IssuesPage() {
                                 <div className="space-y-3">
                                   <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Reporter</p>
-                                      <p className="text-xs text-zinc-300">{issue.Reporter.Username}</p>
+                                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Status</p>
+                                      <select 
+                                        className="w-full bg-[#050505] border border-zinc-800 text-xs py-1.5 px-2 rounded focus:outline-none focus:border-[#1ef2c1]/50 font-medium"
+                                        style={{ color: STATUS_COLORS[issue.Status] || "#1ef2c1" }}
+                                        value={issue.Status}
+                                        onChange={(e) => handleStatusChange(issue.IssueID, e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        {STATUS_ORDER.map(s => (
+                                          <option key={s} value={s} className="bg-[#0d1117] text-zinc-200">
+                                            {STATUS_LABELS[s]}
+                                          </option>
+                                        ))}
+                                      </select>
                                     </div>
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Assignee</p>
@@ -267,12 +321,40 @@ export default function IssuesPage() {
                                       </select>
                                     </div>
                                     <div>
+                                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Reporter</p>
+                                      <p className="text-xs text-zinc-300">{issue.Reporter.Username}</p>
+                                    </div>
+                                    <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Created</p>
                                       <p className="text-xs text-zinc-400 font-mono">{new Date(issue.CreatedAt).toLocaleDateString()}</p>
                                     </div>
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Comments</p>
                                       <p className="text-xs text-zinc-300">{issue._count.Comments}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Quick Status Action Buttons */}
+                                  <div className="pt-2 border-t border-zinc-900/80">
+                                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1.5">Quick Transition</p>
+                                    <div className="flex gap-1.5 flex-wrap">
+                                      {STATUS_ORDER.map((st) => (
+                                        <button
+                                          key={st}
+                                          disabled={issue.Status === st}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStatusChange(issue.IssueID, st);
+                                          }}
+                                          className={`text-[10px] px-2.5 py-1 rounded border transition-colors ${
+                                            issue.Status === st
+                                              ? 'border-[#1ef2c1]/50 bg-[#1ef2c1]/10 text-[#1ef2c1] font-bold cursor-default'
+                                              : 'border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 bg-zinc-900/40 cursor-pointer'
+                                          }`}
+                                        >
+                                          {issue.Status === st ? `✓ ${STATUS_LABELS[st]}` : STATUS_LABELS[st]}
+                                        </button>
+                                      ))}
                                     </div>
                                   </div>
                                 </div>
