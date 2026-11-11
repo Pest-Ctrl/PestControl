@@ -206,7 +206,7 @@ export default function IssuesPage() {
                         style={{ backgroundColor: STATUS_COLORS[status] }}
                       />
                       <span className="text-sm font-medium text-zinc-200">{STATUS_LABELS[status]}</span>
-                      <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full font-mono">
+                      <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
                         {items.length}
                       </span>
                     </div>
@@ -228,7 +228,7 @@ export default function IssuesPage() {
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpandedId(expandedId === issue.IssueID ? null : issue.IssueID); }}
                             className="w-full text-left px-5 py-3 hover:bg-[#1ef2c1]/[0.03] transition-colors border-b border-zinc-900/50 last:border-0 flex items-center gap-4 cursor-pointer select-none"
                           >
-                            <span className="text-[#1ef2c1]/50 font-mono text-xs w-20 shrink-0">
+                            <span className="text-[#1ef2c1]/70 text-xs w-20 shrink-0 font-medium">
                               {issue.IssueID.slice(0, 10)}
                             </span>
                             <span className="text-sm text-zinc-200 flex-1 truncate">{issue.Title}</span>
@@ -250,11 +250,11 @@ export default function IssuesPage() {
                               </select>
                             </div>
 
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded ${SEVERITY_COLORS[issue.Severity] || ""}`}>
+                            <span className={`w-20 text-center inline-block shrink-0 text-[10px] font-bold uppercase tracking-wider py-1 border rounded ${SEVERITY_COLORS[issue.Severity] || ""}`}>
                               {issue.Severity}
                             </span>
-                            <span className="text-xs text-zinc-500 w-16 text-right">{issue.BugType}</span>
-                            <span className="text-xs text-zinc-600 font-mono w-20 text-right">
+                            <span className="text-xs text-zinc-500 w-20 text-right">{issue.BugType}</span>
+                            <span className="text-xs text-zinc-400 w-24 text-right truncate">
                               {issue.Assignee?.Username || "—"}
                             </span>
                             <span className="text-xs text-zinc-700 w-6 text-right">
@@ -276,13 +276,13 @@ export default function IssuesPage() {
                                   {issue.Repo && (
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Repository</p>
-                                      <p className="text-xs text-zinc-300 font-mono">{issue.Repo.GHOwner}/{issue.Repo.GHName}</p>
+                                      <p className="text-xs text-zinc-300">{issue.Repo.GHOwner}/{issue.Repo.GHName}</p>
                                     </div>
                                   )}
                                   {issue.Commit && (
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Linked Commit</p>
-                                      <p className="text-xs text-[#1ef2c1]/60 font-mono">{issue.Commit.SHA} — {issue.Commit.Message}</p>
+                                      <p className="text-xs text-[#1ef2c1]/80">{issue.Commit.SHA} — {issue.Commit.Message}</p>
                                     </div>
                                   )}
                                 </div>
@@ -326,7 +326,7 @@ export default function IssuesPage() {
                                     </div>
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Created</p>
-                                      <p className="text-xs text-zinc-400 font-mono">{new Date(issue.CreatedAt).toLocaleDateString()}</p>
+                                      <p className="text-xs text-zinc-400">{new Date(issue.CreatedAt).toLocaleDateString()}</p>
                                     </div>
                                     <div>
                                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Comments</p>

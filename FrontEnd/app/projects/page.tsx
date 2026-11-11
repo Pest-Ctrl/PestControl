@@ -127,12 +127,12 @@ export default function WorkspacePage() {
                         <div className="flex items-start justify-between">
                           <div>
                             <h2 className="text-sm font-bold text-zinc-100">{space.SpaceName}</h2>
-                            <p className="text-[10px] text-zinc-500 mt-0.5 font-mono">ID: {space.SpaceID?.split('-')[0]}...</p>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">ID: {space.SpaceID?.split('-')[0]}...</p>
                           </div>
                         </div>
                         <div className="border-t border-zinc-900 pt-3 flex items-center gap-4 text-[10px] text-zinc-500">
-                          <span><span className="text-zinc-300 font-mono font-bold">{spaceRepos.length}</span> repos</span>
-                          <span><span className="text-zinc-300 font-mono font-bold">{spaceRepos.reduce((a, r) => a + (r._count?.Issues || 0), 0)}</span> issues</span>
+                          <span><span className="text-zinc-300 font-bold">{spaceRepos.length}</span> repos</span>
+                          <span><span className="text-zinc-300 font-bold">{spaceRepos.reduce((a, r) => a + (r._count?.Issues || 0), 0)}</span> issues</span>
                         </div>
                       </div>
                     );
@@ -184,11 +184,11 @@ export default function WorkspacePage() {
                           <div className="flex gap-4">
                             <div>
                               <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Issues</p>
-                              <p className="text-xs font-mono text-zinc-300 mt-0.5">{repo._count?.Issues ?? 0}</p>
+                              <p className="text-xs text-zinc-300 mt-0.5 font-semibold">{repo._count?.Issues ?? 0}</p>
                             </div>
                             <div>
                               <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Commits</p>
-                              <p className="text-xs text-zinc-300 mt-0.5 font-mono">{repo._count?.Commits ?? 0}</p>
+                              <p className="text-xs text-zinc-300 mt-0.5 font-semibold">{repo._count?.Commits ?? 0}</p>
                             </div>
                           </div>
                           <div className="text-right">

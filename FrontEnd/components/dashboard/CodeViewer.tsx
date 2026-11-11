@@ -71,7 +71,7 @@ export default function CodeViewer({ content, selectedRange, onRangeSelect, lang
   if (loading) {
     return (
       <div className="w-full h-64 bg-[#050505] border border-zinc-800 rounded-lg flex items-center justify-center">
-        <div className="text-zinc-500 font-mono text-sm animate-pulse">Loading file contents...</div>
+        <div className="text-zinc-500 text-sm animate-pulse">Loading file contents...</div>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function CodeViewer({ content, selectedRange, onRangeSelect, lang
   if (!content) {
     return (
       <div className="w-full h-64 bg-[#050505] border border-zinc-800 rounded-lg flex items-center justify-center">
-        <div className="text-zinc-500 font-mono text-sm italic">No content to display.</div>
+        <div className="text-zinc-500 text-sm italic">No content to display.</div>
       </div>
     );
   }

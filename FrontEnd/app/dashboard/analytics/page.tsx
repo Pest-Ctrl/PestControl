@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Gitline from "@/components/dashboard/Gitline";
+import Gitline, { ProcessedCommit } from "@/components/dashboard/Gitline";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Scrollable from "@/components/Scrollable";
 
@@ -12,6 +12,13 @@ interface Issue {
   CreatedAt: string;
 }
 
+const SEVERITY_STYLES: Record<string, string> = {
+  Critical: "bg-red-500/20 text-red-400 border-red-500/30",
+  High: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  Medium: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  Low: "bg-zinc-800 text-zinc-400 border-zinc-700",
+};
+
 export default function AnalyticsPage() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [spaces, setSpaces] = useState<any[]>([]);
@@ -19,13 +26,15 @@ export default function AnalyticsPage() {
   const [repos, setRepos] = useState<any[]>([]);
   const [selectedRepoId, setSelectedRepoId] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<"git-tree" | "metrics" | "split">("git-tree");
+  const [inspectedCommit, setInspectedCommit] = useState<ProcessedCommit | null>(null);
 
   useEffect(() => {
     fetch("/api/spaces")
       .then((r) => r.json())
       .then((data) => setSpaces(Array.isArray(data) ? data : []))
       .catch(() => {});
-      
+
     fetch("/api/repos")
       .then((r) => r.json())
       .then((data) => setRepos(Array.isArray(data) ? data : []))
@@ -37,7 +46,7 @@ export default function AnalyticsPage() {
     let url = "/api/issues?";
     if (selectedRepoId) url += `repoId=${selectedRepoId}&`;
     if (selectedSpaceId) url += `spaceId=${selectedSpaceId}&`;
-    
+
     fetch(url)
       .then((r) => r.json())
       .then((data) => {
@@ -78,19 +87,51 @@ export default function AnalyticsPage() {
     <div className="flex min-h-screen bg-[#050505] text-white font-sans">
       <Sidebar />
       <Scrollable className="flex-1 flex flex-col h-screen">
-        <header className="sticky top-0 z-20 bg-[#050505]/90 backdrop-blur border-b border-zinc-900 px-8 py-4 flex items-center justify-between">
+        {/* Sticky Top Header */}
+        <header className="sticky top-0 z-20 bg-[#050505]/95 backdrop-blur border-b border-zinc-900 px-8 py-4 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-lg font-bold text-white tracking-wide">Analytics</h1>
-            <p className="text-xs text-zinc-400">Process improvement metrics & audit trail</p>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-white tracking-wide">Git Tree & Analytics</h1>
+              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#1ef2c1]/10 text-[#1ef2c1] border border-[#1ef2c1]/30">
+                Live Audit Trail
+              </span>
+            </div>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Visualize branch changes, merging operations, and software defect metrics
+            </p>
           </div>
-          <div className="flex gap-4">
+
+          <div className="flex flex-wrap items-center gap-3">
+            {/* View Switcher Tabs */}
+            <div className="bg-[#0a0a0a] p-1 rounded-lg border border-zinc-800 flex items-center gap-1">
+              {[
+                { id: "git-tree", label: "Git Branch Tree", icon: "⌥" },
+                { id: "metrics", label: "Quality Metrics", icon: "📊" },
+                { id: "split", label: "Split View", icon: "◫" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveView(tab.id as any)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all ${
+                    activeView === tab.id
+                      ? "bg-[#1ef2c1] text-black font-semibold shadow-[0_0_12px_rgba(30,242,193,0.3)]"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                  }`}
+                >
+                  <span>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Filter Selectors */}
             <select
               value={selectedSpaceId}
               onChange={(e) => {
                 setSelectedSpaceId(e.target.value);
-                setSelectedRepoId(""); // Reset repo filter when space changes
+                setSelectedRepoId("");
               }}
-              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-4 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg"
+              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-3 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg cursor-pointer"
             >
               <option value="">All Workspaces</option>
               {spaces.map((s) => (
@@ -102,108 +143,234 @@ export default function AnalyticsPage() {
             <select
               value={selectedRepoId}
               onChange={(e) => setSelectedRepoId(e.target.value)}
-              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-4 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg"
+              className="bg-[#0d1117] border border-zinc-800 text-zinc-300 text-xs px-3 py-2 focus:outline-none focus:border-[#1ef2c1]/50 rounded-lg cursor-pointer"
             >
               <option value="">All Repositories</option>
               {repos
-                .filter(r => !selectedSpaceId || r.SpaceID === selectedSpaceId)
+                .filter((r) => !selectedSpaceId || r.SpaceID === selectedSpaceId)
                 .map((r) => (
-                <option key={r.RepoID} value={r.RepoID}>
-                  {r.GHOwner}/{r.GHName}
-                </option>
-              ))}
+                  <option key={r.RepoID} value={r.RepoID}>
+                    {r.GHOwner}/{r.GHName}
+                  </option>
+                ))}
             </select>
           </div>
         </header>
 
-        <div className="flex-1 flex">
-          {/* Main metrics area */}
-          <main className="flex-1 p-8 space-y-8 overflow-y-auto">
-            {/* KPI Cards */}
-            <section>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] mb-4 font-bold">Overview</p>
-              <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                {[
-                  { title: "Total Issues", value: total, accent: true },
-                  { title: "Open", value: openCount, accent: false },
-                  { title: "Closure Rate", value: `${closureRate}%`, accent: closureRate >= 70 },
-                  { title: "Reopened", value: reopenedCount, accent: reopenedCount === 0 },
-                ].map((kpi) => (
-                  <div
-                    key={kpi.title}
-                    className="bg-[#0d1117] border border-zinc-900 p-5"
-                  >
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-2">
-                      {kpi.title}
-                    </p>
-                    <p className={`text-2xl font-bold ${kpi.accent ? "text-[#1ef2c1]" : "text-white"}`}>
-                      {loading ? "—" : kpi.value}
-                    </p>
+        {/* Top KPI Cards (Compact & Clean) */}
+        <div className="px-8 pt-6 pb-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { title: "Total Issues", value: total, accent: true, subtitle: "Tracked in workspace" },
+              { title: "Open Issues", value: openCount, accent: false, subtitle: "Awaiting resolution" },
+              { title: "Closure Rate", value: `${closureRate}%`, accent: closureRate >= 65, subtitle: `${closedCount} of ${total} resolved` },
+              { title: "Active Regressions", value: reopenedCount, accent: reopenedCount === 0, subtitle: reopenedCount === 0 ? "Zero regressions" : "Requires attention" },
+            ].map((kpi) => (
+              <div
+                key={kpi.title}
+                className={`bg-[#0d1117] border p-4 rounded-xl flex flex-col justify-between transition-all ${
+                  kpi.accent
+                    ? "border-[#1ef2c1]/30 shadow-[0_0_15px_rgba(30,242,193,0.05)]"
+                    : "border-zinc-900"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                    {kpi.title}
+                  </span>
+                  {kpi.accent && <span className="w-2 h-2 rounded-full bg-[#1ef2c1] shadow-[0_0_6px_#1ef2c1]" />}
+                </div>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className={`text-3xl font-bold tracking-tight ${kpi.accent ? "text-[#1ef2c1]" : "text-white"}`}>
+                    {loading ? "—" : kpi.value}
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-500 mt-1">{kpi.subtitle}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Dynamic Content Views */}
+        <div className="flex-1 p-8 pt-4">
+          {/* VIEW 1: DEDICATED GIT TREE & MERGE GRAPH */}
+          {activeView === "git-tree" && (
+            <div className="h-[calc(100vh-230px)] flex flex-col">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-200">Interactive Git Tree & Merge Graph</h2>
+                  <p className="text-xs text-zinc-500">
+                    Showing branch curves, forks from main, PR merges, and commit associations
+                  </p>
+                </div>
+              </div>
+              <div className="flex-1 min-h-0">
+                <Gitline
+                  spaceId={selectedSpaceId}
+                  repoId={selectedRepoId}
+                  onSelectCommit={(commit) => setInspectedCommit(commit)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 2: DEFECT METRICS & HEALTH */}
+          {activeView === "metrics" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Status Breakdown */}
+                <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">
+                        Issues by Status
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-0.5">Workflow distribution of all logged issues</p>
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-400 bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-800">
+                      {total} Total
+                    </span>
                   </div>
-                ))}
-              </div>
-            </section>
 
-            {/* Status Breakdown */}
-            <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="bg-[#0d1117] border border-zinc-900 p-6">
-                <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-6">Issues by Status</p>
-                <div className="space-y-3">
-                  {statusBreakdown.map((s) => (
-                    <div key={s.label} className="flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                      <div className="flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-zinc-400">{s.label}</span>
-                          <span className="font-mono text-zinc-300">{s.count}</span>
-                        </div>
-                        <div className="h-1 bg-zinc-900 w-full">
-                          <div
-                            className="h-1 transition-all"
-                            style={{ width: total > 0 ? `${(s.count / total) * 100}%` : "0%", backgroundColor: s.color }}
-                          />
+                  <div className="space-y-4">
+                    {statusBreakdown.map((s) => (
+                      <div key={s.label} className="flex items-center gap-3">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                        <div className="flex-1">
+                          <div className="flex justify-between text-xs mb-1.5 font-medium">
+                            <span className="text-zinc-300">{s.label}</span>
+                            <span className="text-zinc-200 font-semibold">{s.count}</span>
+                          </div>
+                          <div className="h-1.5 bg-zinc-900 rounded-full overflow-hidden w-full">
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{
+                                width: total > 0 ? `${(s.count / total) * 100}%` : "0%",
+                                backgroundColor: s.color,
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Severity Breakdown with Uniform Badges */}
+                <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">
+                        Issues by Severity
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-0.5">Risk assessment and prioritization matrix</p>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    {severityBreakdown.map((s) => (
+                      <div key={s.label} className="flex items-center gap-4 bg-black/40 p-3 rounded-lg border border-zinc-900">
+                        <span
+                          className={`w-20 text-center inline-block shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${
+                            SEVERITY_STYLES[s.label] || SEVERITY_STYLES.Medium
+                          }`}
+                        >
+                          {s.label}
+                        </span>
+                        <div className="flex-1">
+                          <div className="h-2 bg-zinc-900 rounded-full overflow-hidden w-full">
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{
+                                width: total > 0 ? `${(s.count / total) * 100}%` : "0%",
+                                backgroundColor: s.color,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-sm font-bold w-12 text-right" style={{ color: s.color }}>
+                          {s.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 3: UNIFIED SPLIT VIEW */}
+          {activeView === "split" && (
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-[calc(100vh-230px)]">
+              {/* Left Column: Realistic Git Tree */}
+              <div className="xl:col-span-8 flex flex-col h-full min-h-0">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-zinc-300">Git Branch & Merge Graph</span>
+                  <span className="text-[11px] text-zinc-500">Live code commits</span>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <Gitline
+                    spaceId={selectedSpaceId}
+                    repoId={selectedRepoId}
+                    onSelectCommit={(commit) => setInspectedCommit(commit)}
+                  />
                 </div>
               </div>
 
-              <div className="bg-[#0d1117] border border-zinc-900 p-6">
-                <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold mb-6">Issues by Severity</p>
-                <div className="space-y-3">
-                  {severityBreakdown.map((s) => (
-                    <div key={s.label} className="flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                      <div className="flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-zinc-400">{s.label}</span>
-                          <span className="font-mono text-zinc-300">{s.count}</span>
-                        </div>
-                        <div className="h-1 bg-zinc-900 w-full">
-                          <div
-                            className="h-1 transition-all"
-                            style={{ width: total > 0 ? `${(s.count / total) * 100}%` : "0%", backgroundColor: s.color }}
-                          />
+              {/* Right Column: Defect Distribution Metrics */}
+              <div className="xl:col-span-4 flex flex-col gap-5 overflow-y-auto pr-1">
+                {/* Status Card */}
+                <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-5 shadow-sm">
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-4">
+                    Status Distribution
+                  </p>
+                  <div className="space-y-3">
+                    {statusBreakdown.map((s) => (
+                      <div key={s.label} className="flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                        <div className="flex-1">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-zinc-400">{s.label}</span>
+                            <span className="text-zinc-200 font-semibold">{s.count}</span>
+                          </div>
+                          <div className="h-1 bg-zinc-900 rounded-full overflow-hidden w-full">
+                            <div
+                              className="h-full transition-all"
+                              style={{
+                                width: total > 0 ? `${(s.count / total) * 100}%` : "0%",
+                                backgroundColor: s.color,
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Severity Card with Equalized Badges */}
+                <div className="bg-[#0d1117] border border-zinc-900 rounded-xl p-5 shadow-sm">
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-4">
+                    Severity Risk
+                  </p>
+                  <div className="space-y-2.5">
+                    {severityBreakdown.map((s) => (
+                      <div key={s.label} className="flex items-center justify-between bg-black/40 p-2.5 rounded-lg border border-zinc-900">
+                        <span
+                          className={`w-20 text-center inline-block shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${
+                            SEVERITY_STYLES[s.label] || SEVERITY_STYLES.Medium
+                          }`}
+                        >
+                          {s.label}
+                        </span>
+                        <span className="text-xs text-zinc-300 font-semibold">{s.count} issues</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </section>
-          </main>
-
-          {/* Gitline Side Panel */}
-          <aside className="w-80 xl:w-96 border-l border-zinc-900 bg-[#0a0a0a] overflow-y-auto h-[calc(100vh-57px)]">
-            <div className="p-4 border-b border-zinc-900">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-[0.25em] font-bold">Gitline · Audit Trail</p>
-              <p className="text-[10px] text-zinc-600 mt-1">Commits with linked issues</p>
             </div>
-            <div className="p-3">
-              <Gitline spaceId={selectedSpaceId} repoId={selectedRepoId} />
-            </div>
-          </aside>
+          )}
         </div>
       </Scrollable>
     </div>

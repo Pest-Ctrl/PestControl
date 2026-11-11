@@ -90,8 +90,8 @@ export default function DeveloperDashboard({ userName }: { userName: string }) {
               inProgressIssues.map(issue => (
                 <div key={issue.IssueID} className="border border-zinc-800 p-4 hover:border-zinc-600 cursor-pointer transition-colors">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-[#1ef2c1] font-mono text-xs">{issue.IssueID.slice(0, 10)}</span>
-                    <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 ${issue.Severity === 'Critical' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                    <span className="text-[#1ef2c1]/80 text-xs font-medium">{issue.IssueID.slice(0, 10)}</span>
+                    <span className={`w-20 text-center inline-block shrink-0 text-[10px] uppercase tracking-wider py-0.5 rounded border ${issue.Severity === 'Critical' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
                       {issue.Severity}
                     </span>
                   </div>
@@ -126,7 +126,7 @@ export default function DeveloperDashboard({ userName }: { userName: string }) {
               backlog.map(issue => (
                 <div key={issue.IssueID} className="border border-zinc-800 p-3 hover:border-zinc-600 cursor-pointer transition-colors flex justify-between items-center">
                   <div>
-                    <span className="text-[#1ef2c1] font-mono text-xs mr-3">{issue.IssueID.slice(0, 10)}</span>
+                    <span className="text-[#1ef2c1]/80 text-xs font-medium mr-3">{issue.IssueID.slice(0, 10)}</span>
                     <span className="text-sm text-zinc-300">{issue.Title}</span>
                   </div>
                   <button className="text-[10px] uppercase tracking-widest text-zinc-400 hover:text-white">Assign to me →</button>
